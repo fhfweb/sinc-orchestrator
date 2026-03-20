@@ -1,0 +1,46 @@
+﻿---
+id: cross-episode-bd2299813da9cecb
+type: pattern
+project_slug: orchestrator-os
+tags: [cross-project, memory, lesson]
+source_project: sistema-gestao-psicologos-autonomos
+source_kind: lesson
+source_files: [ai-orchestrator/knowledge_base/lessons_learned/LESSON_REPAIR-DEPLOY-20260311145119.md]
+source_modules: [ai-orchestrator/knowledge_base]
+content_hash: bd2299813da9cecb856eab3c5650ad6d154a0f8d183bb3da0916423bea50b7f5
+---
+
+# Cross-Project Episode: Lesson Learned: REPAIR-DEPLOY-20260311145119
+
+## Summary
+# Lesson Learned: REPAIR-DEPLOY-20260311145119
+
+- Generated At: 2026-03-11T15:03:28
+- Task ID: REPAIR-DEPLOY-20260311145119
+- Agent: Codex
+- Completed At: 2026-03-11T15:02:54
+- Incident Path: 
+
+## Error Signature
+- Category: unknown
+- Title: unknown
+- Details: unknown
+
+## Fix Pattern
+- Task status moved to completed.
+- Capture the exact patch/test evidence in this section when available.
+
+## Validation Command
+```text
+unknown
+```
+
+## Reuse Guidance
+- Search this lesson first when similar failures appear.
+- Re-run the failing command before applying any broad refactor.
+- Keep the repair minimal and attach evidence in execution history.
+
+## Source
+- project: sistema-gestao-psicologos-autonomos
+- path: ai-orchestrator/knowledge_base/lessons_learned/LESSON_REPAIR-DEPLOY-20260311145119.md
+- imported_at: 2026-03-13T14:28:23

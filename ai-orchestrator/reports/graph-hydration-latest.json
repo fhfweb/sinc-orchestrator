@@ -1,0 +1,67 @@
+{
+    "status":  "ok",
+    "generated_at":  "2026-03-12T10:12:47",
+    "project_path":  "G:\\Fernando\\project0",
+    "project_slug":  "project0",
+    "stack":  "powershell",
+    "ast":  {
+                "output_path":  "G:\\Fernando\\project0\\ai-orchestrator\\reports\\ast-graph-20260312101242.json",
+                "latest_output_path":  "G:\\Fernando\\project0\\ai-orchestrator\\reports\\ast-graph-latest.json",
+                "files_analyzed":  167,
+                "nodes":  0,
+                "edges":  0,
+                "relationships_written":  0,
+                "neo4j_synced":  false
+            },
+    "memory_sync":  {
+                        "project_slug":  "project0",
+                        "memory_dir":  "G:\\Fernando\\project0\\memory_graph\\nodes",
+                        "memory_dir_exists":  true,
+                        "relationships_path":  "G:\\Fernando\\project0\\memory_graph\\edges\\relationships.md",
+                        "dependency_graph_path":  "G:\\Fernando\\project0\\ai-orchestrator\\state\\project-state.json",
+                        "world_model_json_path":  "G:\\Fernando\\project0\\ai-orchestrator\\state\\world-model-auto.json",
+                        "ast_graph_path":  "G:\\Fernando\\project0\\ai-orchestrator\\reports\\ast-graph-20260312101242.json",
+                        "task_dag_path":  "",
+                        "task_completions_dir":  "",
+                        "project_root":  "G:\\Fernando\\project0",
+                        "nodes_discovered":  {
+                                                 "markdown":  5,
+                                                 "intake_modules":  3,
+                                                 "world_entities":  0,
+                                                 "ast_nodes":  0,
+                                                 "task_nodes":  0,
+                                                 "route_nodes":  0,
+                                                 "schema_nodes":  0,
+                                                 "test_nodes":  0,
+                                                 "incident_nodes":  9,
+                                                 "requirement_nodes":  0,
+                                                 "total":  17
+                                             },
+                        "relationships_discovered":  {
+                                                         "intake":  0,
+                                                         "world_model":  0,
+                                                         "ast":  0,
+                                                         "task_trace":  0,
+                                                         "route":  0,
+                                                         "schema":  0,
+                                                         "test":  0,
+                                                         "incident":  0,
+                                                         "requirement":  0,
+                                                         "total":  10
+                                                     },
+                        "qdrant":  {
+                                       "enabled":  false,
+                                       "reason":  "skip flag"
+                                   },
+                        "neo4j":  {
+                                      "enabled":  false,
+                                      "reason":  "neo4j-password-missing"
+                                  }
+                    },
+    "gpu_guard":  {
+                      "reserve_mb":  3072,
+                      "gpu_overhead_bytes":  3221225472,
+                      "num_parallel":  2,
+                      "max_loaded_models":  2
+                  }
+}

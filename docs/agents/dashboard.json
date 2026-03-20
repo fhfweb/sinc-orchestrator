@@ -1,0 +1,68 @@
+{
+  "generated_at": "2026-03-15T16:51:11.3556087+00:00",
+  "summary": {
+    "projects": 1,
+    "pending": 3.0,
+    "in_progress": 3.0,
+    "blocked": 3.0,
+    "done": 32.0,
+    "active_locks": 6.0,
+    "cross_project_patterns": 13
+  },
+  "projects": [
+    {
+      "slug": "consumer-project",
+      "health": "degraded",
+      "pending": 3,
+      "in_progress": 3,
+      "blocked": 3,
+      "done": 32,
+      "active_locks": 6,
+      "reputation_updated_at": "03/15/2026 16:51:07",
+      "meta_calibration_updated_at": "03/15/2026 16:51:07",
+      "top_agents": [
+        {
+          "agent": "AI Engineer Frontend",
+          "reputation_fit_score": 0.77,
+          "runtime_samples": 252,
+          "runtime_success_rate": 0.5397,
+          "runtime_avg_duration_ms": 28786,
+          "runtime_timeout_rate": 0.0
+        },
+        {
+          "agent": "Database Agent",
+          "reputation_fit_score": 0.764,
+          "runtime_samples": 208,
+          "runtime_success_rate": 0.5288,
+          "runtime_avg_duration_ms": 28887,
+          "runtime_timeout_rate": 0.0
+        },
+        {
+          "agent": "AI CTO",
+          "reputation_fit_score": 0.763,
+          "runtime_samples": 420,
+          "runtime_success_rate": 0.5286,
+          "runtime_avg_duration_ms": 29138,
+          "runtime_timeout_rate": 0.0071
+        }
+      ],
+      "next_tasks": [
+        {
+          "id": "REPAIR-20260315164929-17a7aa",
+          "priority": "P0",
+          "title": "Repair missing agent artifacts (failed agents=1)"
+        },
+        {
+          "id": "REL-PROD-001",
+          "priority": "P1",
+          "title": ""
+        },
+        {
+          "id": "FEAT-SINC-AI-ASSISTANCE-010",
+          "priority": "P2",
+          "title": "Guided assistant actions"
+        }
+      ]
+    }
+  ]
+}

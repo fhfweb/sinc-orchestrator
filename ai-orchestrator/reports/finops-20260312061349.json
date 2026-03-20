@@ -1,0 +1,282 @@
+{
+    "generated_at":  "2026-03-12T06:13:53",
+    "project":  "project0",
+    "dry_run":  false,
+    "system":  {
+                   "ram_metric_available":  true,
+                   "ram_metric_source":  "dotnet-computerinfo",
+                   "ram_used_pct":  67.3,
+                   "ram_free_gb":  15.64,
+                   "ram_total_gb":  47.89,
+                   "cpu_metric_available":  true,
+                   "cpu_metric_source":  "docker-container-aggregate",
+                   "cpu_used_pct":  7,
+                   "gpu_metric_available":  true,
+                   "gpu_metric_source":  "nvidia-smi",
+                   "gpu_util_pct":  1,
+                   "gpu_vram_used_mb":  3506,
+                   "gpu_vram_total_mb":  12227,
+                   "gpu_vram_used_pct":  28.7,
+                   "gpu_temperature_c":  37
+               },
+    "embedding_runtime":  {
+                              "found":  false,
+                              "processor":  "",
+                              "vectors_per_second":  0,
+                              "ollama_vectors_per_second":  0,
+                              "ollama_embeddings":  0,
+                              "non_ollama_embeddings":  0
+                          },
+    "llm_runtime":  {
+                        "found":  true,
+                        "enabled":  false,
+                        "model":  "",
+                        "tokens_per_second":  0,
+                        "total_tokens":  0,
+                        "llm_calls":  0
+                    },
+    "ollama_runtime":  {
+                           "available":  true,
+                           "gpu_models":  1,
+                           "cpu_models":  0,
+                           "unknown_models":  0,
+                           "processor_mix":  "gpu:1|cpu:0|unknown:0"
+                       },
+    "maintenance":  {
+                        "core_gate_removed":  [
+
+                                              ],
+                        "core_gate_cleanup_errors":  [
+
+                                                     ]
+                    },
+    "containers":  [
+                       {
+                           "name":  "core-gate-20260311-162225-php-mysql-qdrant",
+                           "cpu_pct":  0.2,
+                           "mem_usage":  "81.45MiB / 23.41GiB",
+                           "mem_pct":  0.3
+                       },
+                       {
+                           "name":  "core-gate-20260311-162225-php-mysql-neo4j",
+                           "cpu_pct":  0.4,
+                           "mem_usage":  "504.3MiB / 23.41GiB",
+                           "mem_pct":  2.1
+                       },
+                       {
+                           "name":  "core-gate-20260311-162225-node-postgres-db",
+                           "cpu_pct":  0,
+                           "mem_usage":  "33.74MiB / 23.41GiB",
+                           "mem_pct":  0.1
+                       },
+                       {
+                           "name":  "core-gate-20260311-162225-node-postgres-qdrant",
+                           "cpu_pct":  0.2,
+                           "mem_usage":  "81.62MiB / 23.41GiB",
+                           "mem_pct":  0.3
+                       },
+                       {
+                           "name":  "core-gate-20260311-162225-node-postgres-neo4j",
+                           "cpu_pct":  0.4,
+                           "mem_usage":  "508.4MiB / 23.41GiB",
+                           "mem_pct":  2.1
+                       },
+                       {
+                           "name":  "core-gate-20260311-162225-python-postgres-db",
+                           "cpu_pct":  0,
+                           "mem_usage":  "22.58MiB / 23.41GiB",
+                           "mem_pct":  0.1
+                       },
+                       {
+                           "name":  "core-gate-20260311-162225-python-postgres-neo4j",
+                           "cpu_pct":  0.4,
+                           "mem_usage":  "700MiB / 23.41GiB",
+                           "mem_pct":  2.9
+                       },
+                       {
+                           "name":  "core-gate-20260311-162225-python-postgres-qdrant",
+                           "cpu_pct":  0.1,
+                           "mem_usage":  "83.08MiB / 23.41GiB",
+                           "mem_pct":  0.4
+                       },
+                       {
+                           "name":  "core-gate-20260311-161411-php-mysql-neo4j",
+                           "cpu_pct":  0.4,
+                           "mem_usage":  "626.5MiB / 23.41GiB",
+                           "mem_pct":  2.6
+                       },
+                       {
+                           "name":  "core-gate-20260311-161411-php-mysql-qdrant",
+                           "cpu_pct":  0.1,
+                           "mem_usage":  "82.9MiB / 23.41GiB",
+                           "mem_pct":  0.4
+                       },
+                       {
+                           "name":  "core-gate-20260311-161411-php-mysql-db",
+                           "cpu_pct":  0.3,
+                           "mem_usage":  "445.9MiB / 23.41GiB",
+                           "mem_pct":  1.9
+                       },
+                       {
+                           "name":  "core-gate-20260311-161411-node-postgres-db",
+                           "cpu_pct":  0,
+                           "mem_usage":  "22.64MiB / 23.41GiB",
+                           "mem_pct":  0.1
+                       },
+                       {
+                           "name":  "core-gate-20260311-161411-node-postgres-neo4j",
+                           "cpu_pct":  0.4,
+                           "mem_usage":  "642.1MiB / 23.41GiB",
+                           "mem_pct":  2.7
+                       },
+                       {
+                           "name":  "core-gate-20260311-161411-node-postgres-qdrant",
+                           "cpu_pct":  0.2,
+                           "mem_usage":  "83.18MiB / 23.41GiB",
+                           "mem_pct":  0.4
+                       },
+                       {
+                           "name":  "core-gate-20260311-161411-python-postgres-db",
+                           "cpu_pct":  0,
+                           "mem_usage":  "21.9MiB / 23.41GiB",
+                           "mem_pct":  0.1
+                       },
+                       {
+                           "name":  "core-gate-20260311-161411-python-postgres-neo4j",
+                           "cpu_pct":  0.4,
+                           "mem_usage":  "524.2MiB / 23.41GiB",
+                           "mem_pct":  2.2
+                       },
+                       {
+                           "name":  "core-gate-20260311-161411-python-postgres-qdrant",
+                           "cpu_pct":  0.1,
+                           "mem_usage":  "80.84MiB / 23.41GiB",
+                           "mem_pct":  0.3
+                       },
+                       {
+                           "name":  "core-gate-20260311-160128-python-postgres-db",
+                           "cpu_pct":  0,
+                           "mem_usage":  "19.97MiB / 23.41GiB",
+                           "mem_pct":  0.1
+                       },
+                       {
+                           "name":  "core-gate-20260311-160128-python-postgres-neo4j",
+                           "cpu_pct":  0.3,
+                           "mem_usage":  "497.9MiB / 23.41GiB",
+                           "mem_pct":  2.1
+                       },
+                       {
+                           "name":  "core-gate-20260311-160128-python-postgres-qdrant",
+                           "cpu_pct":  0.2,
+                           "mem_usage":  "81MiB / 23.41GiB",
+                           "mem_pct":  0.3
+                       },
+                       {
+                           "name":  "sistema-gestao-psicologos-autonomos-worker",
+                           "cpu_pct":  0,
+                           "mem_usage":  "30.97MiB / 23.41GiB",
+                           "mem_pct":  0.1
+                       },
+                       {
+                           "name":  "sistema-gestao-psicologos-autonomos-app",
+                           "cpu_pct":  0,
+                           "mem_usage":  "73.78MiB / 23.41GiB",
+                           "mem_pct":  0.3
+                       },
+                       {
+                           "name":  "sistema-gestao-psicologos-autonomos-redis",
+                           "cpu_pct":  0.3,
+                           "mem_usage":  "4.633MiB / 23.41GiB",
+                           "mem_pct":  0
+                       },
+                       {
+                           "name":  "sistema-gestao-psicologos-autonomos-db",
+                           "cpu_pct":  0,
+                           "mem_usage":  "23.33MiB / 23.41GiB",
+                           "mem_pct":  0.1
+                       },
+                       {
+                           "name":  "sistema-gestao-psicologos-autonomos-neo4j",
+                           "cpu_pct":  0.4,
+                           "mem_usage":  "1.039GiB / 23.41GiB",
+                           "mem_pct":  4.4
+                       },
+                       {
+                           "name":  "sistema-gestao-psicologos-autonomos-qdrant",
+                           "cpu_pct":  0.2,
+                           "mem_usage":  "299.2MiB / 23.41GiB",
+                           "mem_pct":  1.2
+                       },
+                       {
+                           "name":  "core-gate-20260311-143628-php-mysql-neo4j",
+                           "cpu_pct":  0.3,
+                           "mem_usage":  "656.6MiB / 23.41GiB",
+                           "mem_pct":  2.7
+                       },
+                       {
+                           "name":  "core-gate-20260311-143628-php-mysql-qdrant",
+                           "cpu_pct":  0.2,
+                           "mem_usage":  "84.92MiB / 23.41GiB",
+                           "mem_pct":  0.4
+                       },
+                       {
+                           "name":  "core-gate-20260311-143628-php-mysql-db",
+                           "cpu_pct":  0.4,
+                           "mem_usage":  "443.3MiB / 23.41GiB",
+                           "mem_pct":  1.8
+                       },
+                       {
+                           "name":  "core-gate-20260311-143628-node-postgres-db",
+                           "cpu_pct":  0,
+                           "mem_usage":  "22.62MiB / 23.41GiB",
+                           "mem_pct":  0.1
+                       },
+                       {
+                           "name":  "core-gate-20260311-143628-node-postgres-neo4j",
+                           "cpu_pct":  0.4,
+                           "mem_usage":  "653.7MiB / 23.41GiB",
+                           "mem_pct":  2.7
+                       },
+                       {
+                           "name":  "core-gate-20260311-143628-node-postgres-qdrant",
+                           "cpu_pct":  0.2,
+                           "mem_usage":  "85.11MiB / 23.41GiB",
+                           "mem_pct":  0.4
+                       },
+                       {
+                           "name":  "core-gate-20260311-143628-python-postgres-db",
+                           "cpu_pct":  0,
+                           "mem_usage":  "22.62MiB / 23.41GiB",
+                           "mem_pct":  0.1
+                       },
+                       {
+                           "name":  "core-gate-20260311-143628-python-postgres-neo4j",
+                           "cpu_pct":  0.3,
+                           "mem_usage":  "651.9MiB / 23.41GiB",
+                           "mem_pct":  2.7
+                       },
+                       {
+                           "name":  "core-gate-20260311-143628-python-postgres-qdrant",
+                           "cpu_pct":  0.2,
+                           "mem_usage":  "88.45MiB / 23.41GiB",
+                           "mem_pct":  0.4
+                       },
+                       {
+                           "name":  "orchestrator-core",
+                           "cpu_pct":  0,
+                           "mem_usage":  "520KiB / 23.41GiB",
+                           "mem_pct":  0
+                       }
+                   ],
+    "paused_this_run":  [
+
+                        ],
+    "resumed_this_run":  [
+
+                         ],
+    "warnings":  [
+
+                 ],
+    "ram_critical_threshold":  85,
+    "ram_resume_threshold":  70
+}

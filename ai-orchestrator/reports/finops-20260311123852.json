@@ -1,0 +1,22 @@
+{
+    "generated_at":  "2026-03-11T12:38:55",
+    "project":  "project0",
+    "dry_run":  false,
+    "system":  {
+                   "ram_used_pct":  0,
+                   "ram_free_gb":  0,
+                   "ram_total_gb":  0,
+                   "cpu_used_pct":  0
+               },
+    "containers":  [
+
+                   ],
+    "paused_this_run":  [
+
+                        ],
+    "resumed_this_run":  [
+
+                         ],
+    "ram_critical_threshold":  85,
+    "ram_resume_threshold":  70
+}

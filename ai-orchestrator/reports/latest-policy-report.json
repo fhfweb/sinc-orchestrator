@@ -1,0 +1,280 @@
+{
+  "generated_at": "2026-03-17T17:06:48",
+  "project_path": "/workspace",
+  "policy_compliance_score": 0,
+  "performance_metadata": {
+    "execution_time_seconds": 11.943
+  },
+  "findings": [
+    {
+      "rule": "ADR-0001:StandardizedPatterns",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/Admin/ActivityLogController.php",
+      "evidence": "Found usage of 'PDO'",
+      "recommendation": "Follow project standards. Use Eloquent/Query Builder and avoid abrupt exits.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "ADR-0001:StandardizedPatterns",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/Admin/DashboardController.php",
+      "evidence": "Found usage of 'DB::table'",
+      "recommendation": "Follow project standards. Use Eloquent/Query Builder and avoid abrupt exits.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "ADR-0001:StandardizedPatterns",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/Admin/DashboardWidgetsController.php",
+      "evidence": "Found usage of 'DB::table'",
+      "recommendation": "Follow project standards. Use Eloquent/Query Builder and avoid abrupt exits.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "ADR-0001:StandardizedPatterns",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/Admin/FailedJobController.php",
+      "evidence": "Found usage of 'DB::table'",
+      "recommendation": "Follow project standards. Use Eloquent/Query Builder and avoid abrupt exits.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "ADR-0001:ThinControllers",
+      "level": "WARNING",
+      "file": "workspace/app/Http/Controllers/Admin/FinanceController.php",
+      "evidence": "Line count: 553",
+      "recommendation": "Refactor logic into Service classes or Actions.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "ADR-0001:StandardizedPatterns",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/Admin/FinanceController.php",
+      "evidence": "Found usage of 'DB::table'",
+      "recommendation": "Follow project standards. Use Eloquent/Query Builder and avoid abrupt exits.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "ADR-0001:StandardizedPatterns",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/Admin/MarketingROIController.php",
+      "evidence": "Found usage of 'DB::table'",
+      "recommendation": "Follow project standards. Use Eloquent/Query Builder and avoid abrupt exits.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "ADR-0001:StandardizedPatterns",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/Admin/ReferralController.php",
+      "evidence": "Found usage of 'DB::table'",
+      "recommendation": "Follow project standards. Use Eloquent/Query Builder and avoid abrupt exits.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "ADR-0001:ThinControllers",
+      "level": "WARNING",
+      "file": "workspace/app/Http/Controllers/Admin/TenantController.php",
+      "evidence": "Line count: 742",
+      "recommendation": "Refactor logic into Service classes or Actions.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "ADR-0001:StandardizedPatterns",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/Tenant/Finance/CommissionController.php",
+      "evidence": "Found usage of 'PDO'",
+      "recommendation": "Follow project standards. Use Eloquent/Query Builder and avoid abrupt exits.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:StructuralAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Services/LeadScoreBaseline.php",
+      "evidence": "Non-standard suffix in Services directory",
+      "recommendation": "Move this file to a more appropriate directory (e.g., DTOs, Results) or rename to follow Service patterns.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:StructuralAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Services/LogSanitizer.php",
+      "evidence": "Non-standard suffix in Services directory",
+      "recommendation": "Move this file to a more appropriate directory (e.g., DTOs, Results) or rename to follow Service patterns.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:StructuralAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Services/OrchestratorClient.php",
+      "evidence": "Non-standard suffix in Services directory",
+      "recommendation": "Move this file to a more appropriate directory (e.g., DTOs, Results) or rename to follow Service patterns.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:StructuralAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Services/WorkflowStepExecutionResult.php",
+      "evidence": "Non-standard suffix in Services directory",
+      "recommendation": "Move this file to a more appropriate directory (e.g., DTOs, Results) or rename to follow Service patterns.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:StructuralAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Services/WorkflowStepExecutor.php",
+      "evidence": "Non-standard suffix in Services directory",
+      "recommendation": "Move this file to a more appropriate directory (e.g., DTOs, Results) or rename to follow Service patterns.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:FlatControllerAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/AnamnesePublicController.php",
+      "evidence": "Controller lacks domain subdirectory grouping",
+      "recommendation": "Move controller into a domain subdirectory (e.g., app/Http/Controllers/DomainName/).",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:FlatControllerAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/DocsController.php",
+      "evidence": "Controller lacks domain subdirectory grouping",
+      "recommendation": "Move controller into a domain subdirectory (e.g., app/Http/Controllers/DomainName/).",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:FlatControllerAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/ImpersonationController.php",
+      "evidence": "Controller lacks domain subdirectory grouping",
+      "recommendation": "Move controller into a domain subdirectory (e.g., app/Http/Controllers/DomainName/).",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:FlatControllerAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/InventoryItemController.php",
+      "evidence": "Controller lacks domain subdirectory grouping",
+      "recommendation": "Move controller into a domain subdirectory (e.g., app/Http/Controllers/DomainName/).",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:FlatControllerAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/LandingController.php",
+      "evidence": "Controller lacks domain subdirectory grouping",
+      "recommendation": "Move controller into a domain subdirectory (e.g., app/Http/Controllers/DomainName/).",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:FlatControllerAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/LocaleController.php",
+      "evidence": "Controller lacks domain subdirectory grouping",
+      "recommendation": "Move controller into a domain subdirectory (e.g., app/Http/Controllers/DomainName/).",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:FlatControllerAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/MarketingSpendController.php",
+      "evidence": "Controller lacks domain subdirectory grouping",
+      "recommendation": "Move controller into a domain subdirectory (e.g., app/Http/Controllers/DomainName/).",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:FlatControllerAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/PatientPortalController.php",
+      "evidence": "Controller lacks domain subdirectory grouping",
+      "recommendation": "Move controller into a domain subdirectory (e.g., app/Http/Controllers/DomainName/).",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:FlatControllerAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/ProfileController.php",
+      "evidence": "Controller lacks domain subdirectory grouping",
+      "recommendation": "Move controller into a domain subdirectory (e.g., app/Http/Controllers/DomainName/).",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:FlatControllerAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Http/Controllers/WebhookLogController.php",
+      "evidence": "Controller lacks domain subdirectory grouping",
+      "recommendation": "Move controller into a domain subdirectory (e.g., app/Http/Controllers/DomainName/).",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:ModelStructuralAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Models/Patient.php",
+      "evidence": "File in Models/ does not appear to be an Eloquent Model",
+      "recommendation": "Ensure this file is a valid Eloquent Model or move it to a more appropriate directory.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Domain:ModelStructuralAnomaly",
+      "level": "MEDIUM",
+      "file": "workspace/app/Models/User.php",
+      "evidence": "File in Models/ does not appear to be an Eloquent Model",
+      "recommendation": "Ensure this file is a valid Eloquent Model or move it to a more appropriate directory.",
+      "severity": "MEDIUM"
+    },
+    {
+      "rule": "Security:TenantIsolation",
+      "level": "MEDIUM",
+      "file": "workspace/app/Models/AnamneseQuestion.php",
+      "evidence": "Trait BelongsToTenant not found.",
+      "recommendation": "Add the BelongsToTenant trait to ensure automatic data isolation.",
+      "severity": "MEDIUM",
+      "title": "Model missing tenant global scope"
+    },
+    {
+      "rule": "Security:TenantIsolation",
+      "level": "MEDIUM",
+      "file": "workspace/app/Models/Announcement.php",
+      "evidence": "Trait BelongsToTenant not found.",
+      "recommendation": "Add the BelongsToTenant trait to ensure automatic data isolation.",
+      "severity": "MEDIUM",
+      "title": "Model missing tenant global scope"
+    },
+    {
+      "rule": "Security:TenantIsolation",
+      "level": "MEDIUM",
+      "file": "workspace/app/Models/Expense.php",
+      "evidence": "Trait BelongsToTenant not found.",
+      "recommendation": "Add the BelongsToTenant trait to ensure automatic data isolation.",
+      "severity": "MEDIUM",
+      "title": "Model missing tenant global scope"
+    },
+    {
+      "rule": "Security:TenantIsolation",
+      "level": "MEDIUM",
+      "file": "workspace/app/Models/InventoryItem.php",
+      "evidence": "Trait BelongsToTenant not found.",
+      "recommendation": "Add the BelongsToTenant trait to ensure automatic data isolation.",
+      "severity": "MEDIUM",
+      "title": "Model missing tenant global scope"
+    },
+    {
+      "rule": "Security:TenantIsolation",
+      "level": "MEDIUM",
+      "file": "workspace/app/Models/MarketingSpend.php",
+      "evidence": "Trait BelongsToTenant not found.",
+      "recommendation": "Add the BelongsToTenant trait to ensure automatic data isolation.",
+      "severity": "MEDIUM",
+      "title": "Model missing tenant global scope"
+    },
+    {
+      "rule": "Security:TenantIsolation",
+      "level": "MEDIUM",
+      "file": "workspace/app/Models/WebhookLog.php",
+      "evidence": "Trait BelongsToTenant not found.",
+      "recommendation": "Add the BelongsToTenant trait to ensure automatic data isolation.",
+      "severity": "MEDIUM",
+      "title": "Model missing tenant global scope"
+    }
+  ]
+}

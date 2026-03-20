@@ -1,0 +1,31 @@
+{
+  "schema_version": "v3",
+  "bridge_version": "python-v1",
+  "task_id": "TASK-E2E-EXT-20260319140259",
+  "title": "E2E external bridge",
+  "description": "validate python external bridge",
+  "priority": "1",
+  "execution_mode": "external-agent",
+  "runtime_engine": "claude-code",
+  "preferred_agent": "agent-e2e-35b7",
+  "assigned_agent": "agent-e2e-35b7",
+  "requested_by_agent": "scheduler-worker",
+  "requested_at": "2026-03-19T14:02:59.253498+00:00",
+  "files_affected": [
+    "README.md"
+  ],
+  "dependencies": [],
+  "preflight_path": "",
+  "project_id": "",
+  "tenant_id": "local",
+  "dispatch_id": 1,
+  "metadata": {
+    "execution_mode": "external-agent",
+    "files_affected": [
+      "README.md"
+    ],
+    "runtime_engine": "claude-code",
+    "preferred_agent": "agent-e2e-35b7",
+    "external_bridge_enabled": true
+  }
+}

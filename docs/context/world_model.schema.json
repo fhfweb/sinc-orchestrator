@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "orchestrator/world_model/v1",
+  "title": "Orchestrator World Model",
+  "type": "object",
+  "required": [
+    "meta",
+    "area_1_product_strategy",
+    "area_2_requirements",
+    "area_3_architecture",
+    "area_4_ux",
+    "area_5_development",
+    "area_6_quality",
+    "area_7_operations",
+    "area_8_launch",
+    "orchestrator_context"
+  ],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["project_id", "project_name", "created_at", "updated_at", "status"],
+      "properties": {
+        "project_id": { "type": "string", "minLength": 1 },
+        "project_name": { "type": "string", "minLength": 1 },
+        "created_at": { "type": "string" },
+        "updated_at": { "type": "string" },
+        "cycle": { "type": "integer", "minimum": 1 },
+        "status": { "type": "string" },
+        "owner": { "type": "string" },
+        "intake_hash": { "type": "string" }
+      }
+    },
+    "area_1_product_strategy": {
+      "type": "object",
+      "required": ["problem_statement", "personas", "value_proposition", "business_model", "success_criteria"],
+      "properties": {
+        "problem_statement": { "type": "object" },
+        "personas": { "type": "array" },
+        "value_proposition": { "type": "object" },
+        "business_model": { "type": "object" },
+        "success_criteria": { "type": "object" },
+        "main_risks": { "type": "array" }
+      }
+    },
+    "area_2_requirements": {
+      "type": "object",
+      "required": ["critical_flows", "mvp_scope", "non_functional_requirements", "integrations"],
+      "properties": {
+        "critical_flows": { "type": "array", "minItems": 2 },
+        "mvp_scope": { "type": "object" },
+        "functional_requirements": { "type": "array" },
+        "non_functional_requirements": { "type": "object" },
+        "compliance": { "type": "object" },
+        "integrations": { "type": "array" },
+        "out_of_scope": { "type": "array" }
+      }
+    },
+    "area_3_architecture": {
+      "type": "object",
+      "required": ["stack", "architectural_pattern", "data_model", "auth_strategy", "communication", "infrastructure"],
+      "properties": {
+        "stack": { "type": "object" },
+        "architectural_pattern": { "type": "object" },
+        "data_model": { "type": "object" },
+        "auth_strategy": { "type": "object" },
+        "communication": { "type": "object" },
+        "infrastructure": { "type": "object" },
+        "adrs": { "type": "array" },
+        "component_map": { "type": "object" }
+      }
+    },
+    "area_4_ux": {
+      "type": "object",
+      "required": ["journeys", "ui_states", "accessibility", "design_system"],
+      "properties": {
+        "journeys": { "type": "array" },
+        "ui_states": { "type": "array" },
+        "accessibility": { "type": "object" },
+        "design_system": { "type": "object" }
+      }
+    },
+    "area_5_development": {
+      "type": "object",
+      "required": ["backend", "frontend", "infra"],
+      "properties": {
+        "backend": { "type": "object" },
+        "frontend": { "type": "object" },
+        "infra": { "type": "object" },
+        "branching_strategy": { "type": "object" }
+      }
+    },
+    "area_6_quality": {
+      "type": "object",
+      "required": ["testing_strategy", "critical_regressions", "security"],
+      "properties": {
+        "testing_strategy": { "type": "object" },
+        "critical_regressions": { "type": "array" },
+        "performance": { "type": "object" },
+        "security": { "type": "object" }
+      }
+    },
+    "area_7_operations": {
+      "type": "object",
+      "required": ["deployment", "rollback", "monitoring", "incident_response"],
+      "properties": {
+        "deployment": { "type": "object" },
+        "rollback": { "type": "object" },
+        "monitoring": { "type": "object" },
+        "incident_response": { "type": "object" }
+      }
+    },
+    "area_8_launch": {
+      "type": "object",
+      "required": ["go_to_market", "onboarding", "feedback_loop", "roadmap"],
+      "properties": {
+        "go_to_market": { "type": "object" },
+        "onboarding": { "type": "object" },
+        "feedback_loop": { "type": "object" },
+        "roadmap": { "type": "object" }
+      }
+    },
+    "orchestrator_context": {
+      "type": "object",
+      "required": ["architecture_decisions", "agent_memory", "known_risks", "production_learnings"],
+      "properties": {
+        "architecture_decisions": { "type": "array" },
+        "agent_memory": { "type": "array" },
+        "known_risks": { "type": "array" },
+        "production_learnings": { "type": "array" }
+      }
+    }
+  }
+}

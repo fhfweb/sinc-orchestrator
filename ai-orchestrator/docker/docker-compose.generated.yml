@@ -1,0 +1,89 @@
+name: sinc
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SINC Application — Generated Docker Compose
+#
+# This compose contains ONLY the SINC application services:
+#   app    — Laravel HTTP server
+#   db     — MySQL (app-local database)
+#   worker — Laravel Horizon queue worker
+#
+# Infrastructure (postgres, neo4j, redis, qdrant, ollama) and orchestrator
+# services are provided by docker-compose.orchestrator.yml (orchestrator-platform).
+#
+# Client-side agents (agent-worker, orchestrator-loop) run via
+# docker-compose.client.yml.
+#
+# All services connect to sinc-platform-net (external — created by
+# docker-compose.orchestrator.yml).
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  app:
+    container_name: sinc-app
+    build:
+      context: ../../
+      dockerfile: ai-orchestrator/docker/Dockerfile.generated
+    working_dir: /workspace
+    volumes:
+      - ../../:/workspace
+    ports:
+      - "8002:8002"
+    env_file:
+      - .env.docker.generated
+    command: >-
+      sh -lc "php artisan serve --host=0.0.0.0 --port=8002"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - sinc-platform-net
+
+  db:
+    image: mysql:8.4
+    container_name: sinc-db
+    environment:
+      MYSQL_DATABASE: sinc
+      MYSQL_USER: sinc
+      MYSQL_PASSWORD: 58ae5a1ea6f4de800cedebec3b9d9411da840b358679b1b8
+      MYSQL_ROOT_PASSWORD: 17c9001d05bbcc3ad3134233ec95193e6eb648d1405c98b5
+    ports:
+      - "3306:3306"
+    volumes:
+      - sinc-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -usinc -p58ae5a1ea6f4de800cedebec3b9d9411da840b358679b1b8"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - sinc-platform-net
+
+  worker:
+    container_name: sinc-worker
+    build:
+      context: ../../
+      dockerfile: ai-orchestrator/docker/Dockerfile.generated
+    working_dir: /workspace
+    volumes:
+      - ../../:/workspace
+    env_file:
+      - .env.docker.generated
+    command: >-
+      sh -lc "php artisan horizon"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - sinc-platform-net
+
+volumes:
+  sinc-mysql-data:
+
+networks:
+  sinc-platform-net:
+    external: true

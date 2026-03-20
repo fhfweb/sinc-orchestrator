@@ -1,0 +1,14 @@
+psycopg[binary]
+psycopg-pool
+neo4j
+redis
+httpx
+tenacity
+watchfiles
+tree-sitter
+tree-sitter-python
+tree-sitter-javascript
+tree-sitter-typescript
+tree-sitter-go
+qdrant-client
+opentelemetry-sdk

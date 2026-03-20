@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/static/dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+</head>
+<body class="dark-mode">
+    {% import "_dashboard_macros.html" as ui %}
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo-area">
+                <div class="logo-icon"></div>
+                <h1>SINC <span>NOC</span></h1>
+            </div>
+            <nav class="nav-menu">
+                {{ ui.nav_item("summary", "layout-dashboard", "Overview", active=true) }}
+                {{ ui.nav_item("fleet", "users", "Agent Fleet") }}
+                {{ ui.nav_item("governance", "shield-check", "Governance") }}
+                {{ ui.nav_item("config", "settings", "Cognitive Config") }}
+            </nav>
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <div class="status-indicator online"></div>
+                    <span>System Online</span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-viewport">
+            <header class="top-bar">
+                <div class="search-container">
+                    <i data-lucide="search"></i>
+                    <input type="text" placeholder="Search tasks, agents, or logs..." id="main-search">
+                </div>
+                <div class="header-actions">
+                    <div class="mode-badge" id="system-mode-display">NORMAL MODE</div>
+                    <button class="icon-btn"><i data-lucide="bell"></i></button>
+                    <div class="user-profile">
+                        <div class="avatar">F</div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="content-scroll">
+                <div class="stats-grid">
+                    {{ ui.stat_card("metric-success-rate", "zap", "purple", "Success Rate", "0.0%", trend="+2.4%") }}
+                    {{ ui.stat_card("metric-autonomy-score", "brain", "blue", "Autonomy Score", "0.0", trend="stable") }}
+                    {{ ui.stat_card("metric-active-agents", "activity", "cyan", "Active Agents", "0") }}
+                    {{ ui.stat_card("metric-latency", "clock", "orange", "Avg Latency", "0ms") }}
+                </div>
+
+                <div class="layout-main">
+                    <div class="sub-layout-left">
+                        {% call ui.glass_card("Live Task Pipeline", action_label="View All") %}
+                        <div class="task-list" id="task-list-container">
+                            <div class="loading-state">Syncing with orchestrator...</div>
+                        </div>
+                        {% endcall %}
+
+                        {% call ui.glass_card("Component Registry Health") %}
+                        <div class="registry-grid" id="registry-health-container"></div>
+                        {% endcall %}
+                    </div>
+
+                    <div class="sub-layout-right">
+                        {% call ui.glass_card("Agent Reputation", compact=true) %}
+                        <div class="rep-list" id="rep-list-container"></div>
+                        {% endcall %}
+
+                        {% call ui.glass_card("Live Feed", compact=true) %}
+                        <div class="activity-feed" id="activity-feed-container"></div>
+                        {% endcall %}
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="modal-container" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div id="modal-content"></div>
+            <button class="close-btn" id="close-modal"><i data-lucide="x"></i></button>
+        </div>
+    </div>
+
+    <script src="/static/dashboard.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

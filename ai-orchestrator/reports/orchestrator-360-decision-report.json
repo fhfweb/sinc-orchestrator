@@ -1,0 +1,98 @@
+{
+  "generated_at": "2026-03-14T17:04:36",
+  "status": "degraded",
+  "scores": {
+    "overall": 66,
+    "architecture": 100,
+    "quality": 82,
+    "operations": 82,
+    "execution": 0
+  },
+  "health_status": "needs-answers",
+  "task_stats": {
+    "total": 158,
+    "done": 0,
+    "open": 1
+  },
+  "artifacts": {
+    "business_context_json": {
+      "exists": true,
+      "lines": 58,
+      "quality": "good",
+      "score": 100,
+      "note": "ok"
+    },
+    "business_context_md": {
+      "exists": true,
+      "lines": 17,
+      "quality": "good",
+      "score": 100,
+      "note": "ok"
+    },
+    "adr": {
+      "exists": true,
+      "lines": 13,
+      "quality": "good",
+      "score": 100,
+      "note": "ok"
+    },
+    "interfaces": {
+      "exists": true,
+      "lines": 12,
+      "quality": "good",
+      "score": 100,
+      "note": "ok"
+    },
+    "code_review": {
+      "exists": true,
+      "lines": 12,
+      "quality": "good",
+      "score": 100,
+      "note": "ok"
+    },
+    "product_validation": {
+      "exists": true,
+      "lines": 11,
+      "quality": "good",
+      "score": 100,
+      "note": "ok"
+    },
+    "user_simulation": {
+      "exists": true,
+      "lines": 11,
+      "quality": "good",
+      "score": 100,
+      "note": "ok"
+    },
+    "observability_plan": {
+      "exists": true,
+      "lines": 12,
+      "quality": "good",
+      "score": 100,
+      "note": "ok"
+    },
+    "runtime_observability_report": {
+      "exists": true,
+      "lines": 32,
+      "quality": "good",
+      "score": 100,
+      "note": "ok"
+    },
+    "release_config": {
+      "exists": true,
+      "lines": 14,
+      "quality": "good",
+      "score": 100,
+      "note": "ok"
+    },
+    "architecture_doc": {
+      "exists": true,
+      "lines": 89,
+      "quality": "good",
+      "score": 100,
+      "note": "ok"
+    }
+  },
+  "repairs_created": [],
+  "repairs_resolved": []
+}

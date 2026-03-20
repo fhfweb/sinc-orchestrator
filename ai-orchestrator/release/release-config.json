@@ -1,0 +1,14 @@
+{
+    "deploy":  {
+                   "staging":  {
+                                   "command":  "docker compose -f ai-orchestrator/docker/docker-compose.generated.yml up -d --build",
+                                   "smoke_command":  "python -m pytest -q",
+                                   "rollback_command":  "docker compose -f ai-orchestrator/docker/docker-compose.generated.yml down"
+                               },
+                   "production":  {
+                                      "command":  "docker compose -f ai-orchestrator/docker/docker-compose.generated.yml up -d --build",
+                                      "smoke_command":  "python -m pytest -q",
+                                      "rollback_command":  "docker compose -f ai-orchestrator/docker/docker-compose.generated.yml down"
+                                  }
+               }
+}

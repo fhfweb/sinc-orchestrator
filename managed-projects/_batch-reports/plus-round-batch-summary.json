@@ -1,0 +1,42 @@
+﻿{
+    "timestamp":  "2026-03-11T16:27:50",
+    "batch_name":  "plus-round-batch",
+    "managed_projects_root":  "g:\\Fernando\\project0\\managed-projects",
+    "validation_profile":  "full",
+    "verdict":  "NOT READY",
+    "total_cases":  2,
+    "ready_cases":  0,
+    "not_ready_cases":  2,
+    "results":  [
+                    {
+                        "case":  "php:postgres",
+                        "stack":  "php",
+                        "database":  "postgres",
+                        "project_name":  "plus-round-batch-php-postgres",
+                        "project_path":  "g:\\Fernando\\project0\\managed-projects\\plus-round-batch-php-postgres",
+                        "status":  "fail",
+                        "verdict":  "NOT READY",
+                        "duration":  499.21,
+                        "failed_checks":  [
+
+                                          ],
+                        "summary_path":  "g:\\Fernando\\project0\\managed-projects\\plus-round-batch-php-postgres\\ai-orchestrator\\\\reports\\\\e2e-round-summary.json",
+                        "error":  "Step failed [v2-new]: V2 E2E batch failed. NOT READY cases: 3"
+                    },
+                    {
+                        "case":  "php:mysql",
+                        "stack":  "php",
+                        "database":  "mysql",
+                        "project_name":  "plus-round-batch-php-mysql",
+                        "project_path":  "g:\\Fernando\\project0\\managed-projects\\plus-round-batch-php-mysql",
+                        "status":  "fail",
+                        "verdict":  "NOT READY",
+                        "duration":  325.37,
+                        "failed_checks":  [
+
+                                          ],
+                        "summary_path":  "g:\\Fernando\\project0\\managed-projects\\plus-round-batch-php-mysql\\ai-orchestrator\\\\reports\\\\e2e-round-summary.json",
+                        "error":  "Step failed [v2-new]: V2 E2E batch failed. NOT READY cases: 3"
+                    }
+                ]
+}

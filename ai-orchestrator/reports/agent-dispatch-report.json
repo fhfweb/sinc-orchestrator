@@ -1,0 +1,81 @@
+{
+  "generated_at": "2026-03-14T17:04:46",
+  "registry_path": "/orchestrator-root/docs/agents/agents-360.registry.json",
+  "project_path": "/orchestrator-root",
+  "phase": "architecture",
+  "totals": {
+    "selected": 6,
+    "executed": 6,
+    "skipped": 0,
+    "failed": 0,
+    "critical_failed": 0
+  },
+  "results": [
+    {
+      "id": "AG-01",
+      "name": "Business Analyst Agent",
+      "priority": "critical",
+      "phase": "architecture",
+      "mode": "script",
+      "status": "executed",
+      "details": "",
+      "duration_seconds": 0.62,
+      "output_tail": "\n\n    \"observability\": \"/orchestrator-root/ai-orchestrator/reports/production-observability-plan.md\",\n\n\n    \"runtime_telemetry\": \"/orchestrator-root/ai-orchestrator/runtime/telemetry/production-metrics.json\",\n\n\n    \"release_config\": \"/orchestrator-root/ai-orchestrator/release/release-config.json\"\n\n\n  }\n\n\n}"
+    },
+    {
+      "id": "AG-02",
+      "name": "Architecture Agent",
+      "priority": "critical",
+      "phase": "architecture",
+      "mode": "script",
+      "status": "executed",
+      "details": "",
+      "duration_seconds": 0.53,
+      "output_tail": "\n\n    \"observability\": \"/orchestrator-root/ai-orchestrator/reports/production-observability-plan.md\",\n\n\n    \"runtime_telemetry\": \"/orchestrator-root/ai-orchestrator/runtime/telemetry/production-metrics.json\",\n\n\n    \"release_config\": \"/orchestrator-root/ai-orchestrator/release/release-config.json\"\n\n\n  }\n\n\n}"
+    },
+    {
+      "id": "AG-03",
+      "name": "Product Manager Agent",
+      "priority": "high",
+      "phase": "architecture",
+      "mode": "script",
+      "status": "executed",
+      "details": "",
+      "duration_seconds": 1.38,
+      "output_tail": "\n\n  \"repairs_created\": [\n\n\n    \"overall\"\n\n\n  ],\n\n\n  \"repairs_resolved\": []\n\n\n}"
+    },
+    {
+      "id": "AG-19",
+      "name": "Estimation Agent",
+      "priority": "medium",
+      "phase": "architecture",
+      "mode": "script",
+      "status": "executed",
+      "details": "",
+      "duration_seconds": 0.98,
+      "output_tail": "\n\n  \"report_json\": \"/orchestrator-root/ai-orchestrator/reports/orchestrator-360-decision-report.json\",\n\n\n  \"report_md\": \"/orchestrator-root/ai-orchestrator/reports/orchestrator-360-decision-report.md\",\n\n\n  \"repairs_created\": [],\n\n\n  \"repairs_resolved\": []\n\n\n}"
+    },
+    {
+      "id": "AG-20",
+      "name": "Orchestrator Agent",
+      "priority": "critical",
+      "phase": "architecture",
+      "mode": "script",
+      "status": "executed",
+      "details": "",
+      "duration_seconds": 9.49,
+      "output_tail": "Scheduler run complete for /orchestrator-root\n\n\nAssigned tasks: 0"
+    },
+    {
+      "id": "AG-21",
+      "name": "Documentation Agent",
+      "priority": "medium",
+      "phase": "architecture",
+      "mode": "script",
+      "status": "executed",
+      "details": "",
+      "duration_seconds": 0.49,
+      "output_tail": "\n\n    \"observability\": \"/orchestrator-root/ai-orchestrator/reports/production-observability-plan.md\",\n\n\n    \"runtime_telemetry\": \"/orchestrator-root/ai-orchestrator/runtime/telemetry/production-metrics.json\",\n\n\n    \"release_config\": \"/orchestrator-root/ai-orchestrator/release/release-config.json\"\n\n\n  }\n\n\n}"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "generated_at": "2026-03-17T17:08:01",
+  "loop_running": true,
+  "pid": 109,
+  "cycle": 251,
+  "cumulative_cycles": 1541,
+  "run_count": 551,
+  "interval_seconds": 120,
+  "max_cycles": 0,
+  "agent_name": "Codex",
+  "agent_runtime_engine": "python",
+  "started_at": "2026-03-17T03:32:46.3673560+00:00",
+  "mode": "observe-schedule-execute",
+  "mutation_cadence_cycles": 12,
+  "mutation_run_on_fingerprint_change": true,
+  "mutation_last_cycle": 2,
+  "mutation_last_fingerprint": "656b13c23bb028843212b36879d1fff0ef35b22a396f12848ec60616e0b5043d",
+  "mutation_last_reason": "fingerprint-change",
+  "llm_runtime": {
+    "configured": true,
+    "litellm_installed": true,
+    "model": "llama3:8b",
+    "api_base": "http://127.0.0.1:11435",
+    "bootstrap_error": ""
+  },
+  "last_python_runtime_metrics": {
+    "captured_at": "2026-03-17T17:07:14",
+    "cycle": 251,
+    "agent": "Codex",
+    "success": true,
+    "executed_tasks": 0,
+    "skipped_no_llm": 0,
+    "llm_enabled": true,
+    "llm_model": "llama3:8b",
+    "llm_models_used": [],
+    "llm_calls": 0,
+    "llm_total_tokens": 0,
+    "llm_tokens_per_second": 0.0,
+    "llm_route_fast": 0,
+    "llm_route_heavy": 0,
+    "llm_route_infra_default": 0,
+    "llm_route_routing_disabled": 0
+  },
+  "last_step": {
+    "name": "CycleComplete",
+    "status": "ok",
+    "started_at": "2026-03-17T17:08:01.6172924+00:00",
+    "finished_at": "2026-03-17T17:08:01.6173260+00:00",
+    "error": ""
+  },
+  "last_checkpoint_step": null
+}

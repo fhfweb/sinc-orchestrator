@@ -1,0 +1,270 @@
+{
+  "schema_version": "v1",
+  "default_role": "default",
+  "roles": {
+    "default": {
+      "allowed_tools": [
+        "script_validation",
+        "preflight_reasoner",
+        "step_checkpoint_read",
+        "step_checkpoint_write",
+        "step_checkpoint_clear",
+        "delegation_request",
+        "delegation_list",
+        "hitl_create",
+        "hitl_check",
+        "stream_broadcast"
+      ]
+    },
+    "codex": {
+      "extends": "default",
+      "allowed_tools": [
+        "script_validation",
+        "preflight_reasoner",
+        "powershell_command",
+        "step_checkpoint_read",
+        "step_checkpoint_write",
+        "step_checkpoint_clear",
+        "delegation_request",
+        "delegation_list",
+        "hitl_create",
+        "hitl_check",
+        "stream_broadcast",
+        "ephemeral_tool_run",
+        "list_ephemeral_tools",
+        "spawn_sub_agent"
+      ]
+    },
+    "antigravity": {
+      "extends": "default",
+      "allowed_tools": [
+        "script_validation",
+        "preflight_reasoner",
+        "powershell_command",
+        "step_checkpoint_read",
+        "step_checkpoint_write",
+        "step_checkpoint_clear",
+        "delegation_request",
+        "delegation_list",
+        "hitl_create",
+        "hitl_check",
+        "stream_broadcast"
+      ]
+    },
+    "claude code": {
+      "extends": "default",
+      "allowed_tools": [
+        "script_validation",
+        "preflight_reasoner",
+        "powershell_command",
+        "step_checkpoint_read",
+        "step_checkpoint_write",
+        "step_checkpoint_clear",
+        "delegation_request",
+        "delegation_list",
+        "hitl_create",
+        "hitl_check",
+        "stream_broadcast",
+        "register_ephemeral_tool",
+        "ephemeral_tool_run",
+        "list_ephemeral_tools",
+        "graph_query",
+        "spawn_sub_agent"
+      ]
+    },
+    "claude": {
+      "extends": "claude code",
+      "allowed_tools": [
+        "script_validation",
+        "preflight_reasoner",
+        "powershell_command",
+        "step_checkpoint_read",
+        "step_checkpoint_write",
+        "step_checkpoint_clear",
+        "delegation_request",
+        "delegation_list",
+        "hitl_create",
+        "hitl_check",
+        "stream_broadcast",
+        "register_ephemeral_tool",
+        "ephemeral_tool_run",
+        "list_ephemeral_tools",
+        "graph_query",
+        "spawn_sub_agent"
+      ]
+    },
+    "ai architect": {
+      "extends": "default",
+      "allowed_tools": [
+        "script_validation",
+        "preflight_reasoner",
+        "step_checkpoint_read",
+        "step_checkpoint_write",
+        "step_checkpoint_clear",
+        "delegation_request",
+        "delegation_list",
+        "hitl_create",
+        "hitl_check",
+        "stream_broadcast",
+        "register_ephemeral_tool",
+        "ephemeral_tool_run",
+        "list_ephemeral_tools",
+        "graph_query",
+        "spawn_sub_agent"
+      ]
+    },
+    "ai security engineer": {
+      "extends": "default",
+      "allowed_tools": [
+        "script_validation",
+        "graph_query"
+      ]
+    },
+    "ai devops engineer": {
+      "extends": "default",
+      "allowed_tools": [
+        "script_validation",
+        "graph_query"
+      ]
+    },
+    "ai engineer": {
+      "extends": "codex"
+    },
+    "business analyst agent": {
+      "extends": "default"
+    },
+    "architecture agent": {
+      "extends": "ai architect"
+    },
+    "product manager agent": {
+      "extends": "default"
+    },
+    "backend agent": {
+      "extends": "codex"
+    },
+    "frontend agent": {
+      "extends": "antigravity"
+    },
+    "infra agent": {
+      "extends": "ai devops engineer"
+    },
+    "database agent": {
+      "extends": "ai engineer"
+    },
+    "integration agent": {
+      "extends": "ai engineer"
+    },
+    "devops agent": {
+      "extends": "ai devops engineer"
+    },
+    "code review agent": {
+      "extends": "ai architect"
+    },
+    "security agent": {
+      "extends": "ai security engineer"
+    },
+    "performance agent": {
+      "extends": "default"
+    },
+    "qa agent": {
+      "extends": "default"
+    },
+    "user simulation agent": {
+      "extends": "antigravity"
+    },
+    "observability agent": {
+      "extends": "ai devops engineer"
+    },
+    "incident response agent": {
+      "extends": "ai devops engineer"
+    },
+    "memory agent": {
+      "extends": "ai architect"
+    },
+    "learning agent": {
+      "extends": "ai architect"
+    },
+    "estimation agent": {
+      "extends": "ai architect"
+    },
+    "orchestrator agent": {
+      "extends": "ai architect"
+    },
+    "documentation agent": {
+      "extends": "default"
+    }
+  },
+  "tools": {
+    "script_validation": {
+      "script": "scripts/v2/Invoke-ScriptValidationGate.ps1",
+      "requires_project_path": true
+    },
+    "preflight_reasoner": {
+      "script": "scripts/v2/Invoke-PreFlightReasoner.ps1",
+      "requires_project_path": true
+    },
+    "powershell_command": {
+      "script": "scripts/v2/Invoke-RunPowerShellCommandTool.ps1",
+      "requires_project_path": true
+    },
+    "step_checkpoint_read": {
+      "script": "scripts/v2/Invoke-StepCheckpoint.ps1",
+      "fixed_mode": "read",
+      "requires_project_path": true
+    },
+    "step_checkpoint_write": {
+      "script": "scripts/v2/Invoke-StepCheckpoint.ps1",
+      "fixed_mode": "write",
+      "requires_project_path": true
+    },
+    "step_checkpoint_clear": {
+      "script": "scripts/v2/Invoke-StepCheckpoint.ps1",
+      "fixed_mode": "clear",
+      "requires_project_path": true
+    },
+    "delegation_request": {
+      "script": "scripts/v2/Invoke-DelegationBus.ps1",
+      "fixed_mode": "request",
+      "requires_project_path": true
+    },
+    "delegation_list": {
+      "script": "scripts/v2/Invoke-DelegationBus.ps1",
+      "fixed_mode": "list",
+      "requires_project_path": true
+    },
+    "hitl_create": {
+      "script": "scripts/v2/Invoke-HITLGate.ps1",
+      "fixed_mode": "create",
+      "requires_project_path": true
+    },
+    "hitl_check": {
+      "script": "scripts/v2/Invoke-HITLGate.ps1",
+      "fixed_mode": "check",
+      "requires_project_path": true
+    },
+    "stream_broadcast": {
+      "script": "scripts/v2/Invoke-StreamingBroadcast.ps1",
+      "requires_project_path": true
+    },
+    "register_ephemeral_tool": {
+      "handler": "python-native",
+      "description": "Forge a new ephemeral tool at runtime (writes to workspace/tmp_tools/)"
+    },
+    "ephemeral_tool_run": {
+      "script": "scripts/v2/Invoke-EphemeralToolRunner.ps1",
+      "requires_project_path": true
+    },
+    "list_ephemeral_tools": {
+      "handler": "python-native",
+      "description": "List registered ephemeral tools for this project"
+    },
+    "graph_query": {
+      "handler": "python-native",
+      "description": "Run Cypher queries against Neo4j knowledge graph via graph_query.py"
+    },
+    "spawn_sub_agent": {
+      "handler": "python-native",
+      "description": "Spawn an in-memory micro-LLM sub-agent for inline review/audit tasks"
+    }
+  }
+}

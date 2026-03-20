@@ -1,0 +1,32 @@
+{
+  "generated_at": "2026-03-17T17:07:16",
+  "status": "healthy",
+  "baseline_generated": false,
+  "telemetry_path": "/workspace/ai-orchestrator/runtime/telemetry/production-metrics.json",
+  "thresholds_path": "/workspace/ai-orchestrator/runtime/telemetry/thresholds.json",
+  "checks": [
+    {
+      "metric": "latency_p95_ms",
+      "value": 0.0,
+      "threshold": 400.0,
+      "comparator": "<=",
+      "status": "pass"
+    },
+    {
+      "metric": "error_rate_percent",
+      "value": 0.0,
+      "threshold": 2.0,
+      "comparator": "<=",
+      "status": "pass"
+    },
+    {
+      "metric": "conversion_rate_percent",
+      "value": 0.0,
+      "threshold": 25.0,
+      "comparator": ">=",
+      "status": "pass"
+    }
+  ],
+  "alerts": [],
+  "tasks_created": []
+}

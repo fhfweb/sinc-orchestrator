@@ -1,0 +1,32 @@
+{
+    "schema_version":  "v1",
+    "enabled":  true,
+    "require_gpu_for_embeddings":  true,
+    "repair_on_cpu_fallback":  true,
+    "expected_processor":  "gpu",
+    "unknown_processor_is_failure":  false,
+    "max_non_ollama_ratio_percent":  20,
+    "ollama":  {
+                   "embed_url":  "http://127.0.0.1:11435/v1/embeddings",
+                   "embed_model":  "mxbai-embed-large:latest",
+                   "embed_model_candidates":  [
+                                                  "mxbai-embed-large:latest",
+                                                  "nomic-embed-text:latest",
+                                                  "all-minilm:latest"
+                                              ],
+                   "install_missing_models":  true,
+                   "max_install_attempts":  1,
+                   "keep_alive":  "10m",
+                   "embed_batch_size":  24,
+                   "embed_batch_size_auto":  true,
+                   "embed_concurrency":  4,
+                   "embed_warmup_inputs":  32,
+                   "vram_reserve_mb":  3072,
+                   "max_loaded_models":  2,
+                   "num_parallel":  2,
+                   "num_gpu":  "1",
+                   "num_thread":  "4",
+                   "cuda_devices":  "0",
+                   "nvidia_devices":  "all"
+               }
+}

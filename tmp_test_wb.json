@@ -1,0 +1,6 @@
+{
+    "task_id": "TEST-WB-001",
+    "agent": "TestBot",
+    "intention": "Verify Phase 2 Whiteboard Migration",
+    "files_intended": ["test_file.txt"]
+}

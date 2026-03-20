@@ -1,0 +1,86 @@
+{
+  "generated_at": "2026-03-12T09:13:37+00:00",
+  "project_root": "G:\\Fernando\\project0",
+  "services": [
+    "__future__",
+    "agent_worker",
+    "collections",
+    "dataclasses",
+    "datetime",
+    "fastapi",
+    "flask",
+    "llm_client",
+    "neo4j",
+    "pathlib",
+    "qdrant_client",
+    "scripts",
+    "sentence_transformers",
+    "tests",
+    "typing"
+  ],
+  "dependencies": [
+    [
+      "scripts",
+      "__future__"
+    ],
+    [
+      "scripts",
+      "agent_worker"
+    ],
+    [
+      "scripts",
+      "collections"
+    ],
+    [
+      "scripts",
+      "dataclasses"
+    ],
+    [
+      "scripts",
+      "datetime"
+    ],
+    [
+      "scripts",
+      "fastapi"
+    ],
+    [
+      "scripts",
+      "flask"
+    ],
+    [
+      "scripts",
+      "llm_client"
+    ],
+    [
+      "scripts",
+      "neo4j"
+    ],
+    [
+      "scripts",
+      "pathlib"
+    ],
+    [
+      "scripts",
+      "qdrant_client"
+    ],
+    [
+      "scripts",
+      "sentence_transformers"
+    ],
+    [
+      "scripts",
+      "typing"
+    ],
+    [
+      "tests",
+      "pathlib"
+    ]
+  ],
+  "edge_count": 14,
+  "sources": {
+    "scanner_modules": 15,
+    "scanner_edges": 14,
+    "state_modules": 0,
+    "state_edges": 0
+  }
+}

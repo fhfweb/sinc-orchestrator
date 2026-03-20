@@ -1,0 +1,9 @@
+{
+  "task_id": "TASK-E2E-EXT-20260319140259",
+  "agent_name": "agent-e2e-35b7",
+  "status": "success",
+  "summary": "external bridge smoke passed",
+  "files_modified": [],
+  "tests_passed": true,
+  "backend_used": "claude-code"
+}

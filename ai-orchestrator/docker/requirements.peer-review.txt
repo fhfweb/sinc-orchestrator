@@ -1,0 +1,6 @@
+langgraph
+anthropic
+httpx
+opentelemetry-sdk
+opentelemetry-exporter-otlp-proto-grpc
+opentelemetry-instrumentation-httpx

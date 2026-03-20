@@ -1,0 +1,1294 @@
+{
+  "generated_at": "2026-03-14T17:05:17+00:00",
+  "project_path": "/orchestrator-root",
+  "db_path": "/orchestrator-root/ai-orchestrator/state/task-state-v3.db",
+  "backend_mode": "db-primary-v1",
+  "last_sync_at": "2026-03-14T16:22:59+00:00",
+  "scheduler_last_write_at": "2026-03-14T16:22:59+00:00",
+  "last_dag_flush_at": "2026-03-14T16:22:59+00:00",
+  "tasks_total": 121,
+  "status_counts": {
+    "blocked-waiting-answers": 121
+  },
+  "open_execution_tasks": 21,
+  "in_progress_tasks": 0,
+  "blocked_tasks": 121,
+  "completed_tasks": 0,
+  "sample": {
+    "open_execution": [
+      {
+        "task_id": "REPAIR-20260314155823-7627dd",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314155835-1e1f93",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314160131-a5bce7",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314160144-172334",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314160442-4d999e",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314160455-fcf2d4",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314160921-182d00",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314160933-e5c1cf",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314161232-cda779",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314161245-84e82a",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314161543-09d63d",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314161556-c350d1",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314161855-8597d2",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314161910-9013ce",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314162209-ac7907",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314162222-3bbf67",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-DEPLOY-20260314160934",
+        "title": "Fix deployment issues",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-DEPLOY-20260314161246",
+        "title": "Fix deployment issues",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-DEPLOY-20260314161557",
+        "title": "Fix deployment issues",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-DEPLOY-20260314161911",
+        "title": "Fix deployment issues",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-DEPLOY-20260314162223",
+        "title": "Fix deployment issues",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      }
+    ],
+    "in_progress": [],
+    "blocked": [
+      {
+        "task_id": "BENCH-TASK-1",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-10",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-100",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-11",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-12",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-13",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-14",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-15",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-16",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-17",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-18",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-19",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-2",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-20",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-21",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-22",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-23",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-24",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-25",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-26",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-27",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-28",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-29",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-3",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-30",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-31",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-32",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-33",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-34",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-35",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-36",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-37",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-38",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-39",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-4",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-40",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-41",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-42",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-43",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-44",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-45",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-46",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-47",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-48",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-49",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-5",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-50",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-51",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-52",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-53",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-54",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-55",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-56",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-57",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-58",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-59",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-6",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-60",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-61",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-62",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-63",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-64",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-65",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-66",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-67",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-68",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-69",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-7",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-70",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-71",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-72",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-73",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-74",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-75",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-76",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-77",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-78",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-79",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-8",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-80",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-81",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-82",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-83",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-84",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-85",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-86",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-87",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-88",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-89",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-9",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-90",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-91",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-92",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-93",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-94",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-95",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-96",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P2",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-97",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P1",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-98",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "BENCH-TASK-99",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P3",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-state-blocked-waiting-answers"
+      },
+      {
+        "task_id": "REPAIR-20260314155823-7627dd",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314155835-1e1f93",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314160131-a5bce7",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314160144-172334",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314160442-4d999e",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314160455-fcf2d4",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314160921-182d00",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314160933-e5c1cf",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314161232-cda779",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314161245-84e82a",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314161543-09d63d",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314161556-c350d1",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314161855-8597d2",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314161910-9013ce",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314162209-ac7907",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-20260314162222-3bbf67",
+        "title": "",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-DEPLOY-20260314160934",
+        "title": "Fix deployment issues",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-DEPLOY-20260314161246",
+        "title": "Fix deployment issues",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-DEPLOY-20260314161557",
+        "title": "Fix deployment issues",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      },
+      {
+        "task_id": "REPAIR-DEPLOY-20260314161911",
+        "title": "Fix deployment issues",
+        "status": "blocked-waiting-answers",
+        "priority": "P0",
+        "assigned_agent": "",
+        "updated_at": "2026-03-14T13:22:58",
+        "blocked_reason": "project-has-open-questions"
+      }
+    ],
+    "completed": []
+  }
+}

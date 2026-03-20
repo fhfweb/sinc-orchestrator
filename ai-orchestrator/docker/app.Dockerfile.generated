@@ -1,0 +1,10 @@
+FROM php:8.3-cli
+RUN apt-get update && apt-get install -y git unzip libpq-dev libzip-dev libonig-dev libicu-dev && docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring zip bcmath pcntl intl
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+WORKDIR /workspace
+ENV COMPOSER_ALLOW_SUPERUSER=1
+COPY composer.json composer.lock* ./
+RUN if [ -f composer.json ]; then composer install --no-interaction --prefer-dist --no-scripts; else echo "REVIEW_REQUIRED: composer.json not found"; fi
+COPY . .
+EXPOSE 8000
+CMD ["sh", "-lc", "php artisan serve --host=0.0.0.0 --port=8002"]

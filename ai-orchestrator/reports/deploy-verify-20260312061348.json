@@ -1,0 +1,17 @@
+{
+    "generated_at":  "2026-03-12T06:13:48",
+    "project":  "project0",
+    "all_passed":  false,
+    "checks":  [
+                   {
+                       "name":  "docker-compose-file",
+                       "passed":  false,
+                       "detail":  "compose file not found at G:\\Fernando\\project0\\ai-orchestrator\\docker\\docker-compose.generated.yml"
+                   },
+                   {
+                       "name":  "http-health",
+                       "passed":  false,
+                       "detail":  "connection refused at http://localhost:8000/health"
+                   }
+               ]
+}

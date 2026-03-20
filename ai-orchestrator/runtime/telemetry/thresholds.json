@@ -1,0 +1,6 @@
+{
+    "latency_p95_ms":  400,
+    "error_rate_percent":  2,
+    "conversion_rate_percent":  25,
+    "repair_cooldown_seconds":  900
+}

@@ -1,0 +1,82 @@
+{
+  "generated_at": "2026-03-17T17:07:34",
+  "project_path": "/workspace",
+  "source_log": "/workspace/ai-orchestrator/state/loop-step-events.jsonl;/workspace/ai-orchestrator/state/tool-usage-log.jsonl",
+  "source_kind": "loop-step-events,tool-usage-log",
+  "timeout_threshold_ms": 120000,
+  "events_read": 40587,
+  "agents": [
+    {
+      "agent": "AI Architect",
+      "samples": 0,
+      "success_rate": 0.7,
+      "avg_duration_ms": 0,
+      "timeout_rate": 0.0,
+      "reputation_fit_score": 0.85
+    },
+    {
+      "agent": "AI CTO",
+      "samples": 0,
+      "success_rate": 0.7,
+      "avg_duration_ms": 0,
+      "timeout_rate": 0.0,
+      "reputation_fit_score": 0.85
+    },
+    {
+      "agent": "AI DevOps Engineer",
+      "samples": 0,
+      "success_rate": 0.7,
+      "avg_duration_ms": 0,
+      "timeout_rate": 0.0,
+      "reputation_fit_score": 0.85
+    },
+    {
+      "agent": "AI Engineer",
+      "samples": 0,
+      "success_rate": 0.7,
+      "avg_duration_ms": 0,
+      "timeout_rate": 0.0,
+      "reputation_fit_score": 0.85
+    },
+    {
+      "agent": "AI Product Manager",
+      "samples": 0,
+      "success_rate": 0.7,
+      "avg_duration_ms": 0,
+      "timeout_rate": 0.0,
+      "reputation_fit_score": 0.85
+    },
+    {
+      "agent": "AI Security Engineer",
+      "samples": 0,
+      "success_rate": 0.7,
+      "avg_duration_ms": 0,
+      "timeout_rate": 0.0,
+      "reputation_fit_score": 0.85
+    },
+    {
+      "agent": "Antigravity",
+      "samples": 0,
+      "success_rate": 0.7,
+      "avg_duration_ms": 0,
+      "timeout_rate": 0.0,
+      "reputation_fit_score": 0.85
+    },
+    {
+      "agent": "Claude",
+      "samples": 0,
+      "success_rate": 0.7,
+      "avg_duration_ms": 0,
+      "timeout_rate": 0.0,
+      "reputation_fit_score": 0.85
+    },
+    {
+      "agent": "Codex",
+      "samples": 3980,
+      "success_rate": 0.9374,
+      "avg_duration_ms": 1258,
+      "timeout_rate": 0.0,
+      "reputation_fit_score": 0.969
+    }
+  ]
+}

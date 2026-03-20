@@ -1,0 +1,60 @@
+{
+  "agents": [
+    {
+      "name": "Codex",
+      "role": "engineering",
+      "active_tasks": 0,
+      "completed_tasks": 0,
+      "last_assigned": ""
+    },
+    {
+      "name": "Claude",
+      "role": "architecture",
+      "active_tasks": 0,
+      "completed_tasks": 0,
+      "last_assigned": ""
+    },
+    {
+      "name": "Antigravity",
+      "role": "product",
+      "active_tasks": 0,
+      "completed_tasks": 0,
+      "last_assigned": ""
+    },
+    {
+      "name": "AI CTO",
+      "role": "strategy",
+      "active_tasks": 0,
+      "completed_tasks": 0,
+      "last_assigned": ""
+    },
+    {
+      "name": "AI Architect",
+      "role": "architecture",
+      "active_tasks": 0,
+      "completed_tasks": 0,
+      "last_assigned": ""
+    },
+    {
+      "name": "AI DevOps Engineer",
+      "role": "devops",
+      "active_tasks": 0,
+      "completed_tasks": 0,
+      "last_assigned": ""
+    },
+    {
+      "name": "AI Security Engineer",
+      "role": "security",
+      "active_tasks": 0,
+      "completed_tasks": 0,
+      "last_assigned": ""
+    },
+    {
+      "name": "AI Product Manager",
+      "role": "product",
+      "active_tasks": 0,
+      "completed_tasks": 0,
+      "last_assigned": ""
+    }
+  ]
+}

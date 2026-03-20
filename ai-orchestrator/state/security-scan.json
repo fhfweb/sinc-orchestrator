@@ -1,0 +1,43 @@
+{
+    "generated_at":  "2026-03-12T06:13:45",
+    "project_path":  "G:\\Fernando\\project0",
+    "overall":  "AT-RISK",
+    "counts":  {
+                   "critical":  0,
+                   "high":  2,
+                   "medium":  1,
+                   "low":  1,
+                   "total":  4
+               },
+    "report_path":  "G:\\Fernando\\project0\\ai-orchestrator\\analysis\\security-report.md",
+    "findings":  [
+                     {
+                         "category":  "A05",
+                         "title":  "Debug mode enabled in code/config",
+                         "severity":  "MEDIUM",
+                         "evidence":  "G:\\Fernando\\project0\\workspace\\projects\\sistema-gestao-psicologos-autonomos\\.env:4",
+                         "recommendation":  "Disable debug in production profiles."
+                     },
+                     {
+                         "category":  "A03",
+                         "title":  "Potential SQL concatenation",
+                         "severity":  "HIGH",
+                         "evidence":  "G:\\Fernando\\project0\\scripts\\v2\\Invoke-SchedulerV2.ps1:1379",
+                         "recommendation":  "Use parameterized queries or ORM query builders."
+                     },
+                     {
+                         "category":  "A03",
+                         "title":  "Dangerous command execution primitives present",
+                         "severity":  "HIGH",
+                         "evidence":  "G:\\Fernando\\project0\\scripts\\v2\\Invoke-EphemeralToolRunner.ps1:184, G:\\Fernando\\project0\\scripts\\v2\\Invoke-RunPowerShellCommandTool.ps1:199",
+                         "recommendation":  "Restrict command execution and validate all inputs."
+                     },
+                     {
+                         "category":  "A10",
+                         "title":  "Outbound URL fetch usage detected (review SSRF controls)",
+                         "severity":  "LOW",
+                         "evidence":  "G:\\Fernando\\project0\\scripts\\memory_sync.py:942, G:\\Fernando\\project0\\scripts\\memory_sync.py:1065, G:\\Fernando\\project0\\scripts\\memory_sync.py:1106, G:\\Fernando\\project0\\scripts\\query_lessons.py:288",
+                         "recommendation":  "Validate URLs and block internal network ranges."
+                     }
+                 ]
+}

@@ -1,0 +1,27 @@
+{
+  "generated_at": "2026-03-15T21:34:56",
+  "project": "workspace",
+  "all_passed": false,
+  "checks": [
+    {
+      "name": "container:app",
+      "passed": false,
+      "detail": "The term 'cmd' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "name": "container:db",
+      "passed": false,
+      "detail": "The term 'cmd' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "name": "container:worker",
+      "passed": false,
+      "detail": "The term 'cmd' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again."
+    },
+    {
+      "name": "http-health",
+      "passed": false,
+      "detail": "skipped — no containers are running (check container checks above)"
+    }
+  ]
+}

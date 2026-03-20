@@ -1,0 +1,36 @@
+{
+  "project_identity": {
+    "name": "orchestrator-root",
+    "slug": "orchestrator-root",
+    "created_at": "2026-03-14T09:58:15",
+    "updated_at": "2026-03-14T09:58:15",
+    "type": "unknown",
+    "status": "bootstrap",
+    "health_status": "unknown"
+  },
+  "architecture": {
+    "style": "unknown",
+    "services": [],
+    "languages": [],
+    "databases": []
+  },
+  "service_map": {},
+  "patterns": {
+    "architecture_patterns": [],
+    "code_patterns": []
+  },
+  "tech_stack": {
+    "backend": "unknown",
+    "frontend": "unknown",
+    "database": "unknown",
+    "vector_memory": "qdrant",
+    "graph_memory": "neo4j"
+  },
+  "evolution": {
+    "major_changes": []
+  },
+  "agent_knowledge": {
+    "known_hotspots": [],
+    "technical_debt": []
+  }
+}

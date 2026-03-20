@@ -1,0 +1,125 @@
+﻿# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# SINC Orchestrator â€” Generic Client Stack
+#
+# Downloads: curl -sf http://<orchestrator-host>:8765/sdk/docker-compose.client.yml
+#            -o docker-compose.client.yml
+#
+# Prerequisites:
+#   1. Orchestrator platform is running
+#   2. Tenant was created: POST /admin/tenants  (X-Admin-Key header)
+#   3. .env file populated (see .env.example or GET /sdk/.env.example)
+#
+# Start:
+#   docker compose -f docker-compose.client.yml up -d
+#
+# Required .env variables (see GET /sdk/.env.example):
+#   ORCHESTRATOR_URL       = http://<orchestrator-host>:8765
+#   ORCHESTRATOR_API_KEY   = sk-...    (from POST /admin/tenants)
+#   PROJECT_ID             = <your-project-id>
+#   TENANT_ID              = <your-tenant-id>
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+name: orchestrator-client
+
+x-orch-env: &orch-env
+  ORCHESTRATOR_URL:     ${ORCHESTRATOR_URL:-http://host.docker.internal:8765}
+  ORCHESTRATOR_API_KEY: ${ORCHESTRATOR_API_KEY}
+  PROJECT_ID:           ${PROJECT_ID:-default}
+  TENANT_ID:            ${TENANT_ID:-local}
+
+services:
+
+  # â”€â”€ AGENT WORKER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # Polls orchestrator for pending tasks, executes them against the project
+  # codebase, reports results back via API.
+  # All SDK files are downloaded fresh from the orchestrator on startup.
+
+  agent-worker:
+    build:
+      context: .
+      dockerfile: .orchestrator-sdk/Dockerfile.agent
+    container_name: ${PROJECT_ID:-project}-agent-worker
+    working_dir: /workspace
+    volumes:
+      - ${PROJECT_PATH:-.}:/workspace
+      - ${USERPROFILE:-~}/.config/anthropic:/root/.anthropic:ro
+    environment:
+      <<: *orch-env
+      PYTHONUNBUFFERED:    "1"
+      AGENT_WORKSPACE:     /workspace
+      AGENT_NAME:          ${AGENT_NAME:-agent-worker}
+      AGENT_MODEL:         ${AGENT_MODEL:-claude-sonnet-4-6}
+      AGENT_MAX_TOKENS:    ${AGENT_MAX_TOKENS:-8192}
+      AGENT_POLL_INTERVAL: ${AGENT_POLL_INTERVAL:-15}
+      ANTHROPIC_API_KEY:   ${ANTHROPIC_API_KEY:-}
+      OLLAMA_HOST:         ${OLLAMA_HOST:-http://host.docker.internal:11434}
+      OLLAMA_MODEL:        ${OLLAMA_MODEL:-qwen2.5:7b-instruct-q4_K_M}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - DAC_OVERRIDE
+      - SETUID
+      - SETGID
+    command: >-
+      sh -lc "mkdir -p /tmp/sdk && curl -sf ${ORCHESTRATOR_URL}/sdk/agent_worker.py -o /tmp/sdk/agent_worker.py && curl -sf ${ORCHESTRATOR_URL}/sdk/local_agent_runner.py -o /tmp/sdk/local_agent_runner.py && curl -sf ${ORCHESTRATOR_URL}/sdk/orchestrator_client.py -o /tmp/sdk/orchestrator_client.py && curl -sf ${ORCHESTRATOR_URL}/sdk/inference_router.py -o /tmp/sdk/inference_router.py && curl -sf ${ORCHESTRATOR_URL}/sdk/agents_config.py -o /tmp/sdk/agents_config.py && python /tmp/sdk/agent_worker.py"
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # â”€â”€ ORCHESTRATOR LOOP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # Canonical Python client loop.
+  # Triggers observer/scheduler/readiness/external-bridge ticks on the provider.
+
+  orchestrator-loop:
+    build:
+      context: .
+      dockerfile: .orchestrator-sdk/Dockerfile.loop
+    container_name: ${PROJECT_ID:-project}-orchestrator-loop
+    working_dir: /workspace
+    volumes:
+      - ${PROJECT_PATH:-.}:/workspace
+      - ${ORCHESTRATOR_STATE_DIR:-/tmp/orch-state}:/workspace/ai-orchestrator
+    environment:
+      <<: *orch-env
+      PYTHONUNBUFFERED: "1"
+      ORCHESTRATOR_PUSH_EVENTS: "true"
+      ORCHESTRATOR_LOOP_INTERVAL_SECONDS: ${ORCHESTRATOR_LOOP_INTERVAL_SECONDS:-120}
+      ORCHESTRATOR_LOOP_MAX_CYCLES: ${ORCHESTRATOR_LOOP_MAX_CYCLES:-0}
+      ORCHESTRATOR_LOOP_REQUEST_TIMEOUT_SECONDS: ${ORCHESTRATOR_LOOP_REQUEST_TIMEOUT_SECONDS:-30}
+    command: >-
+      sh -lc "mkdir -p /tmp/sdk && curl -sf ${ORCHESTRATOR_URL}/sdk/client_loop.py -o /tmp/sdk/client_loop.py && python /tmp/sdk/client_loop.py"
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # â”€â”€ INGEST WORKER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # Reads the project codebase, pushes AST + vector embeddings to the orchestrator.
+  # Run once after significant code changes:
+  #   docker compose -f docker-compose.client.yml run --rm ingest-worker
+
+  ingest-worker:
+    build:
+      context: .
+      dockerfile: .orchestrator-sdk/Dockerfile.ingest
+    container_name: ${PROJECT_ID:-project}-ingest-worker
+    working_dir: /workspace
+    volumes:
+      - ${PROJECT_PATH:-.}:/workspace:ro
+    environment:
+      <<: *orch-env
+      PYTHONUNBUFFERED:   "1"
+      PROJECT_PATH:       /workspace
+      NEO4J_URI:          ${NEO4J_URI:-bolt://host.docker.internal:7687}
+      NEO4J_USER:         ${NEO4J_USER:-neo4j}
+      NEO4J_PASS:         ${NEO4J_PASS:-changeme}
+      QDRANT_HOST:        ${QDRANT_HOST:-host.docker.internal}
+      QDRANT_PORT:        "6333"
+      OLLAMA_HOST:        ${OLLAMA_HOST:-http://host.docker.internal:11434}
+      OLLAMA_EMBED_MODEL: ${OLLAMA_EMBED_MODEL:-nomic-embed-text}
+    command: >-
+      sh -lc "curl -sf ${ORCHESTRATOR_URL}/sdk/ingest_pipeline.py -o /tmp/ingest_pipeline.py && python /tmp/ingest_pipeline.py run /workspace --project-id ${PROJECT_ID} --tenant-id ${TENANT_ID} --deep"
+    restart: "no"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

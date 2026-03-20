@@ -1,0 +1,73 @@
+{
+  "generated_at": "2026-03-16T03:39:13",
+  "project": "workspace",
+  "dry_run": false,
+  "system": {
+    "ram_metric_available": false,
+    "ram_metric_source": "",
+    "ram_used_pct": 0.0,
+    "ram_free_gb": 0.0,
+    "ram_total_gb": 0.0,
+    "cpu_metric_available": false,
+    "cpu_metric_source": "",
+    "cpu_used_pct": 0.0,
+    "gpu_metric_available": false,
+    "gpu_metric_source": "",
+    "gpu_util_pct": 0.0,
+    "gpu_vram_used_mb": 0.0,
+    "gpu_vram_total_mb": 0.0,
+    "gpu_vram_used_pct": 0.0,
+    "gpu_temperature_c": 0.0
+  },
+  "embedding_runtime": {
+    "found": false,
+    "processor": "",
+    "vectors_per_second": 0.0,
+    "ollama_vectors_per_second": 0.0,
+    "ollama_embeddings": 0,
+    "non_ollama_embeddings": 0,
+    "qdrant_maintenance_ok": true,
+    "qdrant_maintenance_alert_count": 0,
+    "qdrant_fragmentation_percent": 0.0,
+    "qdrant_vector_index_coverage_percent": 0.0,
+    "qdrant_segments_count": 0
+  },
+  "llm_runtime": {
+    "found": true,
+    "enabled": true,
+    "model": "llama3:8b",
+    "models_used": [],
+    "tokens_per_second": 0.0,
+    "total_tokens": 0,
+    "llm_calls": 0,
+    "route_fast": 0,
+    "route_heavy": 0,
+    "route_infra_default": 0,
+    "route_routing_disabled": 0
+  },
+  "ollama_runtime": {
+    "available": false,
+    "gpu_models": 0,
+    "cpu_models": 0,
+    "unknown_models": 0,
+    "processor_mix": "unavailable"
+  },
+  "maintenance": {
+    "core_gate_removed": [],
+    "core_gate_cleanup_errors": [],
+    "zombie_findstr_detected": [],
+    "zombie_findstr_removed": [],
+    "zombie_findstr_errors": []
+  },
+  "containers": [],
+  "paused_this_run": [],
+  "resumed_this_run": [],
+  "warnings": [
+    "[FinOps] Could not read system RAM (all providers failed)",
+    "[FinOps] Could not read GPU metrics (nvidia-smi unavailable)",
+    "[FinOps] Docker stats unavailable: The term 'docker' is not recognized as a name of a cmdlet, function, script file, or executable program.\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+    "[FinOps] Could not read CPU (all providers failed)"
+  ],
+  "ram_critical_threshold": 90,
+  "ram_resume_threshold": 80
+}

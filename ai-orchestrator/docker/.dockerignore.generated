@@ -1,0 +1,16 @@
+.git
+.github
+node_modules
+vendor
+dist
+build
+coverage
+.next
+out
+bin
+obj
+target
+.venv
+venv
+infra
+*.log

@@ -1,0 +1,133 @@
+{
+  "schema_version": "v1",
+  "default_role": "default",
+  "roles": {
+    "default": {
+      "required_fields": [
+        "schema_version",
+        "task_id",
+        "agent_name",
+        "timestamp",
+        "summary",
+        "files_written",
+        "tests_passed",
+        "validation",
+        "source_files",
+        "source_modules",
+        "local_library_candidates",
+        "library_decision"
+      ],
+      "non_empty_fields": [
+        "summary"
+      ],
+      "array_fields": [
+        "files_written",
+        "validation",
+        "source_files",
+        "source_modules",
+        "local_library_candidates"
+      ],
+      "array_non_empty_fields": [
+        "files_written",
+        "source_files"
+      ],
+      "boolean_fields": [
+        "tests_passed"
+      ],
+      "max_items": {
+        "files_written": 100,
+        "validation": 60,
+        "source_files": 100,
+        "source_modules": 60,
+        "local_library_candidates": 60
+      }
+    },
+    "codex": {
+      "extends": "default"
+    },
+    "ai architect": {
+      "extends": "default"
+    },
+    "claude code": {
+      "extends": "default"
+    },
+    "claude": {
+      "extends": "default"
+    },
+    "antigravity": {
+      "extends": "default"
+    },
+    "ai security engineer": {
+      "extends": "default"
+    },
+    "ai devops engineer": {
+      "extends": "default"
+    },
+    "ai engineer": {
+      "extends": "default"
+    },
+    "business analyst agent": {
+      "extends": "default"
+    },
+    "architecture agent": {
+      "extends": "default"
+    },
+    "product manager agent": {
+      "extends": "default"
+    },
+    "backend agent": {
+      "extends": "default"
+    },
+    "frontend agent": {
+      "extends": "default"
+    },
+    "infra agent": {
+      "extends": "default"
+    },
+    "database agent": {
+      "extends": "default"
+    },
+    "integration agent": {
+      "extends": "default"
+    },
+    "devops agent": {
+      "extends": "default"
+    },
+    "code review agent": {
+      "extends": "default"
+    },
+    "security agent": {
+      "extends": "default"
+    },
+    "performance agent": {
+      "extends": "default"
+    },
+    "qa agent": {
+      "extends": "default"
+    },
+    "user simulation agent": {
+      "extends": "default"
+    },
+    "observability agent": {
+      "extends": "default"
+    },
+    "incident response agent": {
+      "extends": "default"
+    },
+    "memory agent": {
+      "extends": "default"
+    },
+    "learning agent": {
+      "extends": "default"
+    },
+    "estimation agent": {
+      "extends": "default"
+    },
+    "orchestrator agent": {
+      "extends": "default"
+    },
+    "documentation agent": {
+      "extends": "default"
+    }
+  }
+}

@@ -1,0 +1,202 @@
+{
+  "creation_date": "2026-03-11T22:39:51",
+  "project_slug": "project0",
+  "project_type": "existing",
+  "confidence": "high",
+  "refactor_policy": "unknown",
+  "status": "blocked-waiting-answers",
+  "project_pack_root": "ai-orchestrator/projects/project0",
+  "project_dna_path": "ai-orchestrator/projects/project0/project_dna.json",
+  "technical_fingerprint": {
+    "hash": "656b13c23bb028843212b36879d1fff0ef35b22a396f12848ec60616e0b5043d",
+    "source_file_count": 80,
+    "languages": [
+      {
+        "language": "powershell",
+        "score": 65
+      },
+      {
+        "language": "python",
+        "score": 27
+      }
+    ],
+    "primary_language": "powershell",
+    "frameworks": [],
+    "frontend_frameworks": [],
+    "infrastructure_tools": [],
+    "package_managers": [
+      "pip"
+    ],
+    "build_systems": [
+      "Python packaging"
+    ],
+    "ci_cd": [],
+    "test_frameworks": [],
+    "docker_assets": [],
+    "database": {
+      "engine": "unknown",
+      "confidence": "unknown",
+      "evidence": "none"
+    },
+    "architecture_pattern": "monolith",
+    "service_structure": [
+      "scripts"
+    ],
+    "monolith_vs_microservices": "monolith",
+    "api_patterns": [],
+    "dependency_graph": {
+      "modules": [
+        "root",
+        "scripts",
+        "tests"
+      ],
+      "edges": [],
+      "edge_count": 0,
+      "cycle_detected": false,
+      "independent_modules": [
+        "root",
+        "scripts",
+        "tests"
+      ],
+      "detection_mode": "semantic",
+      "detection_reason": "semantic-selected",
+      "heuristic_edge_count": 0,
+      "semantic_edge_count": 0,
+      "semantic_available": true
+    },
+    "dependency_detection": {
+      "mode": "semantic",
+      "reason": "semantic-selected",
+      "heuristic_edge_count": 0,
+      "semantic_edge_count": 0,
+      "semantic_available": true,
+      "semantic_engine": "semantic-v1"
+    },
+    "code_quality": {
+      "code_file_count": 15,
+      "complexity_proxy": 262,
+      "complexity_rating": "high",
+      "large_files": [
+        "scripts/ast_analyzer.py (813 lines)",
+        "scripts/business_context_engine.py (962 lines)",
+        "scripts/extract_world_model.py (1006 lines)",
+        "scripts/graph_query.py (597 lines)",
+        "scripts/memory_sync.py (3367 lines)",
+        "scripts/query_lessons.py (1191 lines)",
+        "scripts/Start-ControlPlane.py (760 lines)",
+        "scripts/v2/semantic_dependency_scan.py (855 lines)",
+        "scripts/v2/Start-StreamingServer.py (559 lines)",
+        "scripts/v2/core_llm/agent_worker.py (1867 lines)",
+        "scripts/v2/core_llm/Run-AgentLoop.py (864 lines)"
+      ],
+      "large_file_count": 11,
+      "duplicate_groups": [],
+      "duplicate_group_count": 0,
+      "dead_code_candidates": [],
+      "dead_code_count": 0,
+      "circular_dependency_detected": false,
+      "vulnerability_signals": [],
+      "vulnerability_count": 0
+    },
+    "legacy_signal_score": 0,
+    "documentation_signals": [
+      "README.md",
+      "docs/ONBOARDING.md",
+      "docs/agents/agent-output-schema.json",
+      "docs/agents/agent-tools-registry.json",
+      "docs/agents/agents-360.registry.json",
+      "docs/agents/dashboard.html",
+      "docs/agents/dashboard.json",
+      "docs/agents/DASHBOARD.md",
+      "docs/agents/PROJECT_BRAIN.md",
+      "docs/agents/SYSTEM_MAP.md",
+      "docs/agents/SYSTEM_SUMMARY.md",
+      "docs/context/docker-factory.md",
+      "docs/context/intake.md",
+      "docs/context/intake_template.env",
+      "docs/context/memory.md"
+    ],
+    "plugin_detections": []
+  },
+  "verified_commands": {
+    "install": {
+      "value": "unknown",
+      "confidence": "unknown"
+    },
+    "build": {
+      "value": "unknown",
+      "confidence": "unknown"
+    },
+    "run": {
+      "value": "powershell -ExecutionPolicy Bypass -File .\\orchestrator.ps1",
+      "confidence": "inferred"
+    },
+    "test": {
+      "value": "Invoke-Pester",
+      "confidence": "inferred"
+    }
+  },
+  "unknowns": [
+    "database-engine"
+  ],
+  "memory_mode": "markdown-only",
+  "last_observer_run": "2026-03-12T06:13:06",
+  "health_status": "needs-answers",
+  "updated_at": "2026-03-14T17:05:07",
+  "open_questions": [
+    "Which transactional database engine should this project use?"
+  ],
+  "last_runtime_update": "2026-03-12T06:13:06",
+  "memory_sync": {
+    "enabled": false,
+    "reason": "skip-or-not-executed"
+  },
+  "phase_approvals": {
+    "context": {
+      "status": "approved",
+      "updated_at": "2026-03-11T22:40:59",
+      "updated_by": "observer-auto"
+    },
+    "architecture": {
+      "status": "pending",
+      "updated_at": "2026-03-11T22:40:59",
+      "updated_by": "observer-auto"
+    },
+    "execution": {
+      "status": "pending",
+      "updated_at": "2026-03-11T22:40:59",
+      "updated_by": "observer-auto"
+    },
+    "release": {
+      "status": "pending",
+      "updated_at": "2026-03-11T22:40:59",
+      "updated_by": "observer-auto"
+    }
+  },
+  "agents_360": {
+    "last_dispatch": {
+      "at": "2026-03-14T17:04:46",
+      "phase": "architecture",
+      "report_json": "/orchestrator-root/ai-orchestrator/reports/agent-dispatch-report.json",
+      "report_md": "/orchestrator-root/ai-orchestrator/reports/agent-dispatch-report.md",
+      "selected": 6,
+      "executed": 6,
+      "failed": 0
+    },
+    "last_validation": {
+      "at": "2026-03-14T17:05:07",
+      "phase": "architecture",
+      "scope": [
+        "context",
+        "architecture"
+      ],
+      "verdict": "NOT READY",
+      "report_json": "/orchestrator-root/ai-orchestrator/reports/agent-artifact-validation-report.json",
+      "report_md": "/orchestrator-root/ai-orchestrator/reports/agent-artifact-validation-report.md",
+      "selected": 7,
+      "pass": 6,
+      "fail": 1,
+      "critical_fail": 0
+    }
+  }
+}

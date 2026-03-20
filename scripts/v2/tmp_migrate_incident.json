@@ -1,0 +1,5 @@
+{
+  "deprecated": true,
+  "archived_to": "legacy/powershell-v2/scripts-v2/tmp_migrate_incident.json",
+  "canonical_runtime": "ai-orchestrator/services/streaming"
+}

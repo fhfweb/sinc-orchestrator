@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0; url=http://127.0.0.1:8765/dashboard">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard legado descontinuado</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b1020;
+      color: #f3f5fb;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+    }
+    main {
+      max-width: 720px;
+      padding: 32px;
+      border: 1px solid #24304f;
+      background: #11182c;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+    h1 { margin-top: 0; font-size: 28px; }
+    p { line-height: 1.6; color: #c4cbe0; }
+    a { color: #7fb3ff; }
+    code {
+      background: #0a1222;
+      border: 1px solid #24304f;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Dashboard legado descontinuado</h1>
+    <p>O painel estatico antigo foi substituido pelo dashboard canonico do FastAPI.</p>
+    <p>Abra <a href="http://127.0.0.1:8765/dashboard">http://127.0.0.1:8765/dashboard</a>.</p>
+    <p>Se o redirecionamento automatico falhar, use manualmente o endpoint acima.</p>
+    <p>Compatibilidade minima mantida no servidor novo: <code>/api/command</code>, <code>/api/config/confidence</code>, <code>/api/system/mode</code> e <code>/dashboard/state</code>.</p>
+  </main>
+</body>
+</html>

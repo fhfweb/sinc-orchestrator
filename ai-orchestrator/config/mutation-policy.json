@@ -1,0 +1,28 @@
+{
+    "schema_version":  "v1",
+    "global_min_score_pct":  85,
+    "library_first_gate":  {
+                               "enabled":  true,
+                               "priority":  "P0",
+                               "require_preflight_candidates":  true,
+                               "require_completion_decision":  true,
+                               "policy_path":  "ai-orchestrator/config/library-first-policy.json"
+                           },
+    "domain_policies":  [
+                            {
+                                "pattern":  "auth|security|payment|lgpd|privacy",
+                                "min_score_pct":  95,
+                                "priority":  "P0"
+                            },
+                            {
+                                "pattern":  "api|controller|route|view|endpoint",
+                                "min_score_pct":  90,
+                                "priority":  "P1"
+                            },
+                            {
+                                "pattern":  "service|repository|model|domain",
+                                "min_score_pct":  85,
+                                "priority":  "P1"
+                            }
+                        ]
+}

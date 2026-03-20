@@ -1,0 +1,9 @@
+{
+  "generated_at": "2026-03-16T12:09:11",
+  "project": "workspace",
+  "test_command": "Invoke-Pester",
+  "exit_code": 127,
+  "status": "failed",
+  "elapsed_seconds": 0.0,
+  "output_snippet": "/usr/bin/sh: 1: Invoke-Pester: not found"
+}

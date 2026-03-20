@@ -1,0 +1,33 @@
+{% macro nav_item(view, icon, label, active=false) -%}
+<div class="nav-item{% if active %} active{% endif %}" data-view="{{ view }}">
+    <i data-lucide="{{ icon }}"></i>
+    <span>{{ label }}</span>
+</div>
+{%- endmacro %}
+
+{% macro stat_card(metric_id, icon, icon_class, label, default_value, trend="") -%}
+<div class="stat-card">
+    <div class="stat-icon {{ icon_class }}"><i data-lucide="{{ icon }}"></i></div>
+    <div class="stat-meta">
+        <span class="label">{{ label }}</span>
+        <h2 id="{{ metric_id }}">{{ default_value }}</h2>
+    </div>
+    {% if trend %}
+    <div class="stat-trend">{{ trend }}</div>
+    {% endif %}
+</div>
+{%- endmacro %}
+
+{% macro glass_card(title, body_id="", compact=false, action_label="") -%}
+<div class="card glass{% if compact %} compact{% endif %}">
+    <div class="card-header">
+        <h3>{{ title }}</h3>
+        {% if action_label %}
+        <button class="text-btn">{{ action_label }}</button>
+        {% endif %}
+    </div>
+    <div{% if body_id %} id="{{ body_id }}"{% endif %}>
+        {{ caller() }}
+    </div>
+</div>
+{%- endmacro %}

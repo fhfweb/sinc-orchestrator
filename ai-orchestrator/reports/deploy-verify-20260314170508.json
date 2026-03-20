@@ -1,0 +1,17 @@
+{
+  "generated_at": "2026-03-14T17:05:08",
+  "project": "orchestrator-root",
+  "all_passed": false,
+  "checks": [
+    {
+      "name": "docker-compose-file",
+      "passed": false,
+      "detail": "compose file not found at /orchestrator-root/ai-orchestrator/docker/docker-compose.generated.yml"
+    },
+    {
+      "name": "http-health",
+      "passed": false,
+      "detail": "Connection refused (localhost:8002)"
+    }
+  ]
+}

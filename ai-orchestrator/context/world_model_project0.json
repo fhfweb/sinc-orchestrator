@@ -1,0 +1,280 @@
+{
+  "$schema": "orchestrator/world_model/v1",
+  "version": "1.0.0",
+  "meta": {
+    "project_id": "project0",
+    "project_name": "project0",
+    "created_at": "2026-03-12T09:13:45.743862+00:00",
+    "updated_at": "2026-03-12T09:13:46.397878+00:00",
+    "cycle": 3,
+    "status": "draft",
+    "owner": "CodexSandboxOffline",
+    "orchestrator_version": "unknown",
+    "intake_hash": "8e1514fc0bdd51e6ea8984159d9e168630b2933e157e9d30ff24428795753ca5"
+  },
+  "area_1_product_strategy": {
+    "problem_statement": {
+      "core_problem": "Define core problem in PROJECT_REQUEST.md",
+      "who_has_this_problem": "Primary user for project0",
+      "current_alternative": "manual_process",
+      "why_current_alternative_fails": "low_visibility_and_inconsistent_execution",
+      "evidence_of_problem": ""
+    },
+    "personas": [
+      {
+        "id": "persona_1",
+        "name": "Primary Operator",
+        "role": "System Operator",
+        "is_payer": true,
+        "is_primary_user": true,
+        "technical_level": "medium",
+        "main_goal": "Deliver expected business outcome.",
+        "main_frustration": "Lack of end-to-end visibility.",
+        "critical_journeys": []
+      }
+    ],
+    "value_proposition": {
+      "unique_value": "Deliver measurable value for primary user with low operational overhead",
+      "why_not_competitor": "",
+      "key_differentiators": []
+    },
+    "business_model": {
+      "revenue_model": "subscription",
+      "pricing_tiers": [],
+      "target_cac": "",
+      "target_ltv": "",
+      "target_ltv_cac_ratio": ""
+    },
+    "success_criteria": {
+      "launch_criteria": [
+        "Build and test pass with verified commands",
+        "Core flow runs without blockers"
+      ],
+      "month_3_criteria": [
+        "Increased active usage and reduced support incidents"
+      ],
+      "month_12_criteria": [
+        "Stable growth with reliable operations"
+      ],
+      "north_star_metric": "Activated users completing critical flow"
+    },
+    "main_risks": []
+  },
+  "area_2_requirements": {
+    "critical_flows": [
+      {
+        "id": "flow_1",
+        "name": "Critical Flow 1",
+        "persona_id": "persona_1",
+        "priority": "must_have",
+        "description": "User completes main workflow successfully",
+        "steps": [],
+        "definition_of_done": "Primary user can complete the intended workflow without manual support.",
+        "acceptance_criteria": [
+          "Primary user can complete the intended workflow without manual support."
+        ],
+        "is_launch_blocker": true
+      },
+      {
+        "id": "flow_2",
+        "name": "Critical Flow 2",
+        "persona_id": "persona_1",
+        "priority": "must_have",
+        "description": "Operator validates system health and receives feedback",
+        "steps": [],
+        "definition_of_done": "Operator can monitor completion and resolve failures quickly.",
+        "acceptance_criteria": [
+          "Operator can monitor completion and resolve failures quickly."
+        ],
+        "is_launch_blocker": true
+      }
+    ],
+    "mvp_scope": {
+      "included": [
+        "Core API",
+        "Automated tests",
+        "Operational observability"
+      ],
+      "explicitly_excluded": [
+        "Optional integrations not required for launch"
+      ],
+      "post_launch_backlog": [
+        "UX refinements",
+        "Secondary automation paths"
+      ]
+    },
+    "functional_requirements": [],
+    "non_functional_requirements": {
+      "performance": {
+        "max_response_time_ms": 500,
+        "max_response_time_critical_endpoints_ms": 200,
+        "acceptable_error_rate_percent": 1.0
+      },
+      "availability": {
+        "target_uptime_percent": 99.9,
+        "rto_minutes": 60,
+        "rpo_minutes": 15
+      },
+      "scalability": {
+        "users_at_launch": 100,
+        "users_at_month_6": 1000,
+        "users_at_month_12": 5000,
+        "concurrent_users_peak": 100
+      },
+      "security": {
+        "data_sensitivity": "internal",
+        "pii_present": true,
+        "mfa_required": false
+      }
+    },
+    "compliance": {
+      "lgpd": true,
+      "hipaa": false,
+      "pci_dss": false,
+      "cfm": false,
+      "ans": false,
+      "data_retention_days": 365,
+      "right_to_erasure": true,
+      "data_export_required": true
+    },
+    "integrations": [],
+    "out_of_scope": [
+      "Optional integrations not required for launch"
+    ]
+  },
+  "area_3_architecture": {
+    "stack": {
+      "language_backend": "powershell",
+      "framework_backend": "",
+      "language_frontend": "",
+      "framework_frontend": "",
+      "database_primary": "unknown",
+      "database_secondary": "",
+      "cache": "",
+      "queue": "",
+      "cloud_provider": ""
+    },
+    "architectural_pattern": {
+      "pattern": "modular_monolith",
+      "rationale": "",
+      "multi_tenancy": {
+        "enabled": false,
+        "strategy": "none"
+      }
+    },
+    "data_model": {
+      "core_entities": [],
+      "migration_strategy": "",
+      "seed_strategy": ""
+    },
+    "auth_strategy": {
+      "authentication": "",
+      "authorization": "",
+      "roles": []
+    },
+    "communication": {
+      "sync_protocol": "",
+      "async_protocol": "",
+      "api_versioning_strategy": ""
+    },
+    "infrastructure": {
+      "environments": [
+        "development",
+        "staging",
+        "production"
+      ]
+    },
+    "adrs": [],
+    "component_map": {
+      "components": [],
+      "dependencies": []
+    }
+  },
+  "area_4_ux": {
+    "journeys": [],
+    "ui_states": [],
+    "accessibility": {
+      "wcag_level": "AA"
+    },
+    "design_system": {
+      "exists": false,
+      "location": ""
+    },
+    "mobile_first": false
+  },
+  "area_5_development": {
+    "backend": {
+      "standards": [],
+      "service_contracts": []
+    },
+    "frontend": {
+      "standards": [],
+      "state_management": ""
+    },
+    "infra": {
+      "ci_cd": "",
+      "secrets_policy": "vault-only"
+    },
+    "branching_strategy": {
+      "model": "trunk_or_short_lived_branches"
+    }
+  },
+  "area_6_quality": {
+    "testing_strategy": {
+      "unit": true,
+      "integration": true,
+      "e2e": true
+    },
+    "critical_regressions": [
+      "flow_1",
+      "flow_2"
+    ],
+    "performance": {
+      "targets": []
+    },
+    "security": {
+      "owasp_required": true
+    }
+  },
+  "area_7_operations": {
+    "deployment": {
+      "strategy": "rolling"
+    },
+    "rollback": {
+      "strategy": "automatic"
+    },
+    "monitoring": {
+      "signals": [
+        "latency",
+        "error_rate",
+        "conversion_rate"
+      ]
+    },
+    "incident_response": {
+      "on_call_owner": "CodexSandboxOffline"
+    }
+  },
+  "area_8_launch": {
+    "go_to_market": {
+      "plan": ""
+    },
+    "onboarding": {
+      "first_value_moment": ""
+    },
+    "feedback_loop": {
+      "channels": []
+    },
+    "roadmap": {
+      "next_milestones": [
+        "UX refinements",
+        "Secondary automation paths"
+      ]
+    }
+  },
+  "orchestrator_context": {
+    "architecture_decisions": [],
+    "agent_memory": [],
+    "known_risks": [],
+    "production_learnings": []
+  }
+}

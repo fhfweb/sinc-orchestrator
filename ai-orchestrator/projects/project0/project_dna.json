@@ -1,0 +1,66 @@
+{
+    "project_identity":  {
+                             "name":  "project0",
+                             "slug":  "project0",
+                             "created_at":  "2026-03-11T22:39:51",
+                             "updated_at":  "2026-03-12T06:13:06",
+                             "type":  "unknown",
+                             "status":  "blocked",
+                             "health_status":  "needs-answers"
+                         },
+    "architecture":  {
+                         "style":  "unknown",
+                         "services":  [
+
+                                      ],
+                         "languages":  [
+
+                                       ],
+                         "databases":  [
+
+                                       ]
+                     },
+    "service_map":  {
+
+                    },
+    "patterns":  {
+                     "architecture_patterns":  [
+
+                                               ],
+                     "code_patterns":  [
+
+                                       ]
+                 },
+    "tech_stack":  {
+                       "backend":  "unknown",
+                       "frontend":  "unknown",
+                       "database":  "unknown",
+                       "vector_memory":  "qdrant",
+                       "graph_memory":  "neo4j"
+                   },
+    "evolution":  {
+                      "major_changes":  [
+                                            {
+                                                "date":  "2026-03-11T22:39:51",
+                                                "description":  "observer health changed: unknown -\u003e needs-answers"
+                                            }
+                                        ]
+                  },
+    "agent_knowledge":  {
+                            "known_hotspots":  [
+
+                                               ],
+                            "technical_debt":  [
+                                                   "database-engine",
+                                                   "incident:INCIDENT_20260311_224031_memory_sync",
+                                                   "incident:INCIDENT_20260311_224031_build",
+                                                   "incident:INCIDENT_20260311_224031_test",
+                                                   "incident:INCIDENT_20260311_224053_memory_sync",
+                                                   "incident:INCIDENT_20260311_224053_build",
+                                                   "incident:INCIDENT_20260311_224053_test",
+                                                   "incident:INCIDENT_20260312_061340_memory_sync",
+                                                   "incident:INCIDENT_20260312_061340_build",
+                                                   "incident:INCIDENT_20260312_061340_test"
+                                               ]
+                        }
+}

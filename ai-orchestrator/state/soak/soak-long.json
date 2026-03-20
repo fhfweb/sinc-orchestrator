@@ -1,0 +1,8 @@
+{
+  "pid": 43660,
+  "started_at": "2026-03-19T14:22:51.215209-03:00",
+  "python": "C:\\\\Python313\\\\python.exe",
+  "command": "C:\\\\Python313\\\\python.exe ai-orchestrator/scripts/soak_python_control_plane.py --cycles 10080 --interval-s 120",
+  "stdout": "g:\\Fernando\\project0\\ai-orchestrator\\state\\soak\\soak-long.out.log",
+  "stderr": "g:\\Fernando\\project0\\ai-orchestrator\\state\\soak\\soak-long.err.log"
+}

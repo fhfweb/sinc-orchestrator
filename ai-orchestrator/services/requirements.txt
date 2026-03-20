@@ -1,0 +1,44 @@
+# SINC N5 Core Dependencies
+langgraph>=0.0.1
+langchain-core>=0.1.0
+langchain-anthropic>=0.1.0
+pydantic>=2.0.0
+httpx>=0.24.0
+llama-index
+llama-index-graph-stores-neo4j
+fastembed
+langgraph-checkpoint-sqlite
+
+# Streaming & API
+fastapi
+jinja2
+uvicorn[standard]
+structlog
+sse-starlette
+psutil
+
+# Database & Cache
+psycopg[binary]
+psycopg-pool
+redis
+
+# Analysis & Intelligence
+tree-sitter
+tree-sitter-python
+tree-sitter-typescript
+networkx
+numpy
+
+# Scheduling & Reliability
+APScheduler
+tenacity
+watchfiles
+
+# Observability (OTEL + Metrics)
+prometheus-client
+opentelemetry-sdk
+opentelemetry-exporter-otlp-proto-grpc
+opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-psycopg
+opentelemetry-instrumentation-redis
+opentelemetry-instrumentation-httpx

@@ -1,0 +1,34 @@
+{
+    "generated_at":  "2026-03-12T09:01:39",
+    "profile":  {
+                    "name":  "rtx5070-neo4j-qdrant",
+                    "hardware":  "RTX 5070 / 48GB RAM / Ryzen 7 class",
+                    "objective":  "Dedicate 16GB WSL2 envelope for Neo4j + Qdrant graph/vector workloads."
+                },
+    "wsl2":  {
+                 "memory_gb":  16,
+                 "processors":  8,
+                 "swap_gb":  8,
+                 "localhost_forwarding":  true,
+                 "generated_file":  "G:\\Fernando\\project0\\workspace\\projects\\sistema-gestao-psicologos-autonomos\\ai-orchestrator\\config\\.wslconfig.generated"
+             },
+    "workload":  {
+                     "neo4j":  {
+                                   "heap_mb":  6553,
+                                   "pagecache_mb":  4096,
+                                   "notes":  "Use as upper bound for container env (NEO4J_server_memory_*)."
+                               },
+                     "qdrant":  {
+                                    "memory_budget_mb":  4096,
+                                    "notes":  "Cap Qdrant service memory close to this value when running with other services."
+                                },
+                     "safety_reserve_mb":  1639
+                 },
+    "apply":  {
+                  "manual_steps":  [
+                                       "Copy ai-orchestrator/config/.wslconfig.generated to %USERPROFILE%\\\\.wslconfig",
+                                       "Run: wsl --shutdown",
+                                       "Restart Docker Desktop / WSL distro"
+                                   ]
+              }
+}

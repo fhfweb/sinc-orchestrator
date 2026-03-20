@@ -1,0 +1,4 @@
+{"timestamp": "2026-03-11T17:07:03Z", "mode": "raw", "template": "", "success": false, "error": "raw-cypher-disabled", "duration_ms": 0}
+{"timestamp": "2026-03-11T17:07:03Z", "mode": "template", "template": "module_impact", "success": false, "error": "template-missing-param:module", "duration_ms": 0}
+{"timestamp": "2026-03-11T17:07:09Z", "mode": "template", "template": "module_impact", "success": false, "error": "template-missing-param:module", "duration_ms": 0}
+{"timestamp": "2026-03-11T17:07:16Z", "mode": "template", "template": "module_impact", "success": false, "error": "template-missing-param:module", "duration_ms": 0}

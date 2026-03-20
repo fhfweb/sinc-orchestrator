@@ -1,0 +1,30 @@
+{
+    "schema_version": "v1",
+    "enabled": true,
+    "priority": "P0",
+    "local_only": true,
+    "required_in_tasks": [
+        "pending",
+        "in-progress"
+    ],
+    "decision_options": [
+        "use-existing-library",
+        "hybrid",
+        "custom-code-justified",
+        "not-applicable"
+    ],
+    "guidance": {
+        "objective": "Prefer local, already-installed libraries before creating custom code.",
+        "rules": [
+            "Always evaluate local composer/npm dependencies before proposing new implementation.",
+            "If custom code is chosen, document why existing libraries were rejected.",
+            "When selecting a library, include compatibility and test impact in the decision."
+        ],
+        "risk_checks": [
+            "security-impact",
+            "maintenance-cost",
+            "runtime-footprint",
+            "license-compatibility"
+        ]
+    }
+}

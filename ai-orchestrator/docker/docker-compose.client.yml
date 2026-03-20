@@ -1,0 +1,146 @@
+﻿# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# SINC Orchestrator â€” CLIENT-SIDE SERVICES TEMPLATE
+#
+# Copy this file into your project root and set the variables in .env
+#
+# These services run on the CLIENT side (inside your project).
+# They connect to the centralized orchestrator via HTTP API.
+# They DO mount your project's source code.
+#
+# Required .env variables:
+#   ORCHESTRATOR_URL        = http://<orchestrator-host>:8765
+#   ORCHESTRATOR_API_KEY    = sk-...        (from POST /admin/tenants)
+#   PROJECT_ID              = my-project
+#   TENANT_ID               = my-tenant
+#   ANTHROPIC_API_KEY       = sk-ant-...   (optional â€” for Claude agents)
+#
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+name: orchestrator-client
+
+x-orch-env: &orch-env
+  ORCHESTRATOR_URL:      ${ORCHESTRATOR_URL:-http://host.docker.internal:8765}
+  ORCHESTRATOR_API_KEY:  ${ORCHESTRATOR_API_KEY:-dev}
+  PROJECT_ID:            ${PROJECT_ID:-default}
+  TENANT_ID:             ${TENANT_ID:-local}
+
+services:
+
+  # â”€â”€ AGENT WORKER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # Polls the orchestrator for tasks, executes them against your codebase,
+  # and reports results back via API. Has full read/write access to /workspace.
+
+  agent-worker:
+    build:
+      context: .
+      dockerfile: .orchestrator-sdk/Dockerfile.agent
+    container_name: ${PROJECT_ID:-client}-agent-worker
+    working_dir: /workspace
+    volumes:
+      - .:/workspace                                         # YOUR project code
+      - ${USERPROFILE:-~}/.codex:/root/.codex:ro             # codex credentials
+      - ${USERPROFILE:-~}/.config/anthropic:/root/.anthropic:ro
+    environment:
+      <<: *orch-env
+      PYTHONUNBUFFERED:    "1"
+      AGENT_WORKSPACE:     /workspace
+      AGENT_NAME:          ${AGENT_NAME:-agent-worker}
+      AGENT_MODEL:         ${AGENT_MODEL:-claude-sonnet-4-6}
+      AGENT_MAX_TOKENS:    ${AGENT_MAX_TOKENS:-8192}
+      AGENT_POLL_INTERVAL: ${AGENT_POLL_INTERVAL:-15}
+      ANTHROPIC_API_KEY:   ${ANTHROPIC_API_KEY:-}
+      CODEX_MODEL:         ${CODEX_MODEL:-}
+      # Ollama â€” optional, point to the orchestrator's Ollama or a local one
+      OLLAMA_HOST:           ${OLLAMA_HOST:-http://host.docker.internal:11435}
+      OLLAMA_MODEL:          ${OLLAMA_MODEL:-qwen2.5:7b-instruct-q4_K_M}
+      OLLAMA_MODEL_REASONING: ${OLLAMA_MODEL_REASONING:-qwen2.5:32b-instruct-q4_K_M}
+      OLLAMA_MODEL_CODE:     ${OLLAMA_MODEL_CODE:-qwen2.5-coder:14b-instruct-q4_K_M}
+      OLLAMA_MODEL_GENERAL:  ${OLLAMA_MODEL_GENERAL:-qwen2.5:7b-instruct-q4_K_M}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - DAC_OVERRIDE
+      - SETUID
+      - SETGID
+    # Downloads agent_worker from the orchestrator, always up-to-date:
+    command: >-
+      sh -lc "
+        curl -sf ${ORCHESTRATOR_URL}/sdk/agent_worker.py -o /tmp/agent_worker.py &&
+        python /tmp/agent_worker.py
+      "
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # â”€â”€ AUTONOMOUS LOOP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # Canonical Python loop for the control plane.
+  # The old PowerShell loop is deprecated.
+
+  orchestrator-loop:
+    build:
+      context: .
+      dockerfile: .orchestrator-sdk/Dockerfile.loop
+    container_name: ${PROJECT_ID:-client}-loop
+    working_dir: /workspace
+    volumes:
+      - .:/workspace                                         # YOUR project code (rw)
+    environment:
+      <<: *orch-env
+      PYTHONUNBUFFERED:  "1"
+      ORCHESTRATOR_PUSH_EVENTS: "true"
+      ORCHESTRATOR_LOOP_INTERVAL_SECONDS: ${ORCHESTRATOR_LOOP_INTERVAL_SECONDS:-120}
+      ORCHESTRATOR_LOOP_MAX_CYCLES:       ${ORCHESTRATOR_LOOP_MAX_CYCLES:-0}
+      ORCHESTRATOR_LOOP_REQUEST_TIMEOUT_SECONDS: ${ORCHESTRATOR_LOOP_REQUEST_TIMEOUT_SECONDS:-30}
+    # Downloads the Python loop from the orchestrator SDK - no local mount needed
+    command: >-
+      sh -lc "
+        curl -sf ${ORCHESTRATOR_URL}/sdk/client_loop.py -o /tmp/client_loop.py &&
+        python /tmp/client_loop.py
+      "
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # â”€â”€ INGEST WORKER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # Client-side ingest: reads your local filesystem, pushes AST + vectors
+  # to the orchestrator's Neo4j + Qdrant via the orchestrator's internal network.
+  # Use this when the orchestrator can't clone your private repo.
+  #
+  # Alternative: if your repo is accessible via git, just call:
+  #   POST /ingest  { "project_id": "...", "repo_url": "https://..." }
+  # and the orchestrator will clone it server-side.
+
+  ingest-worker:
+    build:
+      context: .
+      dockerfile: .orchestrator-sdk/Dockerfile.ingest
+    container_name: ${PROJECT_ID:-client}-ingest-worker
+    working_dir: /workspace
+    volumes:
+      - .:/workspace:ro                                      # YOUR project (read-only)
+    environment:
+      <<: *orch-env
+      PYTHONUNBUFFERED:   "1"
+      PROJECT_PATH:       /workspace
+      # Points directly to orchestrator's Neo4j + Qdrant (must be reachable)
+      NEO4J_URI:          ${NEO4J_URI:-bolt://host.docker.internal:7687}
+      NEO4J_USER:         ${NEO4J_USER:-neo4j}
+      NEO4J_PASS:         ${NEO4J_PASS:-changeme-neo4j-password}
+      QDRANT_HOST:        ${QDRANT_HOST:-host.docker.internal}
+      QDRANT_PORT:        "6333"
+      OLLAMA_HOST:        ${OLLAMA_HOST:-http://host.docker.internal:11435}
+      OLLAMA_EMBED_MODEL: ${OLLAMA_EMBED_MODEL:-nomic-embed-text}
+    # Downloads ingest_pipeline from the orchestrator SDK:
+    command: >-
+      sh -lc "
+        curl -sf ${ORCHESTRATOR_URL}/sdk/ingest_pipeline.py -o /tmp/ingest_pipeline.py &&
+        python /tmp/ingest_pipeline.py run /workspace
+          --project-id ${PROJECT_ID}
+          --tenant-id  ${TENANT_ID}
+          --deep
+      "
+    restart: "no"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

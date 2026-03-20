@@ -1,0 +1,186 @@
+{
+  "generated_at": "2026-03-14T17:05:06",
+  "registry_path": "/orchestrator-root/docs/agents/agents-360.registry.json",
+  "project_path": "/orchestrator-root",
+  "phase": "architecture",
+  "scope": [
+    "context",
+    "architecture"
+  ],
+  "verdict": "NOT READY",
+  "totals": {
+    "selected": 7,
+    "pass": 6,
+    "fail": 1,
+    "critical_fail": 0
+  },
+  "results": [
+    {
+      "id": "AG-01",
+      "name": "Business Analyst Agent",
+      "priority": "critical",
+      "phases": [
+        "context",
+        "architecture"
+      ],
+      "status": "pass",
+      "required_count": 2,
+      "present_count": 2,
+      "missing_count": 0,
+      "required_artifacts": [
+        "ai-orchestrator/context/business-context.json",
+        "ai-orchestrator/context/business-context.md"
+      ],
+      "present_artifacts": [
+        "ai-orchestrator/context/business-context.json",
+        "ai-orchestrator/context/business-context.md"
+      ],
+      "missing_artifacts": [],
+      "details": "all-required-artifacts-present"
+    },
+    {
+      "id": "AG-02",
+      "name": "Architecture Agent",
+      "priority": "critical",
+      "phases": [
+        "architecture"
+      ],
+      "status": "pass",
+      "required_count": 3,
+      "present_count": 3,
+      "missing_count": 0,
+      "required_artifacts": [
+        "ai-orchestrator/documentation/adr/ADR-0001-context-driven-architecture.md",
+        "ai-orchestrator/documentation/interfaces/contracts.md",
+        "ai-orchestrator/documentation/architecture.md"
+      ],
+      "present_artifacts": [
+        "ai-orchestrator/documentation/adr/ADR-0001-context-driven-architecture.md",
+        "ai-orchestrator/documentation/interfaces/contracts.md",
+        "ai-orchestrator/documentation/architecture.md"
+      ],
+      "missing_artifacts": [],
+      "details": "all-required-artifacts-present"
+    },
+    {
+      "id": "AG-03",
+      "name": "Product Manager Agent",
+      "priority": "high",
+      "phases": [
+        "architecture",
+        "execution"
+      ],
+      "status": "pass",
+      "required_count": 2,
+      "present_count": 2,
+      "missing_count": 0,
+      "required_artifacts": [
+        "ai-orchestrator/reports/product-validation-checklist.md",
+        "ai-orchestrator/reports/orchestrator-360-decision-report.json"
+      ],
+      "present_artifacts": [
+        "ai-orchestrator/reports/product-validation-checklist.md",
+        "ai-orchestrator/reports/orchestrator-360-decision-report.json"
+      ],
+      "missing_artifacts": [],
+      "details": "all-required-artifacts-present"
+    },
+    {
+      "id": "AG-17",
+      "name": "Memory Agent",
+      "priority": "high",
+      "phases": [
+        "context",
+        "execution",
+        "release"
+      ],
+      "status": "fail",
+      "required_count": 2,
+      "present_count": 1,
+      "missing_count": 1,
+      "required_artifacts": [
+        "ai-orchestrator/memory/world-model.md",
+        "ai-orchestrator/reports/memory-agent-report.json"
+      ],
+      "present_artifacts": [
+        "ai-orchestrator/memory/world-model.md"
+      ],
+      "missing_artifacts": [
+        "ai-orchestrator/reports/memory-agent-report.json"
+      ],
+      "details": "missing=ai-orchestrator/reports/memory-agent-report.json"
+    },
+    {
+      "id": "AG-19",
+      "name": "Estimation Agent",
+      "priority": "medium",
+      "phases": [
+        "architecture",
+        "execution"
+      ],
+      "status": "pass",
+      "required_count": 1,
+      "present_count": 1,
+      "missing_count": 0,
+      "required_artifacts": [
+        "ai-orchestrator/reports/orchestrator-360-decision-report.json"
+      ],
+      "present_artifacts": [
+        "ai-orchestrator/reports/orchestrator-360-decision-report.json"
+      ],
+      "missing_artifacts": [],
+      "details": "all-required-artifacts-present"
+    },
+    {
+      "id": "AG-20",
+      "name": "Orchestrator Agent",
+      "priority": "critical",
+      "phases": [
+        "context",
+        "architecture",
+        "execution",
+        "release"
+      ],
+      "status": "pass",
+      "required_count": 2,
+      "present_count": 2,
+      "missing_count": 0,
+      "required_artifacts": [
+        "ai-orchestrator/tasks/task-dag.json",
+        "ai-orchestrator/state/project-state.json"
+      ],
+      "present_artifacts": [
+        "ai-orchestrator/tasks/task-dag.json",
+        "ai-orchestrator/state/project-state.json"
+      ],
+      "missing_artifacts": [],
+      "details": "all-required-artifacts-present"
+    },
+    {
+      "id": "AG-21",
+      "name": "Documentation Agent",
+      "priority": "medium",
+      "phases": [
+        "architecture",
+        "execution",
+        "release"
+      ],
+      "status": "pass",
+      "required_count": 3,
+      "present_count": 3,
+      "missing_count": 0,
+      "required_artifacts": [
+        "ai-orchestrator/documentation/architecture.md",
+        "ai-orchestrator/reports/code-review-checklist.md",
+        "ai-orchestrator/reports/product-validation-checklist.md"
+      ],
+      "present_artifacts": [
+        "ai-orchestrator/documentation/architecture.md",
+        "ai-orchestrator/reports/code-review-checklist.md",
+        "ai-orchestrator/reports/product-validation-checklist.md"
+      ],
+      "missing_artifacts": [],
+      "details": "all-required-artifacts-present"
+    }
+  ]
+}

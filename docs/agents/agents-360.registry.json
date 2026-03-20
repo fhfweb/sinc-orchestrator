@@ -1,0 +1,360 @@
+{
+  "schema_version": "1.0",
+  "registry_name": "orchestrator-360-agents",
+  "description": "Canonical 21-agent registry for Orchestrator 360 runtime dispatch and artifact validation.",
+  "agents": [
+    {
+      "id": "AG-01",
+      "name": "Business Analyst Agent",
+      "group": "strategy",
+      "priority": "critical",
+      "autonomy": "semi-autonomous",
+      "enabled": true,
+      "phases": ["context", "architecture"],
+      "execution": {
+        "mode": "script",
+        "script": "scripts/Generate-Orchestrator360Artifacts.ps1",
+        "arguments": ["-ProjectPath", "{project_path}"]
+      },
+      "required_artifacts": [
+        "ai-orchestrator/context/business-context.json",
+        "ai-orchestrator/context/business-context.md"
+      ]
+    },
+    {
+      "id": "AG-02",
+      "name": "Architecture Agent",
+      "group": "strategy",
+      "priority": "critical",
+      "autonomy": "semi-autonomous",
+      "enabled": true,
+      "phases": ["architecture"],
+      "execution": {
+        "mode": "script",
+        "script": "scripts/Generate-Orchestrator360Artifacts.ps1",
+        "arguments": ["-ProjectPath", "{project_path}"]
+      },
+      "required_artifacts": [
+        "ai-orchestrator/documentation/adr/ADR-0001-context-driven-architecture.md",
+        "ai-orchestrator/documentation/interfaces/contracts.md",
+        "ai-orchestrator/documentation/architecture.md"
+      ]
+    },
+    {
+      "id": "AG-03",
+      "name": "Product Manager Agent",
+      "group": "strategy",
+      "priority": "high",
+      "autonomy": "semi-autonomous",
+      "enabled": true,
+      "phases": ["architecture", "execution"],
+      "execution": {
+        "mode": "script",
+        "script": "scripts/v2/Invoke-Orchestrator360DecisionEngine.ps1",
+        "arguments": ["-ProjectPath", "{project_path}", "-AutoRepairTasks", "-EmitJson"]
+      },
+      "required_artifacts": [
+        "ai-orchestrator/reports/product-validation-checklist.md",
+        "ai-orchestrator/reports/orchestrator-360-decision-report.json"
+      ]
+    },
+    {
+      "id": "AG-04",
+      "name": "Backend Agent",
+      "group": "build",
+      "priority": "critical",
+      "autonomy": "autonomous",
+      "enabled": true,
+      "phases": ["execution"],
+      "execution": {
+        "mode": "runtime-agent",
+        "runtime_agent": "Codex"
+      },
+      "required_artifacts": []
+    },
+    {
+      "id": "AG-05",
+      "name": "Frontend Agent",
+      "group": "build",
+      "priority": "high",
+      "autonomy": "autonomous",
+      "enabled": true,
+      "phases": ["execution"],
+      "execution": {
+        "mode": "runtime-agent",
+        "runtime_agent": "Antigravity"
+      },
+      "required_artifacts": []
+    },
+    {
+      "id": "AG-06",
+      "name": "Infra Agent",
+      "group": "build",
+      "priority": "high",
+      "autonomy": "autonomous",
+      "enabled": true,
+      "phases": ["execution"],
+      "execution": {
+        "mode": "runtime-agent",
+        "runtime_agent": "AI DevOps Engineer"
+      },
+      "required_artifacts": [
+        "ai-orchestrator/docker/docker-compose.generated.yml"
+      ]
+    },
+    {
+      "id": "AG-07",
+      "name": "Database Agent",
+      "group": "build",
+      "priority": "high",
+      "autonomy": "autonomous",
+      "enabled": true,
+      "phases": ["execution"],
+      "execution": {
+        "mode": "runtime-agent",
+        "runtime_agent": "AI Engineer"
+      },
+      "required_artifacts": [
+        "ai-orchestrator/database/connection-pack.json"
+      ]
+    },
+    {
+      "id": "AG-08",
+      "name": "Integration Agent",
+      "group": "build",
+      "priority": "high",
+      "autonomy": "autonomous",
+      "enabled": true,
+      "phases": ["execution"],
+      "execution": {
+        "mode": "runtime-agent",
+        "runtime_agent": "AI Engineer"
+      },
+      "required_artifacts": []
+    },
+    {
+      "id": "AG-09",
+      "name": "DevOps Agent",
+      "group": "build",
+      "priority": "high",
+      "autonomy": "autonomous",
+      "enabled": true,
+      "phases": ["execution", "release"],
+      "execution": {
+        "mode": "runtime-agent",
+        "runtime_agent": "AI DevOps Engineer"
+      },
+      "required_artifacts": [
+        "ai-orchestrator/release/release-config.json"
+      ]
+    },
+    {
+      "id": "AG-10",
+      "name": "Code Review Agent",
+      "group": "quality",
+      "priority": "critical",
+      "autonomy": "autonomous",
+      "enabled": true,
+      "phases": ["execution"],
+      "execution": {
+        "mode": "script",
+        "script": "scripts/Generate-Orchestrator360Artifacts.ps1",
+        "arguments": ["-ProjectPath", "{project_path}"]
+      },
+      "required_artifacts": [
+        "ai-orchestrator/reports/code-review-checklist.md"
+      ]
+    },
+    {
+      "id": "AG-11",
+      "name": "Security Agent",
+      "group": "quality",
+      "priority": "critical",
+      "autonomy": "autonomous",
+      "enabled": true,
+      "phases": ["execution", "release"],
+      "execution": {
+        "mode": "script",
+        "script": "scripts/v2/Invoke-AgentSkillRuntimeV2.ps1",
+        "arguments": ["-ProjectPath", "{project_path}", "-AgentId", "AG-11", "-EmitJson"]
+      },
+      "required_artifacts": [
+        "ai-orchestrator/state/security-scan.json"
+      ]
+    },
+    {
+      "id": "AG-12",
+      "name": "Performance Agent",
+      "group": "quality",
+      "priority": "medium",
+      "autonomy": "autonomous",
+      "enabled": true,
+      "phases": ["execution", "release"],
+      "execution": {
+        "mode": "script",
+        "script": "scripts/v2/Invoke-AgentSkillRuntimeV2.ps1",
+        "arguments": ["-ProjectPath", "{project_path}", "-AgentId", "AG-12", "-EmitJson"]
+      },
+      "required_artifacts": [
+        "ai-orchestrator/reports/performance-agent-report.json"
+      ]
+    },
+    {
+      "id": "AG-13",
+      "name": "QA Agent",
+      "group": "quality",
+      "priority": "high",
+      "autonomy": "autonomous",
+      "enabled": true,
+      "phases": ["execution"],
+      "execution": {
+        "mode": "script",
+        "script": "scripts/v2/Invoke-AgentSkillRuntimeV2.ps1",
+        "arguments": ["-ProjectPath", "{project_path}", "-AgentId", "AG-13", "-EmitJson"]
+      },
+      "required_artifacts": [
+        "ai-orchestrator/reports/qa-agent-report.json"
+      ]
+    },
+    {
+      "id": "AG-14",
+      "name": "User Simulation Agent",
+      "group": "operations",
+      "priority": "high",
+      "autonomy": "semi-autonomous",
+      "enabled": true,
+      "phases": ["release"],
+      "execution": {
+        "mode": "script",
+        "script": "scripts/Generate-Orchestrator360Artifacts.ps1",
+        "arguments": ["-ProjectPath", "{project_path}"]
+      },
+      "required_artifacts": [
+        "ai-orchestrator/reports/user-simulation-plan.md"
+      ]
+    },
+    {
+      "id": "AG-15",
+      "name": "Observability Agent",
+      "group": "operations",
+      "priority": "high",
+      "autonomy": "autonomous",
+      "enabled": true,
+      "phases": ["execution", "release"],
+      "execution": {
+        "mode": "script",
+        "script": "scripts/v2/Invoke-RuntimeObservabilityV2.ps1",
+        "arguments": ["-ProjectPath", "{project_path}", "-AutoRepairTasks", "-EmitJson"]
+      },
+      "required_artifacts": [
+        "ai-orchestrator/reports/runtime-observability-report.json"
+      ]
+    },
+    {
+      "id": "AG-16",
+      "name": "Incident Response Agent",
+      "group": "operations",
+      "priority": "high",
+      "autonomy": "semi-autonomous",
+      "enabled": true,
+      "phases": ["release"],
+      "execution": {
+        "mode": "script",
+        "script": "scripts/v2/Invoke-AgentSkillRuntimeV2.ps1",
+        "arguments": ["-ProjectPath", "{project_path}", "-AgentId", "AG-16", "-EmitJson"]
+      },
+      "required_artifacts": [
+        "ai-orchestrator/reports/incident-response-summary.json"
+      ]
+    },
+    {
+      "id": "AG-17",
+      "name": "Memory Agent",
+      "group": "intelligence",
+      "priority": "high",
+      "autonomy": "autonomous",
+      "enabled": true,
+      "phases": ["context", "execution", "release"],
+      "execution": {
+        "mode": "script",
+        "script": "scripts/v2/Invoke-AgentSkillRuntimeV2.ps1",
+        "arguments": ["-ProjectPath", "{project_path}", "-AgentId", "AG-17", "-EmitJson"]
+      },
+      "required_artifacts": [
+        "ai-orchestrator/memory/world-model.md",
+        "ai-orchestrator/reports/memory-agent-report.json"
+      ]
+    },
+    {
+      "id": "AG-18",
+      "name": "Learning Agent",
+      "group": "intelligence",
+      "priority": "medium",
+      "autonomy": "autonomous",
+      "enabled": true,
+      "phases": ["execution", "release"],
+      "execution": {
+        "mode": "script",
+        "script": "scripts/v2/Invoke-AgentSkillRuntimeV2.ps1",
+        "arguments": ["-ProjectPath", "{project_path}", "-AgentId", "AG-18", "-EmitJson"]
+      },
+      "required_artifacts": [
+        "ai-orchestrator/reports/learning-agent-report.json"
+      ]
+    },
+    {
+      "id": "AG-19",
+      "name": "Estimation Agent",
+      "group": "intelligence",
+      "priority": "medium",
+      "autonomy": "autonomous",
+      "enabled": true,
+      "phases": ["architecture", "execution"],
+      "execution": {
+        "mode": "script",
+        "script": "scripts/v2/Invoke-Orchestrator360DecisionEngine.ps1",
+        "arguments": ["-ProjectPath", "{project_path}", "-AutoRepairTasks", "-EmitJson"]
+      },
+      "required_artifacts": [
+        "ai-orchestrator/reports/orchestrator-360-decision-report.json"
+      ]
+    },
+    {
+      "id": "AG-20",
+      "name": "Orchestrator Agent",
+      "group": "coordination",
+      "priority": "critical",
+      "autonomy": "semi-autonomous",
+      "enabled": true,
+      "phases": ["context", "architecture", "execution", "release"],
+      "execution": {
+        "mode": "script",
+        "script": "scripts/v2/Invoke-SchedulerV2.ps1",
+        "arguments": ["-ProjectPath", "{project_path}"]
+      },
+      "required_artifacts": [
+        "ai-orchestrator/tasks/task-dag.json",
+        "ai-orchestrator/state/project-state.json"
+      ]
+    },
+    {
+      "id": "AG-21",
+      "name": "Documentation Agent",
+      "group": "coordination",
+      "priority": "medium",
+      "autonomy": "autonomous",
+      "enabled": true,
+      "phases": ["architecture", "execution", "release"],
+      "execution": {
+        "mode": "script",
+        "script": "scripts/Generate-Orchestrator360Artifacts.ps1",
+        "arguments": ["-ProjectPath", "{project_path}"]
+      },
+      "required_artifacts": [
+        "ai-orchestrator/documentation/architecture.md",
+        "ai-orchestrator/reports/code-review-checklist.md",
+        "ai-orchestrator/reports/product-validation-checklist.md"
+      ]
+    }
+  ]
+}

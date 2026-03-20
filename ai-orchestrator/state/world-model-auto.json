@@ -1,0 +1,12 @@
+{
+  "project_slug": "project0",
+  "summary": {
+    "entity_count": 0,
+    "relationship_count": 0,
+    "source_counts": {}
+  },
+  "project_request": {},
+  "entities": [],
+  "business_rules": [],
+  "output_path": "G:\\Fernando\\project0\\ai-orchestrator\\memory\\world-model.md"
+}

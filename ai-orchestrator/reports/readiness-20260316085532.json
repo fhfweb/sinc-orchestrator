@@ -1,0 +1,58 @@
+{
+  "schema_version": "v2-readiness",
+  "generated_at": "2026-03-16T08:55:33",
+  "project": "workspace",
+  "verdict": "NOT_READY",
+  "checks": [
+    {
+      "name": "task-state-db-status",
+      "passed": false,
+      "detail": "unavailable source=dag"
+    },
+    {
+      "name": "no-open-repair-tasks",
+      "passed": false,
+      "detail": "1 open REPAIR task(s) via dag"
+    },
+    {
+      "name": "roadmap-backlog-alignment",
+      "passed": false,
+      "detail": "roadmap_pending=True; open_execution_tasks=0; source=dag"
+    },
+    {
+      "name": "health-status",
+      "passed": false,
+      "detail": "health_status=needs-answers"
+    },
+    {
+      "name": "finops-ram",
+      "passed": true,
+      "detail": "ram=0% (threshold=90%)"
+    },
+    {
+      "name": "script-validation",
+      "passed": true,
+      "detail": "0 parse error(s)"
+    }
+  ],
+  "blockers": [
+    "task-state-db-status: unavailable source=dag",
+    "no-open-repair-tasks: 1 open REPAIR task(s) via dag",
+    "roadmap-backlog-alignment: roadmap_pending=True; open_execution_tasks=0; source=dag",
+    "health-status: health_status=needs-answers"
+  ],
+  "summary": {
+    "checks_passed": 2,
+    "checks_total": 6,
+    "open_repairs": 1,
+    "pending_tasks": 1,
+    "in_progress": 0,
+    "blocked_tasks": 397,
+    "open_execution_tasks": 0,
+    "task_metrics_source": "dag",
+    "roadmap_pending": true,
+    "mutation_score": null,
+    "mutation_run": 0,
+    "health_status": "needs-answers"
+  }
+}

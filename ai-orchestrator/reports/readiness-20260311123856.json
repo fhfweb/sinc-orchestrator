@@ -1,0 +1,42 @@
+{
+    "schema_version":  "v2-readiness",
+    "generated_at":  "2026-03-11T12:38:56",
+    "project":  "project0",
+    "verdict":  "NOT_READY",
+    "checks":  [
+                   {
+                       "name":  "no-open-repair-tasks",
+                       "passed":  true,
+                       "detail":  "0 open REPAIR task(s)"
+                   },
+                   {
+                       "name":  "health-status",
+                       "passed":  false,
+                       "detail":  "health_status=missing"
+                   },
+                   {
+                       "name":  "finops-ram",
+                       "passed":  true,
+                       "detail":  "ram=0% (threshold=85%)"
+                   },
+                   {
+                       "name":  "script-validation",
+                       "passed":  true,
+                       "detail":  "0 parse error(s)"
+                   }
+               ],
+    "blockers":  [
+                     "health-status: health_status=missing"
+                 ],
+    "summary":  {
+                    "checks_passed":  3,
+                    "checks_total":  4,
+                    "open_repairs":  0,
+                    "pending_tasks":  0,
+                    "in_progress":  0,
+                    "blocked_tasks":  0,
+                    "mutation_score":  null,
+                    "mutation_run":  0,
+                    "health_status":  "missing"
+                }
+}

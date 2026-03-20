@@ -1,0 +1,58 @@
+{
+  "generated_at": "2026-03-14T17:04:46",
+  "project": {
+    "name": "orchestrator-root",
+    "slug": "project0",
+    "type": "existing"
+  },
+  "domain": {
+    "problem_statement": "Missing description in PROJECT_REQUEST.md",
+    "value_proposition": "Define a clear business value proposition in PROJECT_REQUEST.md.",
+    "expected_outcome": "Deliver MVP with validated core workflow and production-ready baseline."
+  },
+  "non_functional_requirements": {
+    "reliability": "Health checks must stay >= healthy and CORE-COMPLETE-001 must pass.",
+    "security": "Secrets masked in outputs and stored only in protected vault.",
+    "performance": "P95 API latency target <= 400ms for critical path in initial production.",
+    "observability": "Critical endpoints and failed flows must open repair tasks automatically."
+  },
+  "architecture": {
+    "primary_language": "powershell",
+    "frameworks": [],
+    "architecture_pattern": "monolith",
+    "database_engine": "unknown"
+  },
+  "definition_of_done": [
+    "Business context and ADR approved by human checkpoint.",
+    "Build and test commands verified and passing.",
+    "Domain migration scaffold applied and validated.",
+    "User simulation happy-path and adversarial-path executed with report.",
+    "Production observability plan active with automatic repair-task policy."
+  ],
+  "personas": [
+    {
+      "name": "Primary Operator",
+      "goal": "Run the core business workflow with minimal friction.",
+      "pain": "Manual process and fragmented tooling.",
+      "source": "inferred-from-project-request"
+    },
+    {
+      "name": "Business Owner",
+      "goal": "See measurable business outcome and operational health.",
+      "pain": "Low visibility on quality and delivery risk.",
+      "source": "orchestrator-default"
+    }
+  ],
+  "constraints": [
+    "Keep MVP scope focused on one primary user journey.",
+    "Require verified build/test commands before phase completion.",
+    "Preserve project isolation for Postgres schema, Neo4j namespace, and Qdrant collection."
+  ],
+  "unknowns": [
+    "database-engine"
+  ],
+  "verified_commands": {
+    "build": "unknown",
+    "test": "Invoke-Pester"
+  }
+}

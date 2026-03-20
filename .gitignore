@@ -1,0 +1,13 @@
+# AI Orchestrator Gitignore
+workspace/
+ai-orchestrator/storage/logs/
+ai-orchestrator/tmp/
+ai-orchestrator/services/__pycache__/
+**/node_modules/
+**/vendor/
+.gemini/
+*.log
+*.zip
+*.bak
+temp_recovery/
+find_me.txt
