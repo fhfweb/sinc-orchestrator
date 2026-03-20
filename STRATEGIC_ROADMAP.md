@@ -8,36 +8,36 @@ This roadmap addresses the critical gaps identified in the v10.0 audit: **Produc
 ## 🎯 Phase 1: Proof of Value (The 5-Agent Core)
 **Goal**: Move from "21 described agents" to "5 bulletproof performers."
 
-| Agent | Focus | Key Validator |
+| Agent | Focus | Key Validator (Exit Criterion) |
 |---|---|---|
-| **AI Architect** | ADR & Structure | Consistency across 10+ refactor cycles. |
+| **AI Architect** | ADR & Structure | **50+ cycles** with zero human intervention. |
 | **AI Engineer** | Core Logic | Test pass rate > 95% on first attempt. |
 | **Database Agent** | DDL & Query | Zero-downtime migration generation. |
 | **QA Agent** | Test Generation | Branch coverage target: 80%. |
-| **Documentation** | README/ADR | Zero-human edits required. |
+| **Documentation** | README/ADR | Zero-human edits required for 20+ docs. |
 
 ### 📊 Key Activity: The Learning Rate Benchmark
 - **Test**: Execute a complex module refactor 10 times with a "cold" vs. "warm" (L2/L3) memory.
-- **Metric**: Measure token savings and reduced reasoning steps (Latency) as a direct result of Neo4j/Qdrant hits.
-- **Output**: Publish the "SINC Learning Efficiency Report."
+- **Metric**: Compare **LLM Iteration Count** (number of turns to reach success) in cold vs. warm mode.
+- **Goal**: Demonstrate >40% decrease in iterations due to historical knowledge reuse.
 
 ---
 
 ## ⚡ Phase 2: Performance & Cost Optimization
 **Goal**: Address the "Silent Cost" of 4-layer memory and latency overhead.
 
-- **Selective Recall**: Optimize the memory pipeline to query layers based on task complexity (don't invoke Neo4j for simple file writes).
-- **Latency Benchmarking**: Establish a "Decision Quality vs. Time" threshold. Prove that the extra 2s of memory retrieval saves 30s of manual debugging.
-- **Infrastructure Tiers**: Define "Lite" (Redis-only) vs. "Full Cognitive" (Neo4j/Qdrant) profiles for smaller teams.
+- **Selective Recall**: Optimize the memory pipeline to query layers based on task complexity (e.g., skip Neo4j for simple file writes).
+- **Latency Benchmarking**: Prove that the extra 2s of memory retrieval minimizes **Reasoning Divergence**.
+- **Infrastructure Tiers**: Define "Lite" (Redis-only) vs. "Full Cognitive" (Neo4j/Qdrant) profiles for different project scales.
 
 ---
 
 ## 🛡️ Phase 3: Infrastructure Convergence (e2b Integration)
-**Goal**: Solve the Execution Security deficit by leveraging industry leaders.
+**Goal**: Solve the Execution Security deficit via a **Verified Sandbox Interface**.
 
-- **Backend Abstraction**: Refactor `local_agent_runner.py` to support **e2b.dev (Firecracker MicroVMs)** as an optional execution backend.
-- **Hybrid Security**: Keep "Cognitive Logic" in SINC and "Dangerous Execution" in e2b.
-- **Result**: Immediate reduction in SINC hardening burden; focus shifts entirely to the "Thinking" layer.
+- **Sandbox Abstraction**: Implement a vendor-agnostic interface in `local_agent_runner.py`.
+- **e2b Convergence**: Primary backend support for **e2b.dev (Firecracker MicroVMs)**.
+- **Hybrid Security**: Cognitive logic persists in SINC; stateful execution transitions to isolated micro-VMs.
 
 ---
 
@@ -52,11 +52,11 @@ This roadmap addresses the critical gaps identified in the v10.0 audit: **Produc
 
 ## 📊 Roadmap KPIs
 
-1.  **Learning Rate (LR)**: % reduction in redundant reasoning per 100 consecutive tasks.
+1.  **Iterative Efficiency**: % reduction in LLM turns per complex task (Cold vs. Warm).
 2.  **Reputation Delta**: Success rate improvement of MCTS-routed agents vs. static routing.
-3.  **Infrastructure ROI**: $ cost of SINC infra vs. $ developer time saved.
-4.  **Security Trust Score**: % of execution handled in verified isolated sandboxes (e2b).
+3.  **Infrastructure ROI**: $ cost of SINC infra vs. $ reduction in total prompt tokens.
+4.  **Security Trust Score**: % of execution handled in verified isolated sandboxes.
 
 ---
 > **Status**: **Phase 1 Initialization**  
-> **Primary Focus**: Validating the L3 + Reputation link in 'Construction' domain.
+> **Primary Focus**: Establishing the '50-cycle' baseline for the AI Architect.
