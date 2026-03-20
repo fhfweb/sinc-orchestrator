@@ -41,6 +41,27 @@
   - `alert_notifier`, `webhook_worker`, `orchestrator_client` e `memory_auditor` migraram de `urllib` para o client HTTP resiliente compartilhado
   - o cabeçalho corrompido de `local_agent_runner.py` foi reestabilizado e o gate adaptativo do runner voltou a ficar verde
 
+### Phase 5 Hardening Follow-up 3
+
+- Status: `completed`
+- Owner: `Codex`
+- Summary: validar a tranche em runtime real, colocar fencing token observável no GDS e continuar a limpeza final de `urllib`
+- Artifacts:
+  - `ai-orchestrator/services/graph_intelligence.py`
+  - `ai-orchestrator/services/agent_worker.py`
+  - `ai-orchestrator/services/peer_review_agent.py`
+  - `ai-orchestrator/services/github_connector.py`
+  - `ai-orchestrator/services/maintenance.py`
+  - `ai-orchestrator/services/streaming/tests/test_graph_intelligence_hardening.py`
+  - `ai-orchestrator/documentation/migration/migration-task-board.md`
+- Progress:
+  - `run_reputation_gds()` agora emite `fence_token` quando a lease distribuída é adquirida e mantém renew/heartbeat compatível com fallback sem `eval`
+  - `agent_worker`, `peer_review_agent`, `github_connector` e `maintenance` deixaram de usar `urllib` para outbound HTTP
+  - smoke vivo do control plane passou em `127.0.0.1:8765` para create -> claim -> heartbeat -> complete -> readiness
+  - smoke do batch cognitivo passou no contrato assíncrono (`batch_job_id`, `status=completed`)
+  - o probe real do `CodeValidatorAgent` promoveu `ci_test_suite` a partir de um artefato JUnit local
+  - o probe real de GDS retornou `gds_not_installed`, então o fencing token ficou validado na suíte e não no runtime desta stack
+
 ### MIG-P0-001
 
 - Status: `completed`

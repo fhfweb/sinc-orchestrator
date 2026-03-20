@@ -9,7 +9,7 @@ import logging
 import uuid
 from typing import Dict, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, Request
 from sse_starlette.sse import EventSourceResponse
 
 from services.streaming.core.auth import get_tenant_id, get_tenant
@@ -30,8 +30,8 @@ async def _table_has_tenant(cur, table_name: str) -> bool:
     return "tenant_id" in await get_table_columns_cached(cur, table_name)
 
 
-async def _resolve_tenant_id() -> str:
-    return await get_tenant_id()
+async def _resolve_tenant_id(tenant_id: str = Depends(get_tenant_id)) -> str:
+    return tenant_id
 
 
 async def _resolve_tenant() -> dict:

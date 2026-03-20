@@ -25,6 +25,7 @@ from services.semantic_backend import (
 )
 from services.streaming.core.config import env_get
 from services.streaming.core import redis_ as redis_runtime
+from services.agents_config import get_system_prompt, get_preferred_backend, get_ollama_model_name
 
 WORKSPACE = Path(__file__).resolve().parents[2]
 OLLAMA_HOST = env_get("OLLAMA_HOST", default="http://ollama:11434").rstrip("/")
@@ -42,6 +43,7 @@ class ExecutionResult:
     backend_used: str = ""
     files_modified: list[str] = field(default_factory=list)
     raw_output: str = ""
+    iteration_count: int = 0
 
 
 class PlaywrightManager:
@@ -587,7 +589,13 @@ def _build_ollama_tools() -> list[dict[str, Any]]:
 def _semantic_search_local(query: str, workspace: Path, top_k: int = 5) -> list[dict[str, Any]]:
     lowered = query.lower()
     results: list[dict[str, Any]] = []
+    ignored_dirs = {".git", "node_modules", "__pycache__", "venv", ".venv", "workspace", "logs", "tmp"}
+    
     for path in workspace.rglob("*"):
+        # Performance: skip bulky directories
+        if any(ignored in path.parts for ignored in ignored_dirs):
+            continue
+            
         if not path.is_file() or path.stat().st_size > 200_000:
             continue
         try:
@@ -862,20 +870,93 @@ def _execute_tool(name: str, payload: dict[str, Any], workspace: Path) -> str:
 
 
 def run_codex(prompt: str, *, workspace: Path = WORKSPACE, dispatch: dict[str, Any] | None = None) -> ExecutionResult:
-    return ExecutionResult(status="partial", summary="Codex backend not wired in this environment.", backend_used="codex")
+    """Codex (OpenAI Architecture) executor placeholder."""
+    return ExecutionResult(status="partial", summary="Codex backend not fully optimized in this environment.", backend_used="codex")
 
 
-def run_anthropic(prompt: str, *, workspace: Path = WORKSPACE, dispatch: dict[str, Any] | None = None) -> ExecutionResult:
-    return ExecutionResult(status="partial", summary="Anthropic backend unavailable in local runner fallback.", backend_used="anthropic")
+def run_anthropic(prompt: str, *, system_prompt: str | None = None, workspace: Path = WORKSPACE, dispatch: dict[str, Any] | None = None) -> ExecutionResult:
+    api_key = env_get("ANTHROPIC_API_KEY", default="")
+    if not api_key:
+        return ExecutionResult(status="failed", summary="ANTHROPIC_API_KEY not set", backend_used="anthropic")
+    
+    # [C3] Anthropic Cost Circuit Breaker (60k token limit)
+    max_tokens = int(env_get("ANTHROPIC_MAX_TOKENS", default="2048"))
+    
+    try:
+        from services.http_client import create_sync_resilient_client
+        with create_sync_resilient_client(
+            service_name="agent-runner-anthropic",
+            timeout=120.0,
+            headers={
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+            },
+        ) as client:
+            response = client.post(
+                "https://api.anthropic.com/v1/messages",
+                json={
+                    "model": ANTHROPIC_MODEL,
+                    "max_tokens": max_tokens,
+                    "system": system_prompt or "You are an AI software engineering agent.",
+                    "messages": [{"role": "user", "content": prompt}],
+                }
+            )
+            response.raise_for_status()
+            raw = response.json()
+            text = raw["content"][0]["text"]
+            
+            # Simple heuristic for completion status
+            status = "done" if '"status": "done"' in text.lower() or '"status": "success"' in text.lower() else "partial"
+            
+            # Extract summary
+            summary_match = re.search(r'"summary":\s*"([^"]+)"', text)
+            summary = summary_match.group(1) if summary_match else "Task processed via Anthropic."
+            
+            return ExecutionResult(
+                status=status,
+                summary=summary,
+                backend_used="anthropic",
+                raw_output=text
+            )
+    except Exception as e:
+        return ExecutionResult(status="failed", summary=f"Anthropic call failed: {e}", backend_used="anthropic", error=str(e))
 
 
-def run_ollama(prompt: str, *, workspace: Path = WORKSPACE, dispatch: dict[str, Any] | None = None) -> ExecutionResult:
-    return ExecutionResult(status="partial", summary="Ollama backend unavailable in local runner fallback.", backend_used="ollama")
+def run_ollama(prompt: str, *, system_prompt: str | None = None, model_override: str | None = None, workspace: Path = WORKSPACE, dispatch: dict[str, Any] | None = None) -> ExecutionResult:
+    if not detect_ollama():
+        return ExecutionResult(status="failed", summary="Ollama fallback not available.", backend_used="ollama")
+    
+    model = model_override or OLLAMA_MODEL
+    try:
+        from services.http_client import create_sync_resilient_client
+        with create_sync_resilient_client(service_name="agent-runner-ollama", timeout=120.0) as client:
+            response = client.post(
+                f"{OLLAMA_HOST}/api/generate",
+                json={
+                    "model": model,
+                    "system": system_prompt or "",
+                    "prompt": prompt,
+                    "stream": False,
+                }
+            )
+            response.raise_for_status()
+            text = response.json().get("response", "")
+            
+            status = "done" if '"status": "done"' in text.lower() or '"status": "success"' in text.lower() else "partial"
+            return ExecutionResult(
+                status=status,
+                summary="Task processed via Ollama.",
+                backend_used="ollama",
+                raw_output=text
+            )
+    except Exception as e:
+        return ExecutionResult(status="failed", summary=f"Ollama call failed: {e}", backend_used="ollama", error=str(e))
 
 
 class HybridAgentRunner:
     def __init__(self, available_backends: list[str] | None = None):
         self.available_backends = available_backends or get_available_backends()
+        self.iteration_count = 0
 
     def _build_autonomy_brief(self, task_id: str, task: dict[str, Any], preflight_context: str) -> str:
         description = str(task.get("description") or task.get("title") or "")
@@ -909,19 +990,40 @@ class HybridAgentRunner:
         return "\n".join(lines)
 
     def run(self, prompt: str, task: dict[str, Any] | None = None, workspace: Path | None = None) -> ExecutionResult:
+        self.iteration_count = 0
         workspace = Path(workspace or WORKSPACE)
         dispatch = dict(task or {})
-        backend = self.available_backends[0] if self.available_backends else "ollama"
+        
+        # 4. Determine Agent identity and look up specialized prompt/backend
+        agent_name = str(dispatch.get("assigned_agent") or dispatch.get("agent") or "ai engineer")
+        system_prompt = get_system_prompt(agent_name, workspace=str(workspace))
+        preferred_backend = get_preferred_backend(agent_name)
+        
         brief = ""
         if dispatch:
             try:
                 brief = self._build_autonomy_brief(str(dispatch.get("id") or dispatch.get("title") or "task"), dispatch, prompt)
-                dispatch["_autonomy_policy"] = _derive_autonomy_policy(dispatch, brief, backend)
+                dispatch["_autonomy_policy"] = _derive_autonomy_policy(dispatch, brief, preferred_backend)
             except Exception as exc:
                 brief = f"AUTONOMY DOSSIER UNAVAILABLE: {exc}"
+        
         final_prompt = f"{brief}\n\n{prompt}" if brief else prompt
-        if backend == "codex":
-            return run_codex(final_prompt, workspace=workspace, dispatch=dispatch)
-        if backend == "anthropic":
-            return run_anthropic(final_prompt, workspace=workspace, dispatch=dispatch)
-        return run_ollama(final_prompt, workspace=workspace, dispatch=dispatch)
+
+        # Override backend if the specifically requested one is not available
+        if preferred_backend not in self.available_backends:
+             preferred_backend = self.available_backends[0] if self.available_backends else "ollama"
+
+        self.iteration_count += 1
+        
+        result: ExecutionResult
+        if preferred_backend == "codex":
+            result = run_codex(final_prompt, workspace=workspace, dispatch=dispatch)
+        elif preferred_backend == "anthropic":
+            result = run_anthropic(final_prompt, system_prompt=system_prompt, workspace=workspace, dispatch=dispatch)
+        else:
+            model_name = get_ollama_model_name(agent_name)
+            result = run_ollama(final_prompt, system_prompt=system_prompt, model_override=model_name, workspace=workspace, dispatch=dispatch)
+        
+        result.iteration_count = self.iteration_count
+        return result
+

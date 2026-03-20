@@ -46,6 +46,7 @@ class GraphIntelligenceService:
         self._gds_last_projection_refresh_at = 0.0
         self._has_gds = None
         self._lease_key = f"sinc:gds:lease:{self._projection_name}"
+        self._lease_fence_key = f"sinc:gds:fence:{self._projection_name}"
         self._last_run_key = f"sinc:gds:last_run:{self._projection_name}"
         self._last_refresh_key = f"sinc:gds:last_refresh:{self._projection_name}"
 
@@ -128,15 +129,46 @@ class GraphIntelligenceService:
         if not redis_client:
             return None, "local-only"
         token = uuid.uuid4().hex
+        ttl = max(self._gds_lease_ttl_s, int(self._gds_min_run_interval_s) + 30)
         try:
-            acquired = await redis_client.set(
-                self._lease_key,
-                token,
-                ex=max(self._gds_lease_ttl_s, int(self._gds_min_run_interval_s) + 30),
-                nx=True,
-            )
+            if hasattr(redis_client, "eval"):
+                result = await redis_client.eval(
+                    """
+                    if redis.call('EXISTS', KEYS[1]) == 0 then
+                        local fence = redis.call('INCR', KEYS[2])
+                        local lease_value = ARGV[1] .. ':' .. tostring(fence)
+                        redis.call('SET', KEYS[1], lease_value, 'EX', ARGV[2])
+                        return {1, tostring(fence), lease_value}
+                    end
+                    return {0, '0', ''}
+                    """,
+                    2,
+                    self._lease_key,
+                    self._lease_fence_key,
+                    token,
+                    str(ttl),
+                )
+                if isinstance(result, (list, tuple)) and result:
+                    acquired = bool(int(result[0]))
+                    if acquired:
+                        lease_value = str(result[2] if len(result) > 2 else token)
+                        return lease_value, "distributed"
+                    return "", "distributed"
+            acquired = await redis_client.set(self._lease_key, token, ex=ttl, nx=True)
             if acquired:
-                return token, "distributed"
+                fence_token = None
+                if hasattr(redis_client, "incr"):
+                    try:
+                        fence_token = await redis_client.incr(self._lease_fence_key)
+                    except Exception:
+                        fence_token = None
+                lease_value = f"{token}:{fence_token}" if fence_token is not None else token
+                if lease_value != token and hasattr(redis_client, "set"):
+                    try:
+                        await redis_client.set(self._lease_key, lease_value, ex=ttl)
+                    except Exception:
+                        lease_value = token
+                return lease_value, "distributed"
             return "", "distributed"
         except Exception as exc:
             log.warning("gds_lease_acquire_failed error=%s", exc)
@@ -241,6 +273,9 @@ class GraphIntelligenceService:
             if lease_mode == "distributed" and lease_token == "":
                 return {"status": "skipped", "reason": "lease_held", "lease_mode": "distributed"}
             lease_heartbeat_task: asyncio.Task | None = None
+            fence_token = ""
+            if lease_token and ":" in lease_token:
+                fence_token = lease_token.rsplit(":", 1)[-1]
 
             cluster_last_run, cluster_last_refresh = await self._read_cluster_timestamps()
             if not force and cluster_last_run and now - cluster_last_run < self._gds_min_run_interval_s:
@@ -320,19 +355,26 @@ class GraphIntelligenceService:
                     self._gds_last_projection_refresh_at = refresh_at
                 await self._write_cluster_timestamps(last_run_at=now, last_refresh_at=refresh_at)
                 log.info(
-                    "gds_lifecycle_complete tenant=%s rebuilt=%s lease_mode=%s",
+                    "gds_lifecycle_complete tenant=%s rebuilt=%s lease_mode=%s fence_token=%s",
                     tenant_id or "global",
                     result.get("projection_rebuilt"),
                     lease_mode,
+                    fence_token or "none",
                 )
                 return {
                     **result,
                     "lease_mode": lease_mode,
                     "tenant_scope": tenant_id or "global",
+                    "fence_token": fence_token or None,
                 }
             except Exception as exc:
                 log.error("run_reputation_gds_failed error=%s", exc)
-                return {"status": "error", "error": str(exc), "lease_mode": lease_mode}
+                return {
+                    "status": "error",
+                    "error": str(exc),
+                    "lease_mode": lease_mode,
+                    "fence_token": fence_token or None,
+                }
             finally:
                 if lease_heartbeat_task:
                     lease_heartbeat_task.cancel()

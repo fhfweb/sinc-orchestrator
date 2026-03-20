@@ -73,6 +73,16 @@ class _LeaseRedis:
         return 1
 
 
+class _FenceLeaseRedis(_LeaseRedis):
+    async def eval(self, script, _numkeys, *args):
+        self.eval_calls.append((script, args))
+        if "INCR" in script and "SET" in script:
+            return [1, "7", f"{args[0]}:7"]
+        if "EXPIRE" in script:
+            return 1
+        return 1
+
+
 @pytest.mark.asyncio
 async def test_run_reputation_gds_reuses_projection_when_fresh(monkeypatch):
     state = {
@@ -171,3 +181,25 @@ async def test_run_reputation_gds_starts_and_cancels_lease_heartbeat(monkeypatch
 
     assert result["status"] == "ok"
     assert heartbeat == {"started": 1, "cancelled": 1}
+
+
+@pytest.mark.asyncio
+async def test_run_reputation_gds_emits_fencing_token(monkeypatch):
+    state = {
+        "exists": False,
+        "project_calls": 0,
+        "drop_calls": 0,
+        "pagerank_calls": 0,
+        "degree_calls": 0,
+    }
+    redis = _FenceLeaseRedis()
+    service = GraphIntelligenceService(uri="bolt://unit", user="neo4j", password="neo4j")
+    service._gds_min_run_interval_s = 0
+    service._gds_projection_refresh_interval_s = 999999
+    monkeypatch.setattr(service, "_get_driver", lambda: _FakeDriver(state))
+    monkeypatch.setattr("services.graph_intelligence.get_async_redis", lambda: redis)
+
+    result = await service.run_reputation_gds(iterations=2)
+
+    assert result["status"] == "ok"
+    assert result["fence_token"] == "7"

@@ -19,3 +19,7 @@ opentelemetry-sdk
 opentelemetry-exporter-otlp-proto-grpc
 opentelemetry-instrumentation-httpx
 opentelemetry-instrumentation-fastapi
+langgraph
+langchain-core
+langgraph-checkpoint-sqlite
+scikit-learn

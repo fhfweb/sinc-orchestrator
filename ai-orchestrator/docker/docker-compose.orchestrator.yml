@@ -1,4 +1,4 @@
-﻿name: orchestrator-platform
+name: orchestrator-platform
 
 x-otel-env: &orch-otel-env
   OTEL_ENABLED: ${OTEL_ENABLED:-true}
@@ -125,19 +125,6 @@ services:
     image: ollama/ollama:latest
     container_name: sinc-ollama-model-puller
     environment:
-      OLLAMA_HOST: http://ollama:11434
-    entrypoint: >-
-      sh -c "
-        sleep 5 &&
-        ollama pull ${OLLAMA_MODEL_REASONING:-qwen2.5:32b-instruct-q4_K_M} &&
-        ollama pull ${OLLAMA_MODEL_CODE:-qwen2.5-coder:14b-instruct-q4_K_M} &&
-        ollama pull ${OLLAMA_MODEL_GENERAL:-qwen2.5:7b-instruct-q4_K_M} &&
-        echo 'All models pulled'
-      "
-    depends_on:
-      ollama:
-        condition: service_started
-    restart: "no"
     networks:
       - sinc-platform-net
 

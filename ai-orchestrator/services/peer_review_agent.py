@@ -58,12 +58,8 @@ except ImportError:
     _HAS_ANTHROPIC = False
 
 # ── httpx ─────────────────────────────────────────────────────────────────────
-try:
-    import httpx as _httpx
-    _HAS_HTTPX = True
-except ImportError:
-    import urllib.request as _urllib_req
-    _HAS_HTTPX = False
+import httpx as _httpx
+from services.http_client import create_sync_resilient_client
 
 # ── OpenTelemetry ─────────────────────────────────────────────────────────────
 try:
@@ -110,8 +106,9 @@ _http: Any = None
 
 def _get_http():
     global _http
-    if _http is None and _HAS_HTTPX:
-        _http = _httpx.Client(
+    if _http is None:
+        _http = create_sync_resilient_client(
+            service_name="peer-review-agent",
             base_url=ORCHESTRATOR_URL,
             headers={
                 "X-Api-Key":    ORCHESTRATOR_API_KEY,
@@ -125,23 +122,9 @@ def _get_http():
 
 def _api(method: str, path: str, body: dict | None = None) -> dict:
     client = _get_http()
-    if client:
-        resp = client.request(method, path, json=body)
-        resp.raise_for_status()
-        return resp.json() if resp.content else {}
-
-    # urllib fallback
-    url  = f"{ORCHESTRATOR_URL}{path}"
-    data = json.dumps(body).encode() if body else None
-    req  = _urllib_req.Request(url, data=data, method=method,
-                                headers={
-                                    "X-Api-Key":    ORCHESTRATOR_API_KEY,
-                                    "X-Tenant-ID":  TENANT_ID,
-                                    "Content-Type": "application/json",
-                                })
-    with _urllib_req.urlopen(req, timeout=30) as r:
-        return json.loads(r.read())
-
+    resp = client.request(method, path, json=body)
+    resp.raise_for_status()
+    return resp.json() if resp.content else {}
 
 def _claim_task() -> dict | None:
     """Claim one pending task.
@@ -505,3 +488,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

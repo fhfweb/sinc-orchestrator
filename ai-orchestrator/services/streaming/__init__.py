@@ -284,6 +284,14 @@ def create_app() -> FastAPI:
     The new control plane treats router registration and startup dependency
     validation as first-class bootstrap work. Critical failures stop startup.
     """
+    app = FastAPI(
+        title="SINC Streaming Server",
+        version="3.0.0",
+        lifespan=_lifespan,
+    )
+    app.state.background_tasks = []
+    app.state.bootstrap_status = {"routers": {}, "background_tasks": {}, "startup_checks": {}}
+
     from services.otel_setup import (
         configure_otel,
         instrument_fastapi,
@@ -292,24 +300,6 @@ def create_app() -> FastAPI:
         instrument_redis,
     )
 
-    configure_otel("orchestrator-streaming")
-    instrument_psycopg()
-    instrument_redis()
-    instrument_httpx()
-
-    app = FastAPI(
-        title="SINC Streaming Server",
-        version="3.0-async",
-        docs_url="/docs",
-        redoc_url="/redoc",
-        lifespan=_lifespan,
-    )
-    app.state.bootstrap_status = {
-        "routers": {},
-        "startup_checks": {},
-        "background_tasks": {},
-    }
-    app.state.background_tasks = []
     instrument_fastapi(app)
 
     app.add_middleware(
@@ -338,6 +328,22 @@ def create_app() -> FastAPI:
         response = await call_next(request)
         response.headers["X-Trace-Id"] = trace_id
         return response
+
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request, exc):
+        from .core.auth import get_trace_id
+        trace_id = get_trace_id()
+        _LOG.exception("unhandled_exception trace_id=%s path=%s error=%s", trace_id, request.url.path, exc)
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=500,
+            content={
+                "ok": False,
+                "error": "Internal Server Error",
+                "message": str(exc),
+                "trace_id": trace_id
+            }
+        )
 
     for module_name in _CRITICAL_ROUTERS:
         _register_router(

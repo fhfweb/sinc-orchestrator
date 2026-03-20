@@ -18,6 +18,8 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 
+from httpx import QueryParams
+
 from services.streaming.core.config import DB_CONFIG as STREAMING_DB_CONFIG
 
 log = logging.getLogger("agent-worker")
@@ -31,15 +33,6 @@ def _log(msg: str):
             f.write(line + "\n")
     except Exception:
         pass
-
-try:
-    import httpx as _httpx
-    _HAS_HTTPX = True
-except ImportError:
-    import urllib.request as _urllib_request
-    import urllib.error   as _urllib_error
-    _HAS_HTTPX = False
-    _httpx = None
 
 try:
     from tenacity import (
@@ -115,7 +108,7 @@ def _now() -> str:
 
 # ── HTTP transport ───────────────────────────────────────────────────────────
 from services.event_bus import get_event_bus
-from services.http_client import create_resilient_client
+from services.http_client import create_resilient_client, create_sync_resilient_client
 
 class AgentWorker:
     def __init__(self, name: str, tenant_id: str, project_id: str = ""):
@@ -222,8 +215,7 @@ class AgentWorker:
         try:
             params = f"limit={limit}"
             if error_signature:
-                import urllib.parse
-                params += f"&sig={urllib.parse.quote(error_signature)}"
+                params += "&" + str(QueryParams({"sig": error_signature}))
             resp = await self.api("GET", f"/lessons?{params}")
             lessons = resp.get("lessons", [])
             if not lessons: return ""
@@ -265,8 +257,13 @@ def _api(method: str, path: str, body: dict | None = None) -> dict:
     }
     if ORCHESTRATOR_API_KEY:
         headers["X-API-Key"] = ORCHESTRATOR_API_KEY
-    if _HAS_HTTPX and _httpx is not None:
-        response = _httpx.request(method.upper(), url, json=body, headers=headers, timeout=30.0, follow_redirects=True)
+    with create_sync_resilient_client(
+        service_name="agent-worker-sync",
+        headers=headers,
+        timeout=30.0,
+        follow_redirects=True,
+    ) as client:
+        response = client.request(method.upper(), url, json=body)
         response.raise_for_status()
         if not response.content:
             return {}
@@ -274,17 +271,6 @@ def _api(method: str, path: str, body: dict | None = None) -> dict:
         if "application/json" in content_type:
             return response.json()
         return {"raw": response.text}
-
-    payload = None if body is None else json.dumps(body).encode("utf-8")
-    request_headers = dict(headers)
-    if payload is not None:
-        request_headers["Content-Type"] = "application/json"
-    request = _urllib_request.Request(url, data=payload, headers=request_headers, method=method.upper())
-    with _urllib_request.urlopen(request, timeout=30) as response:
-        raw = response.read()
-        if not raw:
-            return {}
-        return json.loads(raw.decode("utf-8"))
 
 
 def _db():
@@ -337,8 +323,7 @@ def _fetch_lessons(error_signature: str = "", limit: int = 5) -> str:
     try:
         params = f"limit={limit}"
         if error_signature:
-            import urllib.parse
-            params += f"&sig={urllib.parse.quote(error_signature)}"
+            params += "&" + str(QueryParams({"sig": error_signature}))
         resp = _api("GET", f"/lessons?{params}")
         lessons = resp.get("lessons", [])
         if not lessons:
@@ -456,8 +441,6 @@ def _fetch_active_memory_brief(task: dict, api_context: dict, debugger: dict) ->
 
 
 def _fetch_reactivation_hints(task: dict, api_context: dict, debugger: dict) -> str:
-    import urllib.parse
-
     task_type = str(task.get("task_type") or "generic").strip()
     project_id = str(task.get("project_id") or PROJECT_ID or "").strip()
     files = _collect_candidate_files(api_context, debugger, limit=3)
@@ -477,11 +460,18 @@ def _fetch_reactivation_hints(task: dict, api_context: dict, debugger: dict) -> 
         for incident_family in incident_candidates:
             try:
                 query = (
-                    f"/cognitive/memory/reactivation?project_id={urllib.parse.quote(project_id)}"
-                    f"&task_type={urllib.parse.quote(task_type)}"
-                    f"&file_path={urllib.parse.quote(file_path)}"
-                    f"&incident_family={urllib.parse.quote(incident_family)}"
-                    "&limit=2"
+                    "/cognitive/memory/reactivation?"
+                    + str(
+                        QueryParams(
+                            {
+                                "project_id": project_id,
+                                "task_type": task_type,
+                                "file_path": file_path,
+                                "incident_family": incident_family,
+                                "limit": 2,
+                            }
+                        )
+                    )
                 )
                 resp = _api("GET", query)
             except Exception as exc:
@@ -521,17 +511,22 @@ def _fetch_reactivation_hints(task: dict, api_context: dict, debugger: dict) -> 
 
 
 def _fetch_entropy_risk_brief(task: dict, api_context: dict, debugger: dict) -> str:
-    import urllib.parse
-
     file_candidates = _collect_candidate_files(api_context, debugger, limit=5)
     if not file_candidates:
         return ""
     project_id = str(task.get("project_id") or PROJECT_ID or "").strip()
     try:
         query = (
-            f"/entropy/risk-context?project_id={urllib.parse.quote(project_id)}"
-            f"&files={urllib.parse.quote(','.join(file_candidates))}"
-            "&limit=5"
+            "/entropy/risk-context?"
+            + str(
+                QueryParams(
+                    {
+                        "project_id": project_id,
+                        "files": ",".join(file_candidates),
+                        "limit": 5,
+                    }
+                )
+            )
         )
         payload = _api("GET", query)
     except Exception as exc:

@@ -37,8 +37,8 @@ router = APIRouter(tags=["tasks"])
 _semantic_batcher = None
 
 
-async def _resolve_tenant_id() -> str:
-    return await get_tenant_id()
+async def _resolve_tenant_id(tenant_id: str = Depends(get_tenant_id)) -> str:
+    return tenant_id
 
 
 async def _resolve_tenant() -> dict:

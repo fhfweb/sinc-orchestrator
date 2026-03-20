@@ -3,8 +3,9 @@ import os
 import json
 import logging
 import asyncio
-import urllib.request
 from datetime import datetime, timedelta, timezone
+
+from services.http_client import create_sync_resilient_client
 
 log = logging.getLogger("orch.maintenance")
 
@@ -53,10 +54,14 @@ class MemoryMaintenance:
                 
             url = f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{coll}/points/delete"
             try:
-                payload = json.dumps(filter_body).encode()
-                req = urllib.request.Request(url, data=payload, method="POST", headers={"Content-Type": "application/json"})
-                with urllib.request.urlopen(req, timeout=10) as resp:
-                    res = json.loads(resp.read())
+                with create_sync_resilient_client(
+                    service_name="memory-maintenance",
+                    headers={"Content-Type": "application/json"},
+                    timeout=10,
+                ) as client:
+                    resp = client.post(url, json=filter_body)
+                    resp.raise_for_status()
+                    res = resp.json() if resp.content else {}
                     log.info(f"Pruned {coll}: {res.get('status')}")
             except Exception as e:
                 log.warning(f"Error pruning {coll}: {e}")

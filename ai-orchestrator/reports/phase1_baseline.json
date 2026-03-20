@@ -1,0 +1,31 @@
+{
+  "summary": {
+    "cycles": 3,
+    "total_iterations": 3,
+    "avg_iterations": 1.0,
+    "duration_s": 59.967833280563354
+  },
+  "tasks": [
+    {
+      "task_id": "BENCH-1",
+      "title": "Identify bottleneck",
+      "status": "failed",
+      "iterations": 1,
+      "backend": "ollama"
+    },
+    {
+      "task_id": "BENCH-2",
+      "title": "Generate ADR",
+      "status": "failed",
+      "iterations": 1,
+      "backend": "ollama"
+    },
+    {
+      "task_id": "BENCH-3",
+      "title": "Refactor Memory",
+      "status": "failed",
+      "iterations": 1,
+      "backend": "ollama"
+    }
+  ]
+}

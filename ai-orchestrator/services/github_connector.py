@@ -19,7 +19,7 @@ Two main capabilities:
    The connector calls TimeMachine.simulate_change() on the changed files
    and posts a risk-score comment back to the PR.
 
-All GitHub API calls use urllib (no extra deps).
+All GitHub API calls use the shared resilient HTTP client.
 Git clone uses subprocess (git must be in PATH).
 
 Usage:
@@ -45,10 +45,11 @@ import subprocess
 import tempfile
 import threading
 import time
-import urllib.error
-import urllib.request
+import httpx
 from pathlib import Path
 from typing import Callable, Optional
+
+from services.http_client import create_sync_resilient_client
 
 # ──────────────────────────────────────────────
 # CONFIGURATION
@@ -223,13 +224,15 @@ def _get_default_branch(repo_url: str, access_token: str = "") -> str:
     if access_token:
         headers["Authorization"] = f"Bearer {access_token}"
     try:
-        req = urllib.request.Request(
-            f"{GITHUB_API}/repos/{owner}/{repo}",
-            headers=headers
-        )
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read())
-            return data.get("default_branch", "main")
+        with create_sync_resilient_client(
+            service_name="github-connector",
+            headers=headers,
+            timeout=15,
+        ) as client:
+            resp = client.get(f"{GITHUB_API}/repos/{owner}/{repo}")
+            resp.raise_for_status()
+            data = resp.json()
+            return str(data.get("default_branch") or "main")
     except Exception:
         return "main"
 
@@ -285,7 +288,7 @@ def _detect_stack(clone_path: str) -> dict:
 # ──────────────────────────────────────────────
 
 class GitHubAPI:
-    """Minimal GitHub REST API client (urllib only)."""
+    """Minimal GitHub REST API client backed by the shared HTTP client."""
 
     def __init__(self, access_token: str = ""):
         self.token = access_token
@@ -301,18 +304,19 @@ class GitHubAPI:
 
     def _req(self, method: str, path: str, body: Optional[dict] = None) -> dict:
         url = path if path.startswith("http") else f"{GITHUB_API}{path}"
-        data = json.dumps(body).encode() if body else None
-        req = urllib.request.Request(
-            url, data=data, method=method, headers=self._headers()
-        )
-        if data:
-            req.add_header("Content-Type", "application/json")
         try:
-            with urllib.request.urlopen(req, timeout=20) as resp:
-                return json.loads(resp.read())
-        except urllib.error.HTTPError as e:
-            body_text = e.read().decode(errors="replace")
-            raise RuntimeError(f"GitHub API {method} {path} → {e.code}: {body_text}") from e
+            with create_sync_resilient_client(
+                service_name="github-connector",
+                headers=self._headers(),
+                timeout=20,
+            ) as client:
+                resp = client.request(method, url, json=body)
+                resp.raise_for_status()
+                return resp.json() if resp.content else {}
+        except httpx.HTTPStatusError as e:
+            body_text = e.response.text if e.response is not None else ""
+            code = e.response.status_code if e.response is not None else "unknown"
+            raise RuntimeError(f"GitHub API {method} {path} -> {code}: {body_text}") from e
 
     def get_pr_files(self, owner: str, repo: str, pr_number: int) -> list[str]:
         """Return list of changed file paths in a PR."""
@@ -999,3 +1003,4 @@ if __name__ == "__main__":
         print("  detect-stack <path>")
         print()
         print("Env: GITHUB_TOKEN, TENANT_ID, PROJECT_ID")
+

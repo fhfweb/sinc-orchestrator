@@ -31,8 +31,8 @@ router = APIRouter(tags=["agents"])
 _TABLE_UNIQUE_KEYS_CACHE: dict[str, list[tuple[str, ...]]] = {}
 
 
-async def _resolve_tenant_id() -> str:
-    return await get_tenant_id()
+async def _resolve_tenant_id(tenant_id: str = Depends(get_tenant_id)) -> str:
+    return tenant_id
 
 
 async def _table_has_tenant(cur, table_name: str) -> bool:
