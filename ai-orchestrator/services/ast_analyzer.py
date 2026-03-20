@@ -30,7 +30,9 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import Generator
+from typing import Generator, Dict, List, Any
+from services.semantic_resolver import SymbolTable, SymbolDefinition, SuffixIndex, ResolutionContext, TypeUniverse
+from services.parsing.ts_utils import ts_init
 
 
 # ──────────────────────────────────────────────
@@ -52,6 +54,16 @@ _LANG_EXTENSIONS = {
     ".js":  "javascript",
     ".ts":  "typescript",
     ".go":  "go",
+    ".yaml": "infra",
+    ".yml":  "infra",
+    "dockerfile": "infra",
+    ".java": "enterprise",
+    ".cs":   "enterprise",
+    ".cpp":  "enterprise",
+    ".hpp":  "enterprise",
+    ".dart": "enterprise",
+    ".kt":   "enterprise",
+    ".swift": "enterprise",
 }
 
 _SKIP_DIRS = {
@@ -68,436 +80,35 @@ def _walk_source_files(root: str) -> Generator[tuple[str, str], None, None]:
                        and not d.startswith(".")]
         for fname in filenames:
             ext = Path(fname).suffix.lower()
-            lang = _LANG_EXTENSIONS.get(ext)
+            lang = _LANG_EXTENSIONS.get(ext) or _LANG_EXTENSIONS.get(fname.lower())
             if lang:
                 yield os.path.join(dirpath, fname), lang
 
 
 # ──────────────────────────────────────────────
-# LANGUAGE PARSERS (regex-based, zero deps)
+# LANGUAGE DRIVERS (Plugin Architecture)
 # ──────────────────────────────────────────────
 
-def _parse_php(content: str, _rel_path: str) -> dict:
-    """Extract symbols from a PHP file."""
-    symbols: dict = {"classes": [], "functions": [], "imports": [], "calls": []}
+from services.parsing.python_driver import PythonParser
+from services.parsing.js_driver import JSParser
+from services.parsing.go_driver import GoParser
+from services.parsing.php_driver import PHPParser
+from services.parsing.infra_driver import InfraParser
+from services.parsing.enterprise_driver import EnterpriseParser
 
-    # Namespace
-    ns_match = re.search(r"^\s*namespace\s+([\w\\]+)\s*;", content, re.MULTILINE)
-    namespace = ns_match.group(1) if ns_match else ""
-
-    # Use statements (imports)
-    for m in re.finditer(r"^\s*use\s+([\w\\]+)(?:\s+as\s+\w+)?\s*;", content, re.MULTILINE):
-        symbols["imports"].append(m.group(1))
-
-    # Classes / interfaces / traits
-    for m in re.finditer(
-        r"(?:abstract\s+)?(?:class|interface|trait)\s+(\w+)"
-        r"(?:\s+extends\s+([\w\\]+))?"
-        r"(?:\s+implements\s+([\w\\,\s]+))?",
-        content, re.MULTILINE
-    ):
-        cls_name  = m.group(1)
-        extends   = (m.group(2) or "").strip()
-        implements = [i.strip() for i in (m.group(3) or "").split(",") if i.strip()]
-        symbols["classes"].append({
-            "name":       cls_name,
-            "fqn":        f"{namespace}\\{cls_name}" if namespace else cls_name,
-            "extends":    extends,
-            "implements": implements,
-            "line":       content[:m.start()].count("\n") + 1,
-        })
-
-    # Methods (public/protected/private function)
-    for m in re.finditer(
-        r"(?:public|protected|private|static)(?:\s+(?:public|protected|private|static))*"
-        r"\s+function\s+(\w+)\s*\(",
-        content, re.MULTILINE
-    ):
-        symbols["functions"].append({
-            "name": m.group(1),
-            "line": content[:m.start()].count("\n") + 1,
-            "type": "method",
-        })
-
-    # Top-level functions
-    for m in re.finditer(r"^function\s+(\w+)\s*\(", content, re.MULTILINE):
-        symbols["functions"].append({
-            "name": m.group(1),
-            "line": content[:m.start()].count("\n") + 1,
-            "type": "function",
-        })
-
-    # Method calls: $this->method( or ClassName::method(
-    for m in re.finditer(r"(?:\$this->|self::)(\w+)\s*\(", content):
-        symbols["calls"].append(m.group(1))
-
-    return symbols
-
-
-def _parse_python(content: str, _rel_path: str) -> dict:
-    symbols: dict = {"classes": [], "functions": [], "imports": [], "calls": []}
-
-    for m in re.finditer(r"^class\s+(\w+)(?:\(([^)]*)\))?", content, re.MULTILINE):
-        bases = [b.strip() for b in (m.group(2) or "").split(",") if b.strip()]
-        symbols["classes"].append({
-            "name":    m.group(1),
-            "extends": bases[0] if bases else "",
-            "line":    content[:m.start()].count("\n") + 1,
-        })
-
-    for m in re.finditer(r"^def\s+(\w+)\s*\(", content, re.MULTILINE):
-        symbols["functions"].append({
-            "name": m.group(1),
-            "line": content[:m.start()].count("\n") + 1,
-            "type": "function",
-        })
-
-    for m in re.finditer(r"^(?:from\s+([\w.]+)\s+)?import\s+([\w,\s*]+)", content, re.MULTILINE):
-        module = m.group(1) or m.group(2).strip()
-        symbols["imports"].append(module)
-
-    return symbols
-
-
-def _parse_js_ts(content: str, _rel_path: str) -> dict:
-    symbols: dict = {"classes": [], "functions": [], "imports": [], "calls": []}
-
-    for m in re.finditer(r"^(?:export\s+)?class\s+(\w+)(?:\s+extends\s+(\w+))?",
-                         content, re.MULTILINE):
-        symbols["classes"].append({
-            "name":    m.group(1),
-            "extends": m.group(2) or "",
-            "line":    content[:m.start()].count("\n") + 1,
-        })
-
-    for m in re.finditer(
-        r"(?:^|\s)(?:async\s+)?function\s+(\w+)\s*\("
-        r"|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s+)?\(?",
-        content, re.MULTILINE
-    ):
-        name = m.group(1) or m.group(2)
-        if name:
-            symbols["functions"].append({
-                "name": name,
-                "line": content[:m.start()].count("\n") + 1,
-                "type": "function",
-            })
-
-    for m in re.finditer(r"^import\s+.*?\s+from\s+['\"]([^'\"]+)['\"]", content, re.MULTILINE):
-        symbols["imports"].append(m.group(1))
-
-    return symbols
-
-
-def _parse_go(content: str, _rel_path: str) -> dict:
-    symbols: dict = {"classes": [], "functions": [], "imports": [], "calls": []}
-
-    for m in re.finditer(r"^func\s+(?:\(\w+\s+\*?(\w+)\)\s+)?(\w+)\s*\(",
-                         content, re.MULTILINE):
-        receiver = m.group(1) or ""
-        name     = m.group(2)
-        symbols["functions"].append({
-            "name":    name,
-            "line":    content[:m.start()].count("\n") + 1,
-            "type":    "method" if receiver else "function",
-            "receiver": receiver,
-        })
-
-    for m in re.finditer(r"^type\s+(\w+)\s+struct", content, re.MULTILINE):
-        symbols["classes"].append({"name": m.group(1), "line": content[:m.start()].count("\n") + 1})
-
-    return symbols
-
-
-# ──────────────────────────────────────────────
-# TREE-SITTER LAYER  (primary; falls back to regex if not installed)
-# ──────────────────────────────────────────────
-
-_HAS_TS = False
-_TS_PARSERS: dict = {}   # lang → tree_sitter.Parser
-
-# Branch node types that increment cyclomatic complexity (+1 each)
-_CC_NODES = frozenset({
-    # Python
-    "if_statement", "elif_clause", "for_statement", "while_statement",
-    "with_statement", "except_clause", "assert_statement",
-    "conditional_expression",          # ternary x if cond else y
-    "boolean_operator",                # and / or
-    # JS / TS
-    "if_statement", "else_clause", "for_statement", "for_in_statement",
-    "while_statement", "do_statement", "switch_case", "catch_clause",
-    "ternary_expression", "logical_expression",
-    # Go
-    "if_statement", "for_statement", "case_clause", "type_switch_statement",
-    "select_statement",
-})
-
-
-def _count_complexity(node) -> int:
-    """Recursively count branch nodes for cyclomatic complexity."""
-    count = 1 if node.type in _CC_NODES else 0
-    for child in node.children:
-        count += _count_complexity(child)
-    return count
-
-
-def _ts_init():
-    """Lazy Tree-sitter initialisation. Called once on first parse."""
-    global _HAS_TS, _TS_PARSERS
-    if _HAS_TS or _TS_PARSERS:
-        return
-    try:
-        from tree_sitter import Parser as _TSParser, Language as _TSLanguage
-
-        def _try_lang(pkg_name: str, lang_fn_name: str):
-            try:
-                pkg = __import__(pkg_name)
-                lang_fn = getattr(pkg, lang_fn_name, None) or getattr(pkg, "language", None)
-                return _TSLanguage(lang_fn())
-            except Exception:
-                return None
-
-        langs = {
-            "python":     _try_lang("tree_sitter_python",     "language"),
-            "javascript": _try_lang("tree_sitter_javascript", "language"),
-            "typescript": _try_lang("tree_sitter_typescript", "language_typescript"),
-            "go":         _try_lang("tree_sitter_go",         "language"),
-        }
-        for lang, lang_obj in langs.items():
-            if lang_obj:
-                p = _TSParser(lang_obj)
-                _TS_PARSERS[lang] = p
-
-        _HAS_TS = bool(_TS_PARSERS)
-        if _HAS_TS:
-            print(f"[ast-analyzer] tree-sitter active for: {', '.join(_TS_PARSERS)}")
-    except ImportError:
-        pass  # tree-sitter not installed — regex fallback will be used
-
-
-def _ts_query_nodes(node, *types) -> list:
-    """Collect all descendant nodes matching any of the given types."""
-    results = []
-    if node.type in types:
-        results.append(node)
-    for child in node.children:
-        results.extend(_ts_query_nodes(child, *types))
-    return results
-
-
-def _parse_python_ts(content: str, rel_path: str) -> dict:
-    """Tree-sitter Python parser with cyclomatic complexity."""
-    symbols: dict = {"classes": [], "functions": [], "imports": [], "calls": [],
-                     "complexity_total": 0}
-    parser = _TS_PARSERS.get("python")
-    if not parser:
-        return _parse_python(content, rel_path)
-    try:
-        tree = parser.parse(content.encode("utf-8", errors="replace"))
-        root = tree.root_node
-
-        # Classes
-        for node in _ts_query_nodes(root, "class_definition"):
-            name_node = node.child_by_field_name("name")
-            bases_node = node.child_by_field_name("superclasses")
-            if not name_node:
-                continue
-            extends = ""
-            if bases_node:
-                for child in bases_node.children:
-                    if child.type == "identifier":
-                        extends = child.text.decode("utf-8", errors="replace")
-                        break
-            symbols["classes"].append({
-                "name":    name_node.text.decode("utf-8", errors="replace"),
-                "extends": extends,
-                "line":    node.start_point[0] + 1,
-            })
-
-        # Functions / methods
-        for node in _ts_query_nodes(root, "function_definition"):
-            name_node = node.child_by_field_name("name")
-            body_node = node.child_by_field_name("body")
-            if not name_node:
-                continue
-            cc = _count_complexity(body_node) if body_node else 1
-            symbols["functions"].append({
-                "name":       name_node.text.decode("utf-8", errors="replace"),
-                "line":       node.start_point[0] + 1,
-                "type":       "function",
-                "complexity": cc,
-            })
-            symbols["complexity_total"] += cc
-
-        # Imports
-        for node in _ts_query_nodes(root, "import_statement", "import_from_statement"):
-            for child in node.children:
-                if child.type in ("dotted_name", "relative_import"):
-                    symbols["imports"].append(
-                        child.text.decode("utf-8", errors="replace"))
-                    break
-
-        # Calls
-        for node in _ts_query_nodes(root, "call"):
-            fn_node = node.child_by_field_name("function")
-            if fn_node:
-                symbols["calls"].append(fn_node.text.decode("utf-8", errors="replace"))
-
-    except Exception as exc:
-        print(f"[ast-analyzer] tree-sitter python error for {rel_path}: {exc}")
-        return _parse_python(content, rel_path)
-    return symbols
-
-
-def _parse_js_ts_ts(content: str, rel_path: str, lang: str = "javascript") -> dict:
-    """Tree-sitter JavaScript/TypeScript parser with cyclomatic complexity."""
-    symbols: dict = {"classes": [], "functions": [], "imports": [], "calls": [],
-                     "complexity_total": 0}
-    parser = _TS_PARSERS.get(lang) or _TS_PARSERS.get("javascript")
-    if not parser:
-        return _parse_js_ts(content, rel_path)
-    try:
-        tree = parser.parse(content.encode("utf-8", errors="replace"))
-        root = tree.root_node
-
-        # Classes
-        for node in _ts_query_nodes(root, "class_declaration", "class_expression"):
-            name_node = node.child_by_field_name("name")
-            heritage  = node.child_by_field_name("heritage")
-            extends   = ""
-            if heritage:
-                for child in heritage.children:
-                    if child.type == "identifier":
-                        extends = child.text.decode("utf-8", errors="replace")
-                        break
-            if name_node:
-                symbols["classes"].append({
-                    "name":    name_node.text.decode("utf-8", errors="replace"),
-                    "extends": extends,
-                    "line":    node.start_point[0] + 1,
-                })
-
-        # Functions
-        fn_types = ("function_declaration", "function_expression",
-                    "arrow_function", "method_definition")
-        for node in _ts_query_nodes(root, *fn_types):
-            name_node = node.child_by_field_name("name")
-            body_node = node.child_by_field_name("body")
-            name = (name_node.text.decode("utf-8", errors="replace")
-                    if name_node else "<anonymous>")
-            cc = _count_complexity(body_node) if body_node else 1
-            symbols["functions"].append({
-                "name":       name,
-                "line":       node.start_point[0] + 1,
-                "type":       "method" if node.type == "method_definition" else "function",
-                "complexity": cc,
-            })
-            symbols["complexity_total"] += cc
-
-        # Imports
-        for node in _ts_query_nodes(root, "import_statement"):
-            for child in node.children:
-                if child.type == "string":
-                    raw = child.text.decode("utf-8", errors="replace").strip("'\"")
-                    symbols["imports"].append(raw)
-                    break
-
-        # Calls
-        for node in _ts_query_nodes(root, "call_expression"):
-            fn_node = node.child_by_field_name("function")
-            if fn_node:
-                symbols["calls"].append(
-                    fn_node.text.decode("utf-8", errors="replace"))
-
-    except Exception as exc:
-        print(f"[ast-analyzer] tree-sitter js/ts error for {rel_path}: {exc}")
-        return _parse_js_ts(content, rel_path)
-    return symbols
-
-
-def _parse_go_ts(content: str, rel_path: str) -> dict:
-    """Tree-sitter Go parser with cyclomatic complexity."""
-    symbols: dict = {"classes": [], "functions": [], "imports": [], "calls": [],
-                     "complexity_total": 0}
-    parser = _TS_PARSERS.get("go")
-    if not parser:
-        return _parse_go(content, rel_path)
-    try:
-        tree = parser.parse(content.encode("utf-8", errors="replace"))
-        root = tree.root_node
-
-        # Structs (as classes)
-        for node in _ts_query_nodes(root, "type_spec"):
-            name_node = node.child_by_field_name("name")
-            type_node = node.child_by_field_name("type")
-            if name_node and type_node and type_node.type == "struct_type":
-                symbols["classes"].append({
-                    "name": name_node.text.decode("utf-8", errors="replace"),
-                    "line": node.start_point[0] + 1,
-                })
-
-        # Functions + methods
-        for node in _ts_query_nodes(root, "function_declaration", "method_declaration"):
-            name_node = node.child_by_field_name("name")
-            recv_node = node.child_by_field_name("receiver")
-            body_node = node.child_by_field_name("body")
-            if not name_node:
-                continue
-            receiver = ""
-            if recv_node:
-                for child in _ts_query_nodes(recv_node, "type_identifier"):
-                    receiver = child.text.decode("utf-8", errors="replace"); break
-            cc = _count_complexity(body_node) if body_node else 1
-            symbols["functions"].append({
-                "name":       name_node.text.decode("utf-8", errors="replace"),
-                "line":       node.start_point[0] + 1,
-                "type":       "method" if receiver else "function",
-                "receiver":   receiver,
-                "complexity": cc,
-            })
-            symbols["complexity_total"] += cc
-
-        # Imports
-        for node in _ts_query_nodes(root, "import_spec"):
-            path_node = node.child_by_field_name("path")
-            if path_node:
-                raw = path_node.text.decode("utf-8", errors="replace").strip('"')
-                symbols["imports"].append(raw)
-
-        # Calls
-        for node in _ts_query_nodes(root, "call_expression"):
-            fn_node = node.child_by_field_name("function")
-            if fn_node:
-                symbols["calls"].append(
-                    fn_node.text.decode("utf-8", errors="replace"))
-
-    except Exception as exc:
-        print(f"[ast-analyzer] tree-sitter go error for {rel_path}: {exc}")
-        return _parse_go(content, rel_path)
-    return symbols
-
+_PARSER_REGISTRY = {
+    "python": PythonParser(),
+    "javascript": JSParser(),
+    "typescript": JSParser(),
+    "go": GoParser(),
+    "php": PHPParser(),
+    "infra": InfraParser(),
+    "enterprise": EnterpriseParser(),
+}
 
 def _get_parser(lang: str):
-    """Return the best available parser for a language."""
-    _ts_init()
-    if _HAS_TS:
-        if lang == "python":
-            return _parse_python_ts
-        if lang in ("javascript", "typescript"):
-            return lambda content, rel: _parse_js_ts_ts(content, rel, lang)
-        if lang == "go":
-            return _parse_go_ts
-    # regex fallback
-    return _PARSERS.get(lang)
-
-
-_PARSERS = {
-    "php":        _parse_php,
-    "python":     _parse_python,
-    "javascript": _parse_js_ts,
-    "typescript": _parse_js_ts,
-    "go":         _parse_go,
-}
+    """Returns the registered parser for the given language."""
+    return _PARSER_REGISTRY.get(lang)
 
 
 # ──────────────────────────────────────────────
@@ -519,12 +130,13 @@ def _upsert_file_graph(tx, rel_path: str, lang: str, symbols: dict,
     for cls in symbols.get("classes", []):
         tx.run("""
             MERGE (c:Class {fqn: $fqn, project_id: $pid, tenant_id: $tid})
-            SET c.name = $name, c.file = $path, c.line = $line
+            SET c.name = $name, c.file = $path, c.line = $line, c.line_end = $lend, c.docstring = $doc
             WITH c
             MATCH (f:File {path: $path, project_id: $pid, tenant_id: $tid})
             MERGE (f)-[:DEFINES]->(c)
         """, fqn=cls.get("fqn", cls["name"]), name=cls["name"],
-             path=rel_path, line=cls.get("line", 0),
+             path=rel_path, line=cls.get("line", 0), lend=cls.get("line_end", 0),
+             doc=cls.get("docstring", ""),
              pid=project_id, tid=tenant_id)
 
         if cls.get("extends"):
@@ -548,21 +160,87 @@ def _upsert_file_graph(tx, rel_path: str, lang: str, symbols: dict,
     for fn in symbols.get("functions", []):
         tx.run("""
             MERGE (m:Function {name: $name, file: $path, project_id: $pid, tenant_id: $tid})
-            SET m.line = $line, m.type = $type, m.complexity = $cc
+            SET m.line = $line, m.line_end = $lend, m.type = $type, 
+                m.complexity = $cc, m.docstring = $doc, m.tags = $tags
             WITH m
             MATCH (f:File {path: $path, project_id: $pid, tenant_id: $tid})
             MERGE (f)-[:DEFINES]->(m)
-        """, name=fn["name"], path=rel_path, line=fn.get("line", 0),
+        """, name=fn["name"], path=rel_path, line=fn.get("line", 0), lend=fn.get("line_end", 0),
              type=fn.get("type", "function"), cc=fn.get("complexity", 1),
+             doc=fn.get("docstring", ""), tags=fn.get("tags", []),
              pid=project_id, tid=tenant_id)
 
-    # Import edges
-    for imp in symbols.get("imports", []):
+        # Link to owner class if it's a method
+        if fn.get("owner"):
+            tx.run("""
+                MATCH (m:Function {name: $name, file: $path, project_id: $pid, tenant_id: $tid})
+                MATCH (c:Class {name: $owner, file: $path, project_id: $pid, tenant_id: $tid})
+                MERGE (m)-[:OWNED_BY]->(c)
+            """, name=fn["name"], owner=fn["owner"], path=rel_path,
+                 pid=project_id, tid=tenant_id)
+
+    # Resolved Call edges (File -> File)
+    for call in symbols.get("resolved_calls", []):
         tx.run("""
             MATCH (f:File {path: $path, project_id: $pid, tenant_id: $tid})
-            MERGE (t:Module {name: $mod, project_id: $pid, tenant_id: $tid})
+            MATCH (t:File {path: $target, project_id: $pid, tenant_id: $tid})
+            MERGE (f)-[:CALLS {name: $name}]->(t)
+        """, path=rel_path, target=call["target_file"], name=call["name"],
+             pid=project_id, tid=tenant_id)
+
+    # Raw Call nodes for Global XRef & Data Lineage
+    for call in symbols.get("calls", []):
+        c_name = call["name"] if isinstance(call, dict) else call
+        p_func = call.get("parent_function") if isinstance(call, dict) else None
+        
+        tx.run("""
+            MATCH (f:File {path: $path, project_id: $pid, tenant_id: $tid})
+            MERGE (c:Call {name: $name, file_path: $path, tenant_id: $tid})
+            MERGE (f)-[:CONTAINS_CALL]->(c)
+            WITH c
+            // Link to parent function for Taint Analysis
+            OPTIONAL MATCH (parent:Function {name: $pname, file: $path, tenant_id: $tid})
+            FOREACH (p IN CASE WHEN parent IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (parent)-[:CALLS_INTERNAL]->(c)
+            )
+        """, name=c_name, path=rel_path, pname=p_func, pid=project_id, tid=tenant_id)
+
+    # Raw Reference nodes for Global XRef (Classes, Types)
+    for ref_name in symbols.get("references", []):
+        tx.run("""
+            MATCH (f:File {path: $path, project_id: $pid, tenant_id: $tid})
+            MERGE (r:Reference {name: $name, file_path: $path, tenant_id: $tid})
+            MERGE (f)-[:HAS_REFERENCE]->(r)
+        """, name=ref_name, path=rel_path, pid=project_id, tid=tenant_id)
+
+    # Data Flow edges (Phase 13: Taint Analysis)
+    for ass in symbols.get("assignments", []):
+        tx.run("""
+            MATCH (f:File {path: $path, project_id: $pid, tenant_id: $tid})
+            MERGE (v:Variable {name: $var, file: $path, tenant_id: $tid})
+            MERGE (f)-[:HAS_VARIABLE]->(v)
+            WITH v, $val as val
+            // Simplificação: se o valor for uma chamada, ligamos a variável a essa intenção
+            SET v.last_assigned_source = val
+        """, var=ass.get("var"), val=ass.get("value") or ass.get("type"), 
+             path=rel_path, pid=project_id, tid=tenant_id)
+
+    # Import edges (File -> File or File -> Module)
+    # We prioritize File -> File for resolved imports
+    for imp in symbols.get("imports", []):
+        # Try to find if this import was resolved to a file during Pass 1
+        # (This is handled by the ResolutionContext in analyze_project)
+        # For simplicity in the tx, we'll check if a File node exists for the 'imp' name
+        # if it looks like a path or if it was resolved.
+        pass # The actual resolution logic is in analyze_project's Pass 2.
+        # Let's add a NEW field 'resolved_imports' to symbols in analyze_project
+    
+    for r_imp in symbols.get("resolved_imports", []):
+        tx.run("""
+            MATCH (f:File {path: $path, project_id: $pid, tenant_id: $tid})
+            MATCH (t:File {path: $target, project_id: $pid, tenant_id: $tid})
             MERGE (f)-[:IMPORTS]->(t)
-        """, path=rel_path, mod=imp, pid=project_id, tid=tenant_id)
+        """, path=rel_path, target=r_imp, pid=project_id, tid=tenant_id)
 
 
 # ──────────────────────────────────────────────
@@ -573,9 +251,13 @@ class ASTAnalyzer:
     def __init__(self,
                  neo4j_uri: str = NEO4J_URI,
                  neo4j_auth: tuple = (NEO4J_USER, NEO4J_PASS)):
-        self.neo4j_uri  = neo4j_uri
-        self.neo4j_auth = neo4j_auth
-        self._driver    = None
+        self.neo4j_uri   = neo4j_uri
+        self.neo4j_auth  = neo4j_auth
+        self._driver     = None
+        self.symbols      = SymbolTable()
+        self.suffix_index = None
+        self.type_universe = TypeUniverse()
+        ts_init()
 
     def _get_driver(self):
         if self._driver is None:
@@ -591,31 +273,100 @@ class ASTAnalyzer:
         project_path: str,
         project_id: str = "",
         tenant_id: str = "",
-        on_progress=None,   # optional callback(file_path, symbols)
+        on_progress=None,
     ) -> dict:
         """
-        Walk project_path, parse every source file, upsert to Neo4j.
-        Returns summary dict: {files, nodes_created, edges_created, errors}
+        Walk project_path, parse every source file, and perform a two-pass analysis.
+        Pass 1: Extract all symbols to a global SymbolTable.
+        Pass 2: Resolve cross-file dependencies (imports, calls) and upsert to Neo4j.
         """
-        stats = {"files": 0, "nodes_created": 0, "edges_created": 0, "errors": 0}
+        stats = {"files": 0, "nodes_created": 0, "edges_created": 0, "errors": 0, "complexity_total": 0}
         driver = self._get_driver()
+        
+        file_list = list(_walk_source_files(project_path))
+        abs_paths = [p for p, _ in file_list]
+        rel_paths = [os.path.relpath(p, project_path).replace("\\", "/") for p in abs_paths]
+        
+        # Initialize SuffixIndex with all relative paths
+        self.suffix_index = SuffixIndex(rel_paths)
+        res_ctx = ResolutionContext(self.symbols, self.suffix_index)
 
-        for abs_path, lang in _walk_source_files(project_path):
-            rel_path = os.path.relpath(abs_path, project_path).replace("\\", "/")
+        # --- PASS 1: Symbol Extraction ---
+        extracted_data: Dict[str, dict] = {} # rel_path -> symbols_dict
+        
+        for i, (abs_path, lang) in enumerate(file_list):
+            rel_path = rel_paths[i]
             try:
-                content  = Path(abs_path).read_text(encoding="utf-8", errors="replace")
-                parser   = _get_parser(lang)
-                if not parser:
+                content = Path(abs_path).read_text(encoding="utf-8", errors="replace")
+                parser_obj = _get_parser(lang)
+                if not parser_obj:
                     continue
-                symbols  = parser(content, rel_path)
+                
+                symbols = parser_obj.parse(content, rel_path)
+                extracted_data[rel_path] = {"symbols": symbols, "lang": lang}
+                
+                # Register symbols in global table
+                for cls in symbols.get("classes", []):
+                    self.symbols.add(SymbolDefinition(
+                        name=cls["name"], 
+                        file_path=rel_path, 
+                        kind="Class", 
+                        line=cls.get("line", 0),
+                        bases=cls.get("bases", [])
+                    ))
+                for fn in symbols.get("functions", []):
+                    self.symbols.add(SymbolDefinition(
+                        name=fn["name"], 
+                        file_path=rel_path, 
+                        kind=fn.get("type", "Function"), 
+                        line=fn.get("line", 0),
+                        owner_id=fn.get("owner")
+                    ))
+                # Register raw imports into resolution context
+                for imp in symbols.get("imports", []):
+                    res_ctx.add_import(rel_path, imp)
+                
+                # Register assignments for Type Inference
+                for ass in symbols.get("assignments", []):
+                    self.type_universe.record_assignment(rel_path, ass["var"], ass["type"])
+                    
+            except Exception as exc:
+                stats["errors"] += 1
+                print(f"[ast-analyzer] Pass 1 error for {rel_path}: {exc}")
+
+        # --- PASS 2: Semantic Resolution & Upsert ---
+        for rel_path, data in extracted_data.items():
+            try:
+                symbols = data["symbols"]
+                lang    = data["lang"]
+                
                 stats["files"] += 1
-                stats.setdefault("complexity_total", 0)
                 stats["complexity_total"] += symbols.get("complexity_total", 0)
 
-                n_nodes = (len(symbols.get("classes", [])) +
-                           len(symbols.get("functions", [])) + 1)  # +1 for file node
-                n_edges = (len(symbols.get("imports", [])) +
-                           len(symbols.get("calls", [])))
+                # Resolve calls (Cross-file matching)
+                resolved_calls = []
+                for call_obj in symbols.get("calls", []):
+                    call_name = call_obj["name"] if isinstance(call_obj, dict) else call_obj
+                    
+                    # Deep Resolution: If it's a member call 'obj.method', try type inference
+                    target_file = None
+                    if "." in call_name:
+                        parts = call_name.split(".")
+                        obj_name = parts[0]
+                        meth_name = parts[-1]
+                        inferred_type = self.type_universe.infer_type(rel_path, obj_name)
+                        if inferred_type:
+                            targets = res_ctx.resolve_symbol(meth_name, rel_path)
+                            targets = [t for t in targets if t.owner_id == inferred_type or t.name == meth_name]
+                    
+                    targets = res_ctx.resolve_symbol(call_name, rel_path)
+                    if targets:
+                        resolved_calls.append({"name": call_name, "target_file": targets[0].file_path})
+                
+                symbols["resolved_calls"] = resolved_calls
+
+                # Resolve imports (using the map built in Pass 1)
+                symbols["resolved_imports"] = list(res_ctx.import_map.get(rel_path, set()))
 
                 if driver:
                     with driver.session() as session:
@@ -624,6 +375,11 @@ class ASTAnalyzer:
                             rel_path, lang, symbols, project_id, tenant_id
                         )
 
+                n_nodes = (len(symbols.get("classes", [])) +
+                           len(symbols.get("functions", [])) + 1)
+                n_edges = (len(symbols.get("imports", [])) +
+                           len(resolved_calls))
+                
                 stats["nodes_created"] += n_nodes
                 stats["edges_created"] += n_edges
 
@@ -632,9 +388,67 @@ class ASTAnalyzer:
 
             except Exception as exc:
                 stats["errors"] += 1
-                print(f"[ast-analyzer] error parsing {rel_path}: {exc}")
+                print(f"[ast-analyzer] Pass 2 error for {rel_path}: {exc}")
 
-        return stats
+        # --- PHASE 3: Flow Mapping (Post-Analysis) ---
+        if driver:
+            try:
+                from services.flow_mapper import FlowMapper
+                mapper = FlowMapper(driver)
+                mapper.map_processes(project_id, tenant_id)
+            except Exception as exc:
+                print(f"[ast-analyzer] Flow mapping error: {exc}")
+
+        # Prepare return stats and symbols
+        return {
+            "files": len(file_list),
+            "nodes_created": stats["nodes_created"],
+            "edges_created": stats["edges_created"],
+            "complexity_total": stats["complexity_total"],
+            "symbols": self.symbols  # Full symbol table for Phase 7 (Deep Memory)
+        }
+
+    def reanalyze_file(self, project_path: str, abs_path: str, project_id: str, tenant_id: str):
+        """
+        Re-analyze a single file and update its graph nodes and relationships.
+        This is an incremental update triggered by file changes.
+        """
+        rel_path = os.path.relpath(abs_path, project_path).replace("\\", "/")
+        ext = Path(abs_path).suffix.lower()
+        lang = _LANG_EXTENSIONS.get(ext)
+        if not lang:
+            return
+
+        try:
+            content = Path(abs_path).read_text(encoding="utf-8", errors="replace")
+            parser = _get_parser(lang)
+            if not parser:
+                return
+            
+            symbols = parser.parse(content, rel_path)
+            
+            # Note: For incremental resolution without full pass 1, 
+            # we rely on the EXISTING SymbolTable and SuffixIndex if they were loaded.
+            # If not, we do a simple local resolution or skip call resolution for now.
+            # Full consistency requires a new two-pass run occasionally.
+            
+            driver = self._get_driver()
+            if driver:
+                with driver.session() as session:
+                    # Clean old nodes for this file first? 
+                    # MATCH (f:File {path: $path}) DETACH DELETE f
+                    # In this version, MERGE handles it but leaves orphaned edges.
+                    # Best: 
+                    session.run("MATCH (f:File {path: $p, project_id: $pid})-[r]->() DELETE r", 
+                                p=rel_path, pid=project_id)
+                    
+                    session.execute_write(
+                        _upsert_file_graph, 
+                        rel_path, lang, symbols, project_id, tenant_id
+                    )
+            print(f"[ast-analyzer] Incremental update for {rel_path} complete.")
+        except Exception as exc:
+            print(f"[ast-analyzer] Incremental error for {rel_path}: {exc}")
 
     def close(self):
         if self._driver:
