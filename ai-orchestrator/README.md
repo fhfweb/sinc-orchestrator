@@ -2,17 +2,18 @@
 
 > **Service Provider Runtime | Cognitive Layer | Strategic Plane**
 
-This service is the core control plane for the SINC ecosystem. It coordinates the 21-agent swarm, manages the 5-layer memory hierarchy, and executes tasks across multiple LLM backends with production-grade safety.
+This service coordinates the 21-agent swarm, manages the 5-layer memory hierarchy, and executes tasks across multiple LLM backends with production-oriented safety.
 
 ## 🏗️ Technical Architecture
 
 ### The Cognitive Pipeline
-Every task processed through `/cognitive/process` follows a rigid verification loop:
-1. **Pillar I (Execution)**: Dispatch to `local_agent_runner.py`. Anthropic/Ollama/Codex engines with built-in token-budgeting (C3).
-2. **Pillar II (Memory)**: Contextual enrichment from L0-L4 layers. Semantic search (Qdrant) + Graph Alignment (Neo4j).
-3. **Pillar III (Planning)**: MCTS-driven action selection with Thompson Sampling (Reputation Engine blending).
+Every task processed through `/cognitive/process` follows a structured verification loop:
+1. **Pillar I (Execution)**: Dispatch to hardened `local_agent_runner.py` with cost-circuit-breakers (C3).
+2. **Pillar II (Memory)**: Contextual enrichment from pooled memory layers. Semantic search (Qdrant) + Graph Alignment (Neo4j).
+3. **Pillar III (Planning)**: Early-stage MCTS-driven action selection with reputation-aware evaluation.
 
-## 🐝 21-Agent Cognitive Ecosystem
+## 🐝 Specialized Agent Swarm
+Expandable architecture of specialized agents grouped by functional domains:
 
 | Family | Role | Canonical Purpose |
 |---|---|---|
@@ -22,7 +23,6 @@ Every task processed through `/cognitive/process` follows a rigid verification l
 | **Construção** | AI Engineer | Core logic implementation and refactoring. |
 | | AI Engineer Frontend | View-layer components and UX logic. |
 | | Database Agent | DDL migrations and query optimization. |
-| | Integration Agent | API bridging and external systems. |
 | **Qualidade** | Code Reviewer | Static analysis and structural feedback. |
 | | AI Security Engineer | Vulnerability scanning and hardening. |
 | | Performance Agent | Latency profiling and O(n) analysis. |
@@ -36,13 +36,12 @@ Every task processed through `/cognitive/process` follows a rigid verification l
 | **Coordenação** | AI CTO | High-level goal monitoring and escalation. |
 | | Documentation | Automated README and ADR generation. |
 
-## 🛡️ Production Hardening (Baseline v2026.03)
+## 🛡️ Production Hardening Baseline
 
-The runtime has been hardened against established AI Orchestration failure modes:
-- **H1 (Memory)**: `EMBEDDING_CACHE` is now a thread-safe LRU (512 capacity) to prevent OOM leaks.
-- **H4 (Isolation)**: Lazy Playwright loading prevents startup crashes on minimal Docker layers.
-- **C3 (FinOps)**: Uncapped Anthropic loops are replaced with a strict token-per-task budget.
-- **MCTS Exploration**: Deterministic greedy rollouts were replaced with weighted random sampling.
+The runtime is actively hardened against established failure modes:
+- **Memory Management**: Pooled connection drivers and thread-safe LRU caching (H1-H4).
+- **FinOps**: Per-task token budgets to mitigate recursive financial exposure (C3).
+- **Isolation**: Strategic driver isolation to prevent startup failures on minimal hosts.
 
 ## 🚦 Endpoints & Governance
 
@@ -51,7 +50,6 @@ The runtime has been hardened against established AI Orchestration failure modes
 | `/cognitive/process` | POST | Unified cognitive entry point. |
 | `/dashboard` | GET | Real-time monitoring and task debugger. |
 | `/metrics` | GET | Prometheus/OpenTelemetry instrumentation. |
-| `/admin/tenants` | POST | Multi-tenant isolation and key management. |
 
 ## 🚀 Operations
-Refer to `RUNBOOK.md` for incident response and `ARCHITECTURE_DECISIONS.md` for rationale on memory/planning layers.
+Refer to `ARCHITECTURE_DECISIONS.md` for deep-dive rationale on memory and planning implementations.
