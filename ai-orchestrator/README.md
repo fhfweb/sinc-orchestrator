@@ -10,7 +10,7 @@ This service coordinates the 21-agent swarm, manages the 5-layer memory hierarch
 Every task processed through `/cognitive/process` follows a structured verification loop:
 1. **Pillar I (Execution)**: Dispatch to hardened `local_agent_runner.py` with cost-circuit-breakers (C3).
 2. **Pillar II (Memory)**: Contextual enrichment from pooled and singleton-aware memory layers. Semantic search (Qdrant) + Graph Alignment (Neo4j).
-3. **Pillar III (Planning)**: Early-stage MCTS-driven action selection with reputation-aware evaluation (Thompson Sampling).
+3. **Pillar III (Planning)**: Early-stage MCTS-driven action selection with reputation-aware **evaluation**.
 
 ## 🐝 Specialized Agent Swarm
 Expandable architecture of specialized agents grouped by functional domains:
@@ -49,7 +49,6 @@ The runtime is actively hardened against established failure modes:
 |---|---|---|
 | `/cognitive/process` | POST | Unified cognitive entry point. |
 | `/dashboard` | GET | Real-time monitoring and task debugger. |
-| `/metrics` | GET | Prometheus/OpenTelemetry instrumentation. |
 
 ## 🚀 Operations
-Refer to `ARCHITECTURE_DECISIONS.md` for deep-dive rationale on memory and planning implementations.
+Refer to `PITCH.md` for the executive narrative and `ARCHITECTURE_DECISIONS.md` for rationale on memory and planning implementations.

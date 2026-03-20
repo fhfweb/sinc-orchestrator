@@ -1,7 +1,19 @@
 # 🧠 SINC AI Orchestrator: The Cognitive Control Plane
 > **Production-Oriented (Actively Hardening) | Multi-Tenant | Autonomous Software Delivery**
 
-SINC solves the core limitation of current AI agents: **lack of reliability, memory, and coordinated decision-making at scale.** It is a Cognitive Operating System designed to transform raw LLM capabilities into a reliable, learning engineering swarm.
+SINC addresses the fundamental limitations of current AI agents: **lack of reliability, persistent memory, and coordinated decision-making at scale.** It is a Cognitive Operating System designed to transform raw LLM capabilities into a reliable engineering swarm that learns continuously.
+
+---
+
+## 🧩 Architecture Overview
+
+SINC operates as a cognitive control plane that coordinates:
+
+- **Execution Layer**: LLMs (Anthropic/Ollama) + Managed Tool-Use (Playwright/CLI).
+- **Memory Layer**: 5-layer persistence (L1 cache, L2 semantic, L3 graph, L4 event-store).
+- **Planning Layer**: MCTS-driven evaluation + Agent Reputation scoring.
+
+*All unified under a multi-tenant orchestration engine for massive scale.*
 
 ---
 
@@ -16,14 +28,14 @@ SINC solves the core limitation of current AI agents: **lack of reliability, mem
 ### 🧠 Pillar II: Cognitive Memory Hierarchy
 Memory layers implemented with pooled and singleton-aware infrastructure to ensure the system learns from history:
 - **L0: Deterministic Guardrails** - Hard-coded rules and safety constraints.
-- **L1: Elastic Cache** - **Redis-backed** LRU cache for instant deterministic hits.
+- **L1: Elastic Cache** - Redis-backed LRU cache for instant deterministic hits.
 - **L2: Semantic Memory** - Qdrant-powered vector search for contextually related history.
 - **L3: Graph Reasoning** - Neo4j-driven relationship mapping and architectural alignment.
 - **L4: Durable Events** - PostgreSQL event-store for full auditability and reputation tracking.
 
 ### 🎲 Pillar III: Strategic Planning
 **Early-stage MCTS planner** with reputation-aware path evaluation (under active refinement):
-- Simulates potential execution paths to optimize outcomes.
+- **Evaluates** potential execution paths to optimize outcomes.
 - Blends real-time **Agent Reputation Scores** into decision-making.
 - Implements Thompson Sampling for optimal exploration/exploitation of agent swarms.
 
@@ -40,11 +52,11 @@ Memory layers implemented with pooled and singleton-aware infrastructure to ensu
 
 ## ⚔️ Why SINC
 
-Unlike traditional agent frameworks (LangGraph, CrewAI, AutoGPT), SINC provides:
+Unlike traditional agent frameworks, SINC provides:
 
 - **Persistent Multi-Layer Memory**: True data persistence across tasks, not just session-based buffers.
 - **Graph-Aware Reasoning**: Deep code and system relationship mapping, avoiding linear blindspots.
-- **Reputation-Driven Planning**: Dynamic routing based on past agent performance metrics.
+- **Reputation-Driven Planning**: Dynamic routing based on performance-based decision-making.
 - **Cost-Aware Execution**: Built-in financial guardrails to prevent unbounded token loops.
 
 ---
