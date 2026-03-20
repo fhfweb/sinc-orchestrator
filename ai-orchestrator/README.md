@@ -2,15 +2,15 @@
 
 > **Service Provider Runtime | Cognitive Layer | Strategic Plane**
 
-This service coordinates the 21-agent swarm, manages the 5-layer memory hierarchy, and executes tasks across multiple LLM backends with production-oriented safety.
+This service coordinates the 21-agent swarm, manages the 5-layer memory hierarchy, and executes tasks across multiple LLM backends with **production-grade infrastructure (actively hardened)**.
 
 ## 🏗️ Technical Architecture
 
 ### The Cognitive Pipeline
 Every task processed through `/cognitive/process` follows a structured verification loop:
 1. **Pillar I (Execution)**: Dispatch to hardened `local_agent_runner.py` with cost-circuit-breakers (C3).
-2. **Pillar II (Memory)**: Contextual enrichment from pooled memory layers. Semantic search (Qdrant) + Graph Alignment (Neo4j).
-3. **Pillar III (Planning)**: Early-stage MCTS-driven action selection with reputation-aware evaluation.
+2. **Pillar II (Memory)**: Contextual enrichment from pooled and singleton-aware memory layers. Semantic search (Qdrant) + Graph Alignment (Neo4j).
+3. **Pillar III (Planning)**: Early-stage MCTS-driven action selection with reputation-aware evaluation (Thompson Sampling).
 
 ## 🐝 Specialized Agent Swarm
 Expandable architecture of specialized agents grouped by functional domains:
@@ -39,7 +39,7 @@ Expandable architecture of specialized agents grouped by functional domains:
 ## 🛡️ Production Hardening Baseline
 
 The runtime is actively hardened against established failure modes:
-- **Memory Management**: Pooled connection drivers and thread-safe LRU caching (H1-H4).
+- **Memory Management**: Pooled connection drivers and thread-safe **Redis-backed** LRU cache (H1-H4).
 - **FinOps**: Per-task token budgets to mitigate recursive financial exposure (C3).
 - **Isolation**: Strategic driver isolation to prevent startup failures on minimal hosts.
 

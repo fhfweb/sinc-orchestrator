@@ -8,7 +8,7 @@ SINC solves the core limitation of current AI agents: **lack of reliability, mem
 ## 🏛️ The Three Pillars
 
 ### ⚡ Pillar I: Verified Execution
-A production-ready infrastructure with native support for top-tier backends:
+**Production-grade infrastructure (actively hardened)** with native support for top-tier backends:
 - **Anthropic Sonnet 3.5**: Primary cognitive driver with built-in token-budgeting.
 - **Ollama (Qwen2.5-Coder)**: Local-first execution with intelligent GPU VRAM scheduling.
 - **Managed Tool-Use**: Robust browser-based interaction via a lazy-loaded Playwright pool.
@@ -16,7 +16,7 @@ A production-ready infrastructure with native support for top-tier backends:
 ### 🧠 Pillar II: Cognitive Memory Hierarchy
 Memory layers implemented with pooled and singleton-aware infrastructure to ensure the system learns from history:
 - **L0: Deterministic Guardrails** - Hard-coded rules and safety constraints.
-- **L1: Elastic Cache** - Redis-backend LRU cache for instant deterministic hits.
+- **L1: Elastic Cache** - **Redis-backed** LRU cache for instant deterministic hits.
 - **L2: Semantic Memory** - Qdrant-powered vector search for contextually related history.
 - **L3: Graph Reasoning** - Neo4j-driven relationship mapping and architectural alignment.
 - **L4: Durable Events** - PostgreSQL event-store for full auditability and reputation tracking.
@@ -29,8 +29,28 @@ Memory layers implemented with pooled and singleton-aware infrastructure to ensu
 
 ---
 
+## 🎯 Use Cases
+
+- **Autonomous Codebase Refactoring**: Execute large-scale refactors with multi-agent consensus.
+- **Multi-Agent Development Pipelines**: Orchestrate cross-functional swarms (frontend, backend, database) for complex features.
+- **Continuous Software Improvement**: Autonomous loops that detect technical debt and submit patches.
+- **AI-Assisted DevOps**: Incident response and system hardening through cognitive monitoring.
+
+---
+
+## ⚔️ Why SINC
+
+Unlike traditional agent frameworks (LangGraph, CrewAI, AutoGPT), SINC provides:
+
+- **Persistent Multi-Layer Memory**: True data persistence across tasks, not just session-based buffers.
+- **Graph-Aware Reasoning**: Deep code and system relationship mapping, avoiding linear blindspots.
+- **Reputation-Driven Planning**: Dynamic routing based on past agent performance metrics.
+- **Cost-Aware Execution**: Built-in financial guardrails to prevent unbounded token loops.
+
+---
+
 ## 🐝 Specialized Agent Swarm
-An expandable architecture of specialized agents grouped by functional domains:
+An **expandable architecture** of specialized agents grouped by functional domains:
 
 | Group | Agents |
 |---|---|
