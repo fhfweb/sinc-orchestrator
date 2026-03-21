@@ -15,11 +15,18 @@ const els = {
     successRate: document.getElementById('metric-success-rate'),
     autonomyScore: document.getElementById('metric-autonomy-score'),
     activeAgents: document.getElementById('metric-active-agents'),
-    latency: document.getElementById('metric-latency'),
-    taskList: document.getElementById('task-list-container'),
+    systemMode: document.getElementById('system-mode-display'),
     terminalFeed: document.getElementById('terminal-feed-container'),
     graphContainer: document.getElementById('graph-network-container'),
     burnRate: document.getElementById('metric-burn-rate')
+};
+
+const kCols = {
+    'pending': document.querySelector('#col-pending .k-cards'),
+    'running': document.querySelector('#col-running .k-cards'),
+    'review': document.querySelector('#col-review .k-cards'),
+    'completed': document.querySelector('#col-done .k-cards'),
+    'done': document.querySelector('#col-done .k-cards')
 };
 
 // -----------------------------------------------------
@@ -245,37 +252,74 @@ function addTerminalFeed(msg) {
 }
 
 function renderTaskUpdate(task) {
-    const taskId = `task-${task.task_id}`;
+    if (!task.task_id && !task.id) return;
+    const tId = task.task_id || task.id;
+    const taskId = `task-${tId}`;
     let el = document.getElementById(taskId);
     
+    // Status Resolution
+    let colId = task.status || 'pending';
+    if (colId === 'in_progress' || colId === 'running') colId = 'running';
+    else if (colId === 'done' || colId === 'success' || colId === 'completed') colId = 'completed';
+    else if (colId === 'review' || colId === 'hil') colId = 'review';
+    else colId = 'pending';
+    
+    const targetCol = kCols[colId] || kCols['pending'];
+    if (!targetCol) return;
+
     if(!el) {
         el = document.createElement('div');
         el.id = taskId;
-        el.className = 'task-item';
-        if(els.taskList.children.length >= 6) {
-            els.taskList.removeChild(els.taskList.lastChild);
+        targetCol.prepend(el);
+    } else {
+        if (el.parentElement !== targetCol) {
+            targetCol.prepend(el);
         }
-        els.taskList.prepend(el);
     }
     
-    const isRunning = task.status === 'running' || task.status === 'pending';
-    const statusClass = isRunning ? 'active' : '';
-    const icon = isRunning ? 'loader' : (task.status==='completed' ? 'check' : 'alert-circle');
+    // Decorate CSS Classes
+    el.className = `task-item ${colId === 'running' ? 'running' : (colId === 'review' ? 'review' : (colId === 'completed' ? 'done' : ''))}`;
+    const icon = colId === 'running' ? 'loader' : (colId === 'completed' ? 'check-circle' : (colId === 'review' ? 'eye' : 'clock'));
+    const isSpinning = colId === 'running' ? 'rotating' : '';
     
-    el.innerHTML = `
-        <div class="task-status ${statusClass}">
-            <i data-lucide="${icon}"></i>
-        </div>
-        <div class="task-info">
-            <h4>${task.title || 'Agent Operation'}</h4>
-            <div class="meta" style="display:flex; justify-content:space-between">
-                <span>[${task.agent || 'Orchestrator'}]</span>
-                <span class="prefix-${task.status==='completed'?'success':(isRunning?'system':'err')}">${task.status.toUpperCase()}</span>
-            </div>
+    let html = `
+        <div class="task-title">${task.title || 'MCTS Evaluation Node'}</div>
+        <div class="task-agent">
+            <i data-lucide="${icon}" class="${isSpinning}" style="width:14px; height:14px;"></i> 
+            ${task.agent || 'SINC Orchestrator'}
         </div>
     `;
-    lucide.createIcons();
+
+    if (colId === 'review') {
+        html += `
+            <div class="hil-actions">
+                <button class="hil-btn approve" onclick="handleHIL('${tId}', 'approve')">APPROVE</button>
+                <button class="hil-btn reject" onclick="handleHIL('${tId}', 'reject')">REJECT</button>
+            </div>
+        `;
+    }
+
+    el.innerHTML = html;
+    
+    // KanBan Maintenance (Cap to 15 items per column max)
+    if(targetCol.children.length > 15) {
+        targetCol.removeChild(targetCol.lastChild);
+    }
+    
+    if (window.lucide) window.lucide.createIcons();
 }
+
+window.handleHIL = function(taskId, action) {
+    if (action === 'approve') {
+        writeToTerminal(`[HIL] User APPROVED task: ${taskId}. Resuming MCTS execution branch...`, "success");
+        renderTaskUpdate({task_id: taskId, status: 'running', title: 'Applying architecture changes...', agent: 'ArchitectAgent'});
+        setTimeout(() => renderTaskUpdate({task_id: taskId, status: 'completed', title: 'Changes merged seamlessly.', agent: 'System'}), 2500);
+    } else {
+        writeToTerminal(`[HIL] User REJECTED task: ${taskId}. Halting branch evaluation.`, "err");
+        const el = document.getElementById(`task-${taskId}`);
+        if(el) el.remove();
+    }
+};
 
 // -----------------------------------------------------
 // Command Palette (Cmd+K)

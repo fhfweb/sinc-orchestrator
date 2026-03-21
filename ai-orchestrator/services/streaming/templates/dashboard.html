@@ -131,13 +131,28 @@
                             </div>
                         </div>
 
-                        <!-- LIVE TASK PIPELINE -->
-                        <div class="glass-panel">
+                        <!-- LIVE KANBAN BOARD -->
+                        <div class="glass-panel kanban-panel">
                             <div class="panel-header">
-                                <h3><i data-lucide="cpu"></i> Active Agent Pipeline</h3>
+                                <h3><i data-lucide="trello"></i> MCTS KanBan Board</h3>
                             </div>
-                            <div id="task-list-container" class="task-list">
-                                <span class="syncing-text">Syncing neuronal states...</span>
+                            <div class="kanban-board" id="kanban-board">
+                                <div class="kanban-col" id="col-pending">
+                                    <div class="k-header">Pending</div>
+                                    <div class="k-cards"></div>
+                                </div>
+                                <div class="kanban-col" id="col-running">
+                                    <div class="k-header">In Progress</div>
+                                    <div class="k-cards"></div>
+                                </div>
+                                <div class="kanban-col" id="col-review">
+                                    <div class="k-header">HIL Review</div>
+                                    <div class="k-cards"></div>
+                                </div>
+                                <div class="kanban-col" id="col-done">
+                                    <div class="k-header">L3 Cached</div>
+                                    <div class="k-cards"></div>
+                                </div>
                             </div>
                         </div>
                     </div>

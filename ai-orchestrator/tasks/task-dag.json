@@ -2,7 +2,7 @@
   "schema_version": "projection-v1",
   "source": "db-projection",
   "read_only": true,
-  "generated_at": "2026-03-21T02:35:28.745444+00:00",
+  "generated_at": "2026-03-21T02:38:29.452042+00:00",
   "tenant_id": "",
   "project_id": "",
   "tasks": [
@@ -24574,6 +24574,56 @@
       }
     },
     {
+      "id": "soak-task-1774060549-989",
+      "task_id": "soak-task-1774060549-989",
+      "title": "Soak validation task soak-task-1774060549-989",
+      "description": "Cycle 989 control-plane soak validation",
+      "status": "done",
+      "priority": "2",
+      "assigned_agent": "agent-e2e-35b7",
+      "project_id": "sinc",
+      "tenant_id": "local",
+      "depends_on": [],
+      "created_at": "2026-03-21 02:35:49.053017",
+      "updated_at": "2026-03-21 02:35:49.125775",
+      "completed_at": "2026-03-21 02:35:49.125775",
+      "requires_review": false,
+      "verification_required": false,
+      "verification_script": "",
+      "red_team_enabled": false,
+      "plan_id": "",
+      "metadata": {
+        "origin": "soak_python_control_plane",
+        "claim_token": "soak-task-1774060549-989",
+        "execution_mode": "llm-native"
+      }
+    },
+    {
+      "id": "soak-task-1774060669-990",
+      "task_id": "soak-task-1774060669-990",
+      "title": "Soak validation task soak-task-1774060669-990",
+      "description": "Cycle 990 control-plane soak validation",
+      "status": "done",
+      "priority": "2",
+      "assigned_agent": "agent-e2e-35b7",
+      "project_id": "sinc",
+      "tenant_id": "local",
+      "depends_on": [],
+      "created_at": "2026-03-21 02:37:49.048171",
+      "updated_at": "2026-03-21 02:37:49.135574",
+      "completed_at": "2026-03-21 02:37:49.135574",
+      "requires_review": false,
+      "verification_required": false,
+      "verification_script": "",
+      "red_team_enabled": false,
+      "plan_id": "",
+      "metadata": {
+        "origin": "soak_python_control_plane",
+        "claim_token": "soak-task-1774060669-990",
+        "execution_mode": "llm-native"
+      }
+    },
+    {
       "id": "demo-task-5",
       "task_id": "demo-task-5",
       "title": "Refactor Dependency Graph",
@@ -24701,9 +24751,9 @@
     }
   ],
   "counts": {
-    "total": 988,
+    "total": 990,
     "by_status": {
-      "done": 937,
+      "done": 939,
       "pending": 47,
       "dead-letter": 3,
       "awaiting-review": 1
