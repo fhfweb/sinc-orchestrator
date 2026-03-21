@@ -257,9 +257,31 @@ body {
 /* Stats Row */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 24px;
     margin-bottom: 40px;
+}
+
+.stat-card.danger-glow {
+    border: 1px solid rgba(240, 50, 80, 0.3);
+    box-shadow: inset 0 0 20px rgba(240, 50, 80, 0.05), 0 0 15px rgba(240, 50, 80, 0.1);
+}
+.stat-icon.danger-icon {
+    background: rgba(240, 50, 80, 0.15);
+    color: var(--danger);
+    border-color: rgba(240, 50, 80, 0.3);
+}
+
+.odometer-container {
+    overflow: hidden;
+    display: inline-block;
+    height: 32px;
+}
+.odometer-container h2 {
+    font-family: 'Fira Code', monospace;
+    font-weight: 600;
+    font-size: 24px;
+    transition: transform 0.15s ease-in-out, opacity 0.15s ease-in-out;
 }
 
 .stat-card {

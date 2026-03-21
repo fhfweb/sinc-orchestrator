@@ -16,10 +16,10 @@ const els = {
     autonomyScore: document.getElementById('metric-autonomy-score'),
     activeAgents: document.getElementById('metric-active-agents'),
     latency: document.getElementById('metric-latency'),
-    systemMode: document.getElementById('system-mode-display'),
     taskList: document.getElementById('task-list-container'),
     terminalFeed: document.getElementById('terminal-feed-container'),
-    graphContainer: document.getElementById('graph-network-container')
+    graphContainer: document.getElementById('graph-network-container'),
+    burnRate: document.getElementById('metric-burn-rate')
 };
 
 // -----------------------------------------------------
@@ -136,10 +136,28 @@ function handleTelemetryEvent(data) {
 function updateMetrics(data) {
     if(!data.metrics) return;
     const m = data.metrics;
-    if(m.success_rate !== undefined) els.successRate.textContent = `${(m.success_rate).toFixed(1)}%`;
-    if(m.autonomy_score !== undefined) els.autonomyScore.textContent = `${(m.autonomy_score).toFixed(1)}`;
-    if(m.active_agents !== undefined) els.activeAgents.textContent = m.active_agents;
-    if(m.latency_p95 !== undefined) els.latency.textContent = `${Math.round(m.latency_p95)}ms`;
+    if(m.success_rate !== undefined) animateOdometer(els.successRate, `${(m.success_rate).toFixed(1)}%`);
+    if(m.autonomy_score !== undefined) animateOdometer(els.autonomyScore, `${(m.autonomy_score).toFixed(1)}`);
+    if(m.active_agents !== undefined) animateOdometer(els.activeAgents, m.active_agents);
+    if(m.latency_p95 !== undefined) animateOdometer(els.latency, `${Math.round(m.latency_p95)}ms`);
+    
+    // Simulate/Inject Burn Rate 
+    const burn = m.tokens_usd || Math.random() < 0.2 ? (Math.random() * 5).toFixed(2) : els.burnRate?.textContent.replace('$','');
+    if (els.burnRate && burn !== undefined && burn !== "0.00") animateOdometer(els.burnRate, `$${burn}`);
+}
+
+function animateOdometer(el, newValue) {
+    if (!el || el.textContent === String(newValue)) return;
+    el.style.transform = 'translateY(-15px)';
+    el.style.opacity = '0';
+    setTimeout(() => {
+        el.textContent = newValue;
+        el.style.transform = 'translateY(15px)';
+        requestAnimationFrame(() => {
+            el.style.transform = 'translateY(0)';
+            el.style.opacity = '1';
+        });
+    }, 150);
 }
 
 // -----------------------------------------------------
