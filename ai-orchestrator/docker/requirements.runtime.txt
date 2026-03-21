@@ -23,3 +23,5 @@ langgraph
 langchain-core
 langgraph-checkpoint-sqlite
 scikit-learn
+
+websockets>=11.0

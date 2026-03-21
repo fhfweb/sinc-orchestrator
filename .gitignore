@@ -11,3 +11,16 @@ ai-orchestrator/services/__pycache__/
 *.bak
 temp_recovery/
 find_me.txt
+
+# Scripts de debug temporários (ai-orchestrator)
+ai-orchestrator/find_bad_route.py
+ai-orchestrator/inject_kanban.py
+ai-orchestrator/rebuild_html.py
+ai-orchestrator/strip_hardcodes.py
+ai-orchestrator/test_import.py
+ai-orchestrator/trace.txt
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo

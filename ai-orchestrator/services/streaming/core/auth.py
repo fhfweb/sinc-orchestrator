@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 
 import contextvars
-from fastapi import Request, HTTPException, Header, Depends, status
+from fastapi import Request, HTTPException, Header, Depends, status, Query
 
 TRACE_CONTEXT: contextvars.ContextVar[str] = contextvars.ContextVar("trace_id", default="")
 
@@ -69,8 +69,6 @@ async def _update_last_used_at(key: str) -> None:
 
 # ── Tenant resolution dependency ──────────────────────────────────────────────
 
-from fastapi import Request, HTTPException, Header, Depends, status, Query
-...
 async def get_tenant_id(
     request: Request,
     x_api_key: Optional[str] = Header(None, alias="X-Api-Key"),
@@ -154,15 +152,8 @@ async def get_tenant_id(
     return tenant["id"]
 
 
-async def get_tenant(request: Optional[Request] = None) -> Dict[str, Any]:
-    """
-    Dependency to get full tenant object.
-    If called without request (manual call), it will fail gracefully or attempt to resolve.
-    """
-    if request is None:
-        log.warning("get_tenant_called_without_request")
-        return {}
-        
+async def get_tenant(request: Request) -> Dict[str, Any]:
+    """Dependency to get full tenant object from request state."""
     if not hasattr(request.state, "tenant"):
         # If get_tenant_id hasn't run, we can't easily resolve here without the full machinery.
         # But we return empty dict to avoid crashing.

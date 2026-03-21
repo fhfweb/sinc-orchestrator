@@ -304,9 +304,7 @@ async def ask_stream(
     current_tenant_obj: Dict[str, Any] = Depends(get_tenant),
 ):
     """SSE endpoint: streams LLM tokens."""
-    allowed, reason = check_quota(current_tenant_obj, tokens_needed=500)
-    if not allowed:
-        raise HTTPException(status_code=429, detail=reason)
+    await check_quota(current_tenant_obj, tokens_needed=500)
 
     plan    = current_tenant_obj.get("plan", "free")
     routing = _route_prompt(prompt)
