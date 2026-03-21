@@ -81,6 +81,12 @@ async def impact_analysis(symbol_name: str, project_id: str = "default", tenant_
             return f"No impact detected for {symbol_name}."
         
         output = [f"Impact Analysis for '{symbol_name}':"]
+        
+        # Red Team Risk Heuristic
+        risk_score = len(result["impact_map"]) * 2
+        risk_level = "CRITICAL" if risk_score > 15 else "MEDIUM" if risk_score > 5 else "LOW"
+        output.append(f"  [!] Red Team Risk Score: {risk_score} ({risk_level})")
+        
         for imp in result["impact_map"]:
             output.append(f"  - [{imp['risk']}] {imp['type']}: {imp['name']} ({imp['file']}) - Depth: {imp['depth']}")
         
@@ -99,6 +105,45 @@ async def create_sinc_task(title: str, description: str, agent: str = "ai engine
     }
     res = await _orchestrator_request("POST", "/api/v1/tasks", body=payload, tenant_id=tenant_id)
     return json.dumps(res, indent=2)
+
+@mcp.tool()
+async def get_lsp_definition(filepath: str, line: int, character: int) -> str:
+    """
+    Query the Language Server Protocol (LSP) bridge for the absolute definition of a symbol.
+    Requires absolute filepath and 0-indexed line and character positions.
+    Helps resolve 'undefined variable' hallucinations definitively.
+    """
+    try:
+        from services.lsp_bridge.client import LSPClient
+        # One-shot localized LSP spawn. 
+        # For production at scale, this should delegate to a long-running proxy pool.
+        client = LSPClient("pyright-langserver", ["--stdio"])
+        await client.start()
+        
+        root_dir = os.path.dirname(os.path.abspath(filepath))
+        # Ensure correct URI format for Windows/Linux
+        abs_path = root_dir.replace('\\', '/')
+        if not abs_path.startswith('/'): abs_path = '/' + abs_path
+        uri = f"file://{abs_path}"
+        
+        await client.initialize(uri)
+        
+        file_abs = os.path.abspath(filepath).replace('\\', '/')
+        if not file_abs.startswith('/'): file_abs = '/' + file_abs
+        file_uri = f"file://{file_abs}"
+        
+        with open(filepath, 'r', encoding='utf-8') as f:
+            code = f.read()
+            
+        await client.did_open(file_uri, code)
+        result = await client.get_definition(file_uri, line, character)
+        await client.stop()
+        
+        if not result:
+            return "No definition found via LSP. Symbol might be built-in or unresolvable."
+        return json.dumps(result, indent=2)
+    except Exception as e:
+        return f"LSP Bridge Error: {str(e)}"
 
 @mcp.tool()
 async def get_task_status(task_id: str, tenant_id: str = "local") -> str:
