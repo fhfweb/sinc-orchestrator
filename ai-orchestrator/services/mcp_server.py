@@ -152,14 +152,36 @@ async def get_task_status(task_id: str, tenant_id: str = "local") -> str:
     return json.dumps(res, indent=2)
 
 @mcp.tool()
-async def search_agent_memory(query: str, tenant_id: str = "local", top_k: int = 5) -> str:
+async def search_past_solutions(query: str, project_id: str = "sinc", tenant_id: str = "local", top_k: int = 5) -> str:
     """
-    Search the SINC semantic memory (Qdrant) for relevant past experiences, 
-    code patterns, or project knowledge.
+    Search the SINC L3 semantic vector memory (Qdrant) for past solutions, bugs, and architectures
+    previously resolved by the orchestrator. Critical for discovering prior art.
     """
-    payload = {"query": query, "top_k": top_k}
-    res = await _orchestrator_request("POST", "/api/v1/cognitive/memory/search", body=payload, tenant_id=tenant_id)
-    return json.dumps(res, indent=2)
+    try:
+        from services.context_retriever import ContextRetriever
+        retriever = ContextRetriever(top_k=top_k)
+        result = retriever.retrieve(query=query, project_id=project_id, tenant_id=tenant_id, top_k=top_k)
+        
+        cache_hit = retriever.check_semantic_cache(query=query, project_id=project_id, tenant_id=tenant_id, threshold=0.80)
+
+        output = [f"L3 Memory Search Results for '{query}':"]
+        if cache_hit:
+            output.append(f"\n[!] HIGH CONFIDENCE SOLUTION MATCH (Score: {cache_hit['score']:.2f})")
+            output.append(f"Past Decision/Solution:\n{cache_hit['answer']}")
+        
+        chunks = result.get("chunks", [])
+        if not chunks and not cache_hit:
+            return "No past solutions or chunks found in L3 memory."
+            
+        if chunks:
+            output.append("\nRelated Code/Context Chunks:")
+            for c in chunks:
+                snippet = c['text'][:300].replace('\n', ' ')
+                output.append(f" - {c['file']} (Score: {c.get('hybrid_score') or c['score']})\n   {snippet}...")
+                
+        return "\n".join(output)
+    except Exception as e:
+        return f"Error connecting to L3 Memory: {e}"
 
 @mcp.tool()
 async def get_orchestrator_capabilities() -> str:

@@ -2,7 +2,7 @@
   "schema_version": "projection-v1",
   "source": "db-projection",
   "read_only": true,
-  "generated_at": "2026-03-21T02:19:45.766060+00:00",
+  "generated_at": "2026-03-21T02:28:27.485970+00:00",
   "tenant_id": "",
   "project_id": "",
   "tasks": [
@@ -24374,6 +24374,131 @@
       }
     },
     {
+      "id": "soak-task-1774059589-981",
+      "task_id": "soak-task-1774059589-981",
+      "title": "Soak validation task soak-task-1774059589-981",
+      "description": "Cycle 981 control-plane soak validation",
+      "status": "done",
+      "priority": "2",
+      "assigned_agent": "agent-e2e-35b7",
+      "project_id": "sinc",
+      "tenant_id": "local",
+      "depends_on": [],
+      "created_at": "2026-03-21 02:19:49.096439",
+      "updated_at": "2026-03-21 02:19:49.193541",
+      "completed_at": "2026-03-21 02:19:49.193541",
+      "requires_review": false,
+      "verification_required": false,
+      "verification_script": "",
+      "red_team_enabled": false,
+      "plan_id": "",
+      "metadata": {
+        "origin": "soak_python_control_plane",
+        "claim_token": "soak-task-1774059589-981",
+        "execution_mode": "llm-native"
+      }
+    },
+    {
+      "id": "soak-task-1774059709-982",
+      "task_id": "soak-task-1774059709-982",
+      "title": "Soak validation task soak-task-1774059709-982",
+      "description": "Cycle 982 control-plane soak validation",
+      "status": "done",
+      "priority": "2",
+      "assigned_agent": "agent-e2e-35b7",
+      "project_id": "sinc",
+      "tenant_id": "local",
+      "depends_on": [],
+      "created_at": "2026-03-21 02:21:49.091152",
+      "updated_at": "2026-03-21 02:21:49.195044",
+      "completed_at": "2026-03-21 02:21:49.195044",
+      "requires_review": false,
+      "verification_required": false,
+      "verification_script": "",
+      "red_team_enabled": false,
+      "plan_id": "",
+      "metadata": {
+        "origin": "soak_python_control_plane",
+        "claim_token": "soak-task-1774059709-982",
+        "execution_mode": "llm-native"
+      }
+    },
+    {
+      "id": "soak-task-1774059829-983",
+      "task_id": "soak-task-1774059829-983",
+      "title": "Soak validation task soak-task-1774059829-983",
+      "description": "Cycle 983 control-plane soak validation",
+      "status": "done",
+      "priority": "2",
+      "assigned_agent": "agent-e2e-35b7",
+      "project_id": "sinc",
+      "tenant_id": "local",
+      "depends_on": [],
+      "created_at": "2026-03-21 02:23:49.087267",
+      "updated_at": "2026-03-21 02:23:49.190347",
+      "completed_at": "2026-03-21 02:23:49.190347",
+      "requires_review": false,
+      "verification_required": false,
+      "verification_script": "",
+      "red_team_enabled": false,
+      "plan_id": "",
+      "metadata": {
+        "origin": "soak_python_control_plane",
+        "claim_token": "soak-task-1774059829-983",
+        "execution_mode": "llm-native"
+      }
+    },
+    {
+      "id": "soak-task-1774059949-984",
+      "task_id": "soak-task-1774059949-984",
+      "title": "Soak validation task soak-task-1774059949-984",
+      "description": "Cycle 984 control-plane soak validation",
+      "status": "done",
+      "priority": "2",
+      "assigned_agent": "agent-e2e-35b7",
+      "project_id": "sinc",
+      "tenant_id": "local",
+      "depends_on": [],
+      "created_at": "2026-03-21 02:25:49.080493",
+      "updated_at": "2026-03-21 02:25:49.167333",
+      "completed_at": "2026-03-21 02:25:49.167333",
+      "requires_review": false,
+      "verification_required": false,
+      "verification_script": "",
+      "red_team_enabled": false,
+      "plan_id": "",
+      "metadata": {
+        "origin": "soak_python_control_plane",
+        "claim_token": "soak-task-1774059949-984",
+        "execution_mode": "llm-native"
+      }
+    },
+    {
+      "id": "soak-task-1774060069-985",
+      "task_id": "soak-task-1774060069-985",
+      "title": "Soak validation task soak-task-1774060069-985",
+      "description": "Cycle 985 control-plane soak validation",
+      "status": "done",
+      "priority": "2",
+      "assigned_agent": "agent-e2e-35b7",
+      "project_id": "sinc",
+      "tenant_id": "local",
+      "depends_on": [],
+      "created_at": "2026-03-21 02:27:49.074120",
+      "updated_at": "2026-03-21 02:27:49.145674",
+      "completed_at": "2026-03-21 02:27:49.145674",
+      "requires_review": false,
+      "verification_required": false,
+      "verification_script": "",
+      "red_team_enabled": false,
+      "plan_id": "",
+      "metadata": {
+        "origin": "soak_python_control_plane",
+        "claim_token": "soak-task-1774060069-985",
+        "execution_mode": "llm-native"
+      }
+    },
+    {
       "id": "demo-task-5",
       "task_id": "demo-task-5",
       "title": "Refactor Dependency Graph",
@@ -24501,9 +24626,9 @@
     }
   ],
   "counts": {
-    "total": 980,
+    "total": 985,
     "by_status": {
-      "done": 929,
+      "done": 934,
       "pending": 47,
       "dead-letter": 3,
       "awaiting-review": 1

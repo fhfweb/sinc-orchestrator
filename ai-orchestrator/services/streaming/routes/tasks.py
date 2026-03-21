@@ -661,6 +661,28 @@ async def update_task_status(
         agent_name="tasks-api",
         payload={"reason": body.reason, "metadata": body.metadata},
     )
+
+    if body.status == "done":
+        def _index_solution():
+            try:
+                from services.context_retriever import ContextRetriever
+                task_desc = current.get("description") or current.get("title", "")
+                task_ans = body.reason or "Task completed successfully."
+                ContextRetriever().store_solution(
+                    query=task_desc,
+                    answer=task_ans,
+                    project_id=current.get("project_id", "sinc"),
+                    tenant_id=tenant_id,
+                    intent=current.get("task_type", "resolved_task"),
+                    verified=True
+                )
+                log.info(f"[Qdrant] Semantic Solution Indexed for task {task_id}")
+            except Exception as e:
+                log.error(f"[Qdrant] background indexing failed: {e}")
+        
+        import asyncio
+        asyncio.get_event_loop().run_in_executor(None, _index_solution)
+
     return {"ok": True, "task_id": task_id, "status": body.status}
 
 
