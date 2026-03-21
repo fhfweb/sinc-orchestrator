@@ -1,8 +1,13 @@
+import os
+import json
+import uuid
+import httpx
 from mcp.server.fastmcp import FastMCP
 from services.ast_analyzer import ASTAnalyzer
 from services.impact_analyzer import ImpactAnalyzer
 from services.flow_mapper import FlowMapper
-import os
+from services.streaming.core.config import env_get
+from services.http_client import create_resilient_client
 
 # Initialize FastMCP server
 mcp = FastMCP("SINC Cognitive Server")
@@ -10,6 +15,25 @@ mcp = FastMCP("SINC Cognitive Server")
 # Helper to get Neo4j driver (using shared config if possible)
 def get_analyzer():
     return ASTAnalyzer()
+
+async def _orchestrator_request(method: str, path: str, body: dict = None, tenant_id: str = "local") -> dict:
+    base_url = env_get("ORCHESTRATOR_URL", default="http://localhost:8000").rstrip("/")
+    api_key = env_get("ORCHESTRATOR_API_KEY", default="")
+    
+    headers = {
+        "X-Tenant-Id": tenant_id,
+        "X-Trace-Id": f"mcp-{uuid.uuid4().hex[:8]}",
+    }
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    async with create_resilient_client(service_name="mcp-server") as client:
+        try:
+            response = await client.request(method, f"{base_url}{path}", json=body, headers=headers)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            return {"error": str(e)}
 
 @mcp.tool()
 async def query_graph(query: str, project_id: str = "default", tenant_id: str = "local") -> str:
@@ -37,7 +61,7 @@ async def query_graph(query: str, project_id: str = "default", tenant_id: str = 
             records = [dict(r) for r in result]
             if not records:
                 return "No results found."
-            return str(records)
+            return json.dumps(records, indent=2)
 
 @mcp.tool()
 async def impact_analysis(symbol_name: str, project_id: str = "default", tenant_id: str = "local") -> str:
@@ -63,28 +87,43 @@ async def impact_analysis(symbol_name: str, project_id: str = "default", tenant_
         return "\n".join(output)
 
 @mcp.tool()
-async def get_execution_flows(project_id: str = "default", tenant_id: str = "local") -> str:
+async def create_sinc_task(title: str, description: str, agent: str = "ai engineer", tenant_id: str = "local") -> str:
     """
-    List all higher-level execution flows (Processes) identified in the codebase.
-    Shows the 'story' of the code (e.g., API flows, background tasks).
+    Create a new task in the SINC Orchestrator. 
+    The orchestrator will dispatch this to the appropriate worker.
     """
-    with get_analyzer() as analyzer:
-        driver = analyzer._get_driver()
-        if not driver:
-            return "Neo4j driver not available."
-        
-        mapper = FlowMapper(driver)
-        flows = mapper.get_process_stats(project_id, tenant_id)
-        
-        if not flows:
-            return "No processes identified yet. Run a full analysis first."
-        
-        output = ["Identified Execution Flows:"]
-        for f in flows:
-            output.append(f"  - {f['name']}: {f['node_count']} steps/nodes")
-        
-        return "\n".join(output)
+    payload = {
+        "title": title,
+        "description": description,
+        "agent": agent
+    }
+    res = await _orchestrator_request("POST", "/api/v1/tasks", body=payload, tenant_id=tenant_id)
+    return json.dumps(res, indent=2)
+
+@mcp.tool()
+async def get_task_status(task_id: str, tenant_id: str = "local") -> str:
+    """Check the status and result of a specific SINC task."""
+    res = await _orchestrator_request("GET", f"/api/v1/tasks/{task_id}", tenant_id=tenant_id)
+    return json.dumps(res, indent=2)
+
+@mcp.tool()
+async def search_agent_memory(query: str, tenant_id: str = "local", top_k: int = 5) -> str:
+    """
+    Search the SINC semantic memory (Qdrant) for relevant past experiences, 
+    code patterns, or project knowledge.
+    """
+    payload = {"query": query, "top_k": top_k}
+    res = await _orchestrator_request("POST", "/api/v1/cognitive/memory/search", body=payload, tenant_id=tenant_id)
+    return json.dumps(res, indent=2)
+
+@mcp.tool()
+async def get_orchestrator_capabilities() -> str:
+    """
+    Discovery tool: Returns the list of currently available agents, 
+    active projects, and system health.
+    """
+    res = await _orchestrator_request("GET", "/api/v1/system/capabilities")
+    return json.dumps(res, indent=2)
 
 if __name__ == "__main__":
-    # MCP servers usually run via stdio. FastMCP handles this automatically.
     mcp.run()

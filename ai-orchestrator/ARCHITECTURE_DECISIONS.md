@@ -250,3 +250,24 @@
 **Consequences:**
 - Completion failures now surface immediately as task `failed` states rather than hidden `in-progress` zombie tasks.
 - Operators see `completion_post_failed` / `db_update_failed` log keys that are actionable.
+
+---
+
+## ADR-017 — Unified Python Control Plane (Zero PowerShell)
+
+**Status:** Accepted
+**Phase:** V2.0 / P5
+
+**Context:** The system originally relied on a hybrid architecture of PowerShell scripts (`Invoke-Observer`, `Invoke-Scheduler`, etc.) and Python services. This created significant deployment friction, environment inconsistency, and made multi-tenancy support extremely difficult to maintain across two distinct runtimes.
+
+**Decision:**
+- Eliminate all remaining PowerShell scripts (`.ps1`) from the project codebase.
+- Standardize on the **Python Runtime Plane** (`runtime_plane.py`) for critical loops (Observer, Readiness, Scheduler).
+- Standardize on the **Python Governance Plane** (`governance_plane.py`) for automated policies (Mutation, FinOps, Deploy Verification).
+- Use asynchronous background workers (e.g., `observer_worker.py`) as the operational entry points.
+
+**Consequences:**
+- **Simplified Deployment:** Only Python 3.12+ and its dependencies are required.
+- **Improved Multi-Tenancy:** The Python Control Plane natively supports `X-Tenant-Id` routing and tenant-isolated loops.
+- **Enhanced Observability:** All system events and logs now follow the canonical OpenTelemetry/Python logging pipeline established in MIG-P5-004.
+- **Legacy CLI Impact:** Users must now use the Python SDK (`SincClient`) or the `orchestrator_db_bridge.py` for administrative tasks, as PowerShell wrappers were removed.

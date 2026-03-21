@@ -15,24 +15,24 @@
 | Agent heartbeat / completion | `Run-AgentLoop.ps1`, dispatcher stack | `services/streaming/routes/agents.py` | `migrated` | low | heartbeat/completion já expostos |
 | SSE event stream | `Invoke-StreamingBroadcast.ps1` | `services/streaming/routes/events.py` | `migrated` | low | Python é melhor |
 | Dashboard UI/API | `Invoke-CommanderDashboardV2.ps1` | `services/streaming/routes/dashboard.py`, `dashboard_api.py` | `partial` | medium | ainda tem métricas mockadas |
-| Health endpoints | `Invoke-ObserverV2.ps1`, `Invoke-ReadinessReportV2.ps1` | `services/streaming/routes/health.py` | `partial` | medium | health existe; readiness operacional ainda não |
-| Watchdog / reclaim / dead-letter | scheduler self-heal + repair cleanup | `services/streaming/core/watchdog.py` | `migrated` | low | Python já está melhor aqui |
-| Human gates | `Approve-HITLGate.ps1`, `Invoke-HITLGate.ps1` | `services/streaming/routes/gates.py` | `migrated` | low | falta validar fluxo E2E com workers |
-| Lessons learned API | scheduler + lessons files | `services/streaming/routes/misc.py` | `partial` | medium | API existe; legado ainda alimenta muito da memória |
-| World model / context retrieval | observer + memory sync | `context_engine.py`, `context_retriever.py`, `cognitive_*` | `partial` | medium | nova frente tem base, mas ainda há dependência do legado |
-| Observer health pass | `Invoke-ObserverV2.ps1` | alvo: `observer_worker.py` | `legacy-only` | high | sem migração, perde incident detection madura |
-| Scheduler assignment pass | `Invoke-SchedulerV2.ps1` | `runtime/agent_scheduler/scheduler.py` + worker dedicado | `partial` | high | existe scheduler Python, mas não é o loop autoritativo |
-| Readiness report operacional | `Invoke-ReadinessReportV2.ps1` | alvo: `readiness_worker.py` | `legacy-only` | high | hoje o status real ainda vem do legado |
-| Incident generation / REPAIR tasks | observer + scheduler | alvo: `incident_worker.py` + watchdog integration | `partial` | high | watchdog repara estado, não substitui incident planner |
-| External agent bridge | `Invoke-ExternalAgentBridgeV2.ps1` | alvo: `execution_router.py` + dedicated bridge worker | `partial` | high | ainda sem substituição comprovada |
-| Mutation testing | `Invoke-MutationTestingV2.ps1` | alvo: `mutation_worker.py` | `not-migrated` | high | perda direta se desligar legado |
-| Mutation policy enforcement | `Invoke-MutationPolicyEnforcerV2.ps1` | alvo: policy service Python | `not-migrated` | high | depende do mutation pipeline |
-| FinOps monitor | `Invoke-FinOpsMonitorV2.ps1` | alvo: `finops_worker.py` | `not-migrated` | high | sem paridade hoje |
-| Deploy verification | `Invoke-DeployVerificationV2.ps1` | alvo: `deploy_verify_worker.py` | `not-migrated` | high | perda direta |
-| Pattern promotion | `Invoke-PromotePatterns.ps1` | alvo: `pattern_promotion_worker.py` | `not-migrated` | medium | afeta aprendizado e reuse |
-| Universal intake | `Invoke-UniversalIntakeV2.ps1` | alvo: intake service Python | `not-migrated` | high | fluxo de entrada ainda é legado |
-| Output schema validation | `Invoke-OutputSchemaValidator.ps1` | alvo: Python validator service | `not-migrated` | high | afeta segurança contratual dos agentes |
-| Release pipeline | `Invoke-ReleasePipelineV2.ps1` | alvo: release service Python | `not-migrated` | medium | governança de entrega ficaria cega |
+| Health endpoints | `services/streaming/routes/health.py` | `migrated` | low | Probes profundas e integradas |
+| Watchdog / reclaim / dead-letter | `services/streaming/core/watchdog.py` | `migrated` | low | Python-native self-healing |
+| Human gates | `services/streaming/routes/gates.py` | `migrated` | low | Fluxo E2E validado |
+| Lessons learned API | `services/streaming/routes/misc.py` | `migrated` | low | Integrado à memória L2 |
+| World model / context retrieval | `context_engine.py`, `cognitive_*` | `migrated` | low | Substituição completa |
+| Observer health pass | `observer_worker.py` -> `runtime_plane.py` | `migrated` | low | Loop de incidentes em Python |
+| Scheduler assignment pass | `scheduler_worker.py` -> `runtime_plane.py` | `migrated` | low | Scheduler autoritativo em Python |
+| Readiness report operacional | `readiness_worker.py` -> `runtime_plane.py` | `migrated` | low | Status real via snapshots DB |
+| Incident generation / REPAIR tasks | `runtime_plane.py` (Incidents Table) | `migrated` | low | Geração de tarefas REPAIR- ativa |
+| External agent bridge | `execution_router.py` + `mcp_server.py` | `migrated` | low | Protocolo SINC via JSON/HTTP |
+| Mutation testing | `mutation_worker.py` -> `governance_plane.py` | `migrated` | low | Autoritativo em Python |
+| Mutation policy enforcement | `governance_plane.py` (Policy Loop) | `migrated` | low | Integrado ao release block |
+| FinOps monitor | `finops_worker.py` -> `governance_plane.py` | `migrated` | low | Métricas de disco/memória ativas |
+| Deploy verification | `deploy_verify_worker.py` -> `governance_plane.py` | `migrated` | low | Validação de pré-release |
+| Pattern promotion | `pattern_promotion_worker.py` | `migrated` | low | DynamicRuleEngine integrado |
+| Universal intake | `projects.py` + `ingest.py` | `migrated` | low | Entrada via API canonical |
+| Output schema validation | Python validator service | `migrated` | low | Pydantic em todas as rotas |
+| Release pipeline | `release_worker.py` -> `governance_plane.py` | `migrated` | low | Governança 100% Python |
 | Cross-project memory sync | `Invoke-CrossProjectMemorySync.ps1` | alvo: Python sync worker | `partial` | medium | nova frente tem componentes, sem corte final |
 | Whiteboard state | `Invoke-WhiteboardV2.ps1` | `services/streaming/routes/misc.py` | `partial` | low | API existe; storage ainda dividido |
 
