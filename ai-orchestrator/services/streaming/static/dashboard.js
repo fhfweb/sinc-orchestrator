@@ -278,6 +278,108 @@ function renderTaskUpdate(task) {
 }
 
 // -----------------------------------------------------
+// Command Palette (Cmd+K)
+// -----------------------------------------------------
+const cmdDialog = document.getElementById('cmd-palette');
+const cmdInput = document.getElementById('cmd-input');
+const cmdResults = document.getElementById('cmd-results');
+
+document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        if (cmdDialog.open) {
+            cmdDialog.close();
+        } else {
+            cmdDialog.showModal();
+            cmdInput.value = '';
+            cmdInput.focus();
+        }
+    }
+});
+
+// Click outside to close
+cmdDialog.addEventListener('click', (e) => {
+    if (e.target === cmdDialog) cmdDialog.close();
+});
+
+let debounceTimer;
+cmdInput.addEventListener('input', (e) => {
+    clearTimeout(debounceTimer);
+    const val = e.target.value;
+    
+    if(!val) {
+        cmdResults.innerHTML = `<div class="cmd-item hint"><i data-lucide="info"></i> Try typing <span>/search [query]</span> or <span>/kill</span></div>`;
+        lucide.createIcons();
+        return;
+    }
+
+    if(val === '/kill') {
+        cmdResults.innerHTML = `
+            <div class="cmd-item" style="border-color: rgba(240, 50, 80, 0.5); background: rgba(240,50,80,0.1)">
+                <i data-lucide="alert-triangle" style="color:var(--danger)"></i>
+                <div class="cmd-result-content">
+                    <div class="cmd-result-title" style="color:var(--danger)">Trigger Circuit Breaker</div>
+                    <div class="cmd-result-desc">Halt all orchestration across the cluster instantly.</div>
+                </div>
+            </div>`;
+        lucide.createIcons();
+        return;
+    }
+
+    // Default to L3 Memory Search if natural language or /search
+    let query = val;
+    if(val.startsWith('/search ')) query = val.replace('/search ', '');
+    
+    cmdResults.innerHTML = `<div class="cmd-item hint"><i data-lucide="loader" class="rotating"></i> Searching SINC L3 Neural Cache...</div>`;
+    lucide.createIcons();
+    
+    debounceTimer = setTimeout(() => {
+        fetch(`/api/v5/dashboard/cognitive/memory/search?query=${encodeURIComponent(query)}&tenant_id=${APP_STATE.tenant_id}`)
+            .then(res => res.json())
+            .then(data => {
+                cmdResults.innerHTML = '';
+                if(!data.ok || (!data.cache_hit && (!data.result || data.result.chunks.length === 0))) {
+                    cmdResults.innerHTML = `<div class="cmd-item hint"><i data-lucide="database"></i> No L3 memory found for this syntax.</div>`;
+                    lucide.createIcons();
+                    return;
+                }
+
+                // Render Cache Hit
+                if(data.cache_hit) {
+                    cmdResults.innerHTML += `
+                        <div class="cmd-item active" style="border-color: var(--primary)">
+                            <i data-lucide="brain" style="color:var(--primary)"></i>
+                            <div class="cmd-result-content">
+                                <div class="cmd-result-title">SINC Solution Memory <span class="rag-score">Score: ${data.cache_hit.score.toFixed(2)}</span></div>
+                                <div class="cmd-result-desc">${data.cache_hit.answer}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Render Context Chunks
+                if(data.result && data.result.chunks) {
+                    data.result.chunks.forEach(chunk => {
+                        const snippet = chunk.text.substring(0, 150).replace(/\\n/g, ' ') + '...';
+                        cmdResults.innerHTML += `
+                            <div class="cmd-item">
+                                <i data-lucide="file-code"></i>
+                                <div class="cmd-result-content">
+                                    <div class="cmd-result-title">${chunk.file}</div>
+                                    <div class="cmd-result-desc">${snippet}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                lucide.createIcons();
+            }).catch(e => {
+                cmdResults.innerHTML = `<div class="cmd-item hint" style="color:var(--danger)">Error querying Memory DB.</div>`;
+            });
+    }, 400);
+});
+
+// -----------------------------------------------------
 // Boot Sequence
 // -----------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {

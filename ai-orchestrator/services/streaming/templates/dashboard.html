@@ -176,5 +176,20 @@
     <script>
         lucide.createIcons();
     </script>
+
+    <!-- Command Palette (Cmd+K) -->
+    <dialog id="cmd-palette" class="cmd-palette">
+        <div class="cmd-content">
+            <div class="cmd-header">
+                <i data-lucide="terminal" class="cmd-icon"></i>
+                <input type="text" id="cmd-input" placeholder="Type a command or ask SINC L3 Memory..." autocomplete="off">
+            </div>
+            <div class="cmd-results" id="cmd-results">
+                <div class="cmd-item hint">
+                    <i data-lucide="info"></i> Try typing <span>/search [query]</span> or <span>/kill</span>
+                </div>
+            </div>
+        </div>
+    </dialog>
 </body>
 </html>

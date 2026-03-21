@@ -46,6 +46,18 @@ async def get_blast_radius(symbol: str, tenant_id: str = Depends(get_tenant_id))
         result = impact_svc.analyze_impact(symbol, project_id="default", tenant_id=tenant_id)
         return result
 
+from services.context_retriever import ContextRetriever
+@router.get("/cognitive/memory/search")
+async def search_memory(query: str, project_id: str = "sinc", tenant_id: str = Depends(get_tenant_id)):
+    """Busca vetorial na memoria L3 (Qdrant) para a Command Palette e Search Bar."""
+    try:
+        retriever = ContextRetriever()
+        result = retriever.retrieve(query=query, project_id=project_id, tenant_id=tenant_id, top_k=5)
+        cache_hit = retriever.check_semantic_cache(query=query, project_id=project_id, tenant_id=tenant_id, threshold=0.7)
+        return {"ok": True, "cache_hit": cache_hit, "result": result}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
 
 @router.websocket("/ws/telemetry")
 async def websocket_telemetry(
