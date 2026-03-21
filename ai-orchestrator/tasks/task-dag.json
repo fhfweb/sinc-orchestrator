@@ -2,7 +2,7 @@
   "schema_version": "projection-v1",
   "source": "db-projection",
   "read_only": true,
-  "generated_at": "2026-03-21T02:38:29.452042+00:00",
+  "generated_at": "2026-03-21T02:47:30.954278+00:00",
   "tenant_id": "",
   "project_id": "",
   "tasks": [
@@ -24624,6 +24624,106 @@
       }
     },
     {
+      "id": "soak-task-1774060789-991",
+      "task_id": "soak-task-1774060789-991",
+      "title": "Soak validation task soak-task-1774060789-991",
+      "description": "Cycle 991 control-plane soak validation",
+      "status": "done",
+      "priority": "2",
+      "assigned_agent": "agent-e2e-35b7",
+      "project_id": "sinc",
+      "tenant_id": "local",
+      "depends_on": [],
+      "created_at": "2026-03-21 02:39:49.041818",
+      "updated_at": "2026-03-21 02:39:49.113343",
+      "completed_at": "2026-03-21 02:39:49.113343",
+      "requires_review": false,
+      "verification_required": false,
+      "verification_script": "",
+      "red_team_enabled": false,
+      "plan_id": "",
+      "metadata": {
+        "origin": "soak_python_control_plane",
+        "claim_token": "soak-task-1774060789-991",
+        "execution_mode": "llm-native"
+      }
+    },
+    {
+      "id": "soak-task-1774060909-992",
+      "task_id": "soak-task-1774060909-992",
+      "title": "Soak validation task soak-task-1774060909-992",
+      "description": "Cycle 992 control-plane soak validation",
+      "status": "done",
+      "priority": "2",
+      "assigned_agent": "agent-e2e-35b7",
+      "project_id": "sinc",
+      "tenant_id": "local",
+      "depends_on": [],
+      "created_at": "2026-03-21 02:41:49.037899",
+      "updated_at": "2026-03-21 02:41:49.122884",
+      "completed_at": "2026-03-21 02:41:49.122884",
+      "requires_review": false,
+      "verification_required": false,
+      "verification_script": "",
+      "red_team_enabled": false,
+      "plan_id": "",
+      "metadata": {
+        "origin": "soak_python_control_plane",
+        "claim_token": "soak-task-1774060909-992",
+        "execution_mode": "llm-native"
+      }
+    },
+    {
+      "id": "soak-task-1774061029-993",
+      "task_id": "soak-task-1774061029-993",
+      "title": "Soak validation task soak-task-1774061029-993",
+      "description": "Cycle 993 control-plane soak validation",
+      "status": "done",
+      "priority": "2",
+      "assigned_agent": "agent-e2e-35b7",
+      "project_id": "sinc",
+      "tenant_id": "local",
+      "depends_on": [],
+      "created_at": "2026-03-21 02:43:49.031582",
+      "updated_at": "2026-03-21 02:43:49.099249",
+      "completed_at": "2026-03-21 02:43:49.099249",
+      "requires_review": false,
+      "verification_required": false,
+      "verification_script": "",
+      "red_team_enabled": false,
+      "plan_id": "",
+      "metadata": {
+        "origin": "soak_python_control_plane",
+        "claim_token": "soak-task-1774061029-993",
+        "execution_mode": "llm-native"
+      }
+    },
+    {
+      "id": "soak-task-1774061149-994",
+      "task_id": "soak-task-1774061149-994",
+      "title": "Soak validation task soak-task-1774061149-994",
+      "description": "Cycle 994 control-plane soak validation",
+      "status": "done",
+      "priority": "2",
+      "assigned_agent": "agent-e2e-35b7",
+      "project_id": "sinc",
+      "tenant_id": "local",
+      "depends_on": [],
+      "created_at": "2026-03-21 02:45:49.025254",
+      "updated_at": "2026-03-21 02:45:49.107965",
+      "completed_at": "2026-03-21 02:45:49.107965",
+      "requires_review": false,
+      "verification_required": false,
+      "verification_script": "",
+      "red_team_enabled": false,
+      "plan_id": "",
+      "metadata": {
+        "origin": "soak_python_control_plane",
+        "claim_token": "soak-task-1774061149-994",
+        "execution_mode": "llm-native"
+      }
+    },
+    {
       "id": "demo-task-5",
       "task_id": "demo-task-5",
       "title": "Refactor Dependency Graph",
@@ -24751,9 +24851,9 @@
     }
   ],
   "counts": {
-    "total": 990,
+    "total": 994,
     "by_status": {
-      "done": 939,
+      "done": 943,
       "pending": 47,
       "dead-letter": 3,
       "awaiting-review": 1

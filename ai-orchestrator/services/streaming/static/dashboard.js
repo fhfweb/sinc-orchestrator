@@ -79,6 +79,37 @@ function initGraphEngine() {
     };
 
     APP_STATE.network = new vis.Network(els.graphContainer, data, options);
+
+    // Focus Mode (Red Team Heatmap)
+    APP_STATE.network.on("click", function (params) {
+        if (params.nodes.length > 0) {
+            const nodeId = params.nodes[0];
+            
+            // Zoom in aggressively
+            APP_STATE.network.focus(nodeId, {
+                scale: 1.8,
+                animation: { duration: 1200, easingFunction: "easeInOutQuad" }
+            });
+            
+            // Apply Red Team Visuals
+            const clickedNode = APP_STATE.graphNodes.get(nodeId);
+            APP_STATE.graphNodes.update({
+                id: nodeId, 
+                color: { background: '#ff0033', border: '#ff4d6d' }, 
+                shadow: { enabled: true, color: '#ff0033', size: 35 }
+            });
+            writeToTerminal(`[L2 MEMORY] Focus Mode engaged on vector node: ${clickedNode.label || nodeId}`, "warn");
+            
+            // Dim edges temporarily
+            APP_STATE.network.setOptions({ edges: { color: { color: 'rgba(255, 0, 50, 0.1)' } } });
+        } else {
+            // Reset View
+            APP_STATE.network.fit({
+                animation: { duration: 1000, easingFunction: "easeInOutQuad" }
+            });
+            APP_STATE.network.setOptions(options); // Restore default options
+        }
+    });
 }
 
 // -----------------------------------------------------
@@ -424,14 +455,101 @@ cmdInput.addEventListener('input', (e) => {
 });
 
 // -----------------------------------------------------
+// SPA Routing & Tenant Management
+// -----------------------------------------------------
+const viewMain = document.getElementById('view-main-dashboard');
+const viewEngine = document.getElementById('view-engine-room');
+const navItems = document.querySelectorAll('.sidebar .nav-item');
+
+navItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+        navItems.forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        
+        if(item.textContent.includes('Cognitive Config')) {
+            if(viewMain) viewMain.classList.add('hidden');
+            if(viewEngine) viewEngine.classList.remove('hidden');
+        } else {
+            if(viewEngine) viewEngine.classList.add('hidden');
+            if(viewMain) viewMain.classList.remove('hidden');
+        }
+    });
+});
+
+const tenantSelect = document.getElementById('tenant-selector');
+if(tenantSelect) {
+    tenantSelect.addEventListener('change', (e) => {
+        APP_STATE.tenant_id = e.target.value;
+        writeToTerminal(`[SYSTEM] Hot-swapping to Tenant: ${e.target.value.toUpperCase()}...`, "warn");
+        
+        if (socket) {
+            socket.close();
+            writeToTerminal(`[SYSTEM] Restarting MCTS Telemetry Stream for new tenant...`, "system");
+            setTimeout(initWebSocket, 500);
+        }
+        
+        document.querySelectorAll('.k-cards').forEach(c => c.innerHTML = '');
+    });
+}
+
+const btnKill = document.getElementById('btn-kill-switch');
+if(btnKill) {
+    btnKill.addEventListener('click', () => {
+        writeToTerminal(`[SECURITY] INITIATING GLOBAL CIRCUIT BREAKER!`, "err");
+        writeToTerminal(`[SECURITY] Halting ALL Agents, Planners, and Memory stores.`, "err");
+        
+        document.body.style.animation = 'pulse-danger 2s infinite';
+        
+        if (socket) socket.close();
+        document.querySelectorAll('.task-item').forEach(el => el.classList.remove('running'));
+        
+        if (window.metricOdometers && window.metricOdometers.activeAgents) {
+            window.metricOdometers.activeAgents.update(0);
+        }
+    });
+}
+
+// -----------------------------------------------------
+// Particles.js Neural Background
+// -----------------------------------------------------
+function initParticles() {
+    if(window.particlesJS) {
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 60, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#00ffaa" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.4, "random": true, "anim": { "enable": true, "speed": 1, "opacity_min": 0.1, "sync": false } },
+                "size": { "value": 3, "random": true, "anim": { "enable": true, "speed": 2, "size_min": 0.1, "sync": false } },
+                "line_linked": { "enable": true, "distance": 150, "color": "#8a4bff", "opacity": 0.3, "width": 1 },
+                "move": { "enable": true, "speed": 1.5, "direction": "none", "random": true, "straight": false, "out_mode": "out", "bounce": false }
+            },
+            "interactivity": {
+                "detect_on": "window",
+                "events": {
+                    "onhover": { "enable": true, "mode": "grab" },
+                    "onclick": { "enable": true, "mode": "push" },
+                    "resize": true
+                },
+                "modes": {
+                    "grab": { "distance": 220, "line_linked": { "opacity": 0.8 } },
+                    "push": { "particles_nb": 4 }
+                }
+            },
+            "retina_detect": true
+        });
+    }
+}
+
+// -----------------------------------------------------
 // Boot Sequence
 // -----------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
+    initParticles();
     initGraphEngine();
     initWebSocket();
     
-    // Demo the Vis.js Graph Simulation
     setTimeout(() => {
         writeToTerminal("Initiating Neo4j graph resolution matrix...", "warn");
         renderGraphImpact({

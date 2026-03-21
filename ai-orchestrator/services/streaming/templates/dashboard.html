@@ -9,6 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
     <!-- Vis-Network for 2D Graph Physics -->
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <!-- Particles.js para imersão Neural/MCTS -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -56,7 +58,7 @@
 
         <!-- MAIN -->
         <main class="main-viewport">
-            <div class="mesh-background"></div>
+            <div id="particles-js" class="mesh-background"></div>
 
             <header class="top-bar">
                 <div class="search-container">
@@ -64,13 +66,21 @@
                     <input type="text" placeholder="Search cognitive graph, memory vectors, or active tasks..." id="main-search">
                 </div>
                 <div class="header-actions">
+                    <div class="tenant-selector-wrapper">
+                        <i data-lucide="building"></i>
+                        <select id="tenant-selector" class="tenant-select">
+                            <option value="default">🌐 Global SINC (Admin)</option>
+                            <option value="stark">🏢 Stark Industries</option>
+                            <option value="alpha">🛸 Project Alpha</option>
+                        </select>
+                    </div>
                     <div class="mode-badge" id="system-mode-display">AUTONOMOUS_MODE</div>
                     <button class="icon-btn" title="Alerts"><i data-lucide="bell"></i></button>
                     <button class="icon-btn" title="Cluster View"><i data-lucide="network"></i></button>
                 </div>
             </header>
 
-            <section class="content-scroll">
+            <section class="content-scroll" id="view-main-dashboard">
                 
                 <!-- METRICS GRID -->
                 <div class="stats-grid">
@@ -177,6 +187,83 @@
                     </div>
                 </div>
             </section>
+
+            <!-- VIEW: ENGINE ROOM -->
+            <section class="content-scroll hidden" id="view-engine-room">
+                <div class="engine-header">
+                    <h2><i data-lucide="settings"></i> SINC Engine Room</h2>
+                    <p>Advanced LLM Ops and Infrastructure Control</p>
+                </div>
+                
+                <div class="engine-grid">
+                    <!-- MODEL ROUTER MATRIX -->
+                    <div class="engine-card glass-panel">
+                        <h3><i data-lucide="git-merge"></i> LLM Model Router</h3>
+                        <div class="table-container">
+                            <table class="matrix-table">
+                                <thead>
+                                    <tr><th>Agent Role</th><th>Provider</th><th>Model</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Strategic Planner</td>
+                                        <td><span class="badge auth">Anthropic</span></td>
+                                        <td><select class="tenant-select"><option>claude-3-5-sonnet-latest</option><option>claude-3-5-haiku</option></select></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Code Generator</td>
+                                        <td><span class="badge data">OpenAI</span></td>
+                                        <td><select class="tenant-select"><option>gpt-4o</option><option>o1-preview</option></select></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Embeddings Engine</td>
+                                        <td><span class="badge neon">Ollama</span></td>
+                                        <td><select class="tenant-select"><option>nomic-embed-text</option></select></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- API KEYS VAULT -->
+                    <div class="engine-card glass-panel">
+                        <h3><i data-lucide="key"></i> Secure Identity Vault</h3>
+                        <div class="vault-container">
+                            <div class="vault-item">
+                                <label>ANTHROPIC_API_KEY</label>
+                                <div class="input-group">
+                                    <input type="password" value="sk-ant-api03-xxxxxxxxxx">
+                                    <button class="icon-btn small"><i data-lucide="eye"></i></button>
+                                </div>
+                            </div>
+                            <div class="vault-item">
+                                <label>OPENAI_API_KEY</label>
+                                <div class="input-group">
+                                    <input type="password" value="sk-proj-xxxxxxxxxxxxxx">
+                                    <button class="icon-btn small"><i data-lucide="eye"></i></button>
+                                </div>
+                            </div>
+                            <div class="vault-item">
+                                <label>Qdrant/Neo4j Identity Hash</label>
+                                <div class="input-group">
+                                    <input type="password" value="*******************">
+                                    <button class="icon-btn small"><i data-lucide="eye"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CIRCUIT BREAKER -->
+                    <div class="engine-card glass-panel kill-switch-card">
+                        <h3><i data-lucide="triangle-alert" style="color:var(--danger)"></i> Global Circuit Breaker</h3>
+                        <p class="desc">Instantly halts all MCTS planners and active TCP/WebSocket streams. Requires Admin clearance.</p>
+                        <div class="switch-container">
+                            <button id="btn-kill-switch" class="btn-giant-red"><i data-lucide="power"></i> HALT ALL OPERATIONS</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
