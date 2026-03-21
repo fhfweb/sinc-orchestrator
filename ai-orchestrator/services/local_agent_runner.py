@@ -206,6 +206,11 @@ def _language_for_path(path: Path) -> str:
         ".js": "javascript",
         ".ts": "typescript",
         ".php": "php",
+        ".go": "go",
+        ".sql": "sql",
+        ".yaml": "yaml",
+        ".yml": "yaml",
+        ".json": "json",
         ".md": "markdown",
     }.get(suffix, suffix.lstrip(".") or "text")
 

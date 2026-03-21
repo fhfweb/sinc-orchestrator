@@ -39,9 +39,9 @@ class TokenBucket:
 _reclaim_bucket = TokenBucket(capacity=10, fill_rate=2.0)  # 2 reclaims/sec, burst up to 10
 
 # Dynamic import to avoid circular dependencies if any
-def get_event_bus():
-    from ...event_bus import EventBus
-    return EventBus()
+async def get_event_bus():
+    from ...event_bus import get_event_bus as _get
+    return await _get()
 
 log = logging.getLogger("orchestrator")
 
@@ -264,7 +264,7 @@ async def perform_reclaim_cycle(task_id: str = None):
 
     # 4. Redis Stream PEL (Pending Entity List) recovery
     try:
-        bus = get_event_bus()
+        bus = await get_event_bus()
         stream_name = "stream:orch:task_pool"
         group_name  = "agent_workers"
         consumer_id = "watchdog-reaper"

@@ -112,7 +112,6 @@ async def _run_ingest_pipeline(pipeline_id: str, project_id: str, tenant_id: str
 @router.post("/ingest", status_code=status.HTTP_202_ACCEPTED)
 async def ingest(
     body: IngestRequest,
-    backgroup_tasks: BackgroundTasks,
     tenant_id: str = Depends(get_tenant_id)
 ):
     """Trigger an async ingestion pipeline."""

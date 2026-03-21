@@ -38,10 +38,11 @@ import uuid
 import hashlib
 import threading
 import asyncio
-import logging
-from pathlib import Path
 from typing import Optional, Callable
 from services.xref_resolver import XRefResolver
+from services.streaming.core.sse import broadcast
+
+log = logging.getLogger("orchestrator")
 
 _ID_RE = _re.compile(r'^[a-zA-Z0-9_\-.]{1,128}$')
 
@@ -202,7 +203,7 @@ def _qdrant_upsert(collection: str, points: list[dict]):
         with create_sync_resilient_client(service_name="ingest-qdrant", timeout=30) as client:
             client.put(url, json={"points": points}).raise_for_status()
     except Exception as exc:
-        print(f"[ingest] Qdrant upsert error: {exc}", flush=True)
+        log.error("ingest_qdrant_upsert_error error=%s", exc)
 
 
 # ──────────────────────────────────────────────
@@ -513,10 +514,16 @@ class IngestStreamConsumer:
         repo_url     = data.get("repo_url", "")
         branch       = data.get("branch",   "")
 
-        print(f"[ingest-stream] processing {pipeline_id} for {project_id}/{tenant_id}")
+        log.info("ingest_stream_processing pipeline_id=%s project=%s tenant=%s", 
+                 pipeline_id, project_id, tenant_id)
         
         # Run the pipeline (blocking for now as it's a dedicated worker)
-        # In a real async environment, we'd wrap the CPU-heavy parts in to_thread
+        # We hook the broadcast into the pipeline's on_event
+        self.pipeline.on_event = lambda et, payload: asyncio.run_coroutine_threadsafe(
+            broadcast(et, payload, tenant_id=tenant_id),
+            asyncio.get_event_loop()
+        ).result() if et and payload else None
+
         await asyncio.to_thread(
             self.pipeline.run,
             pipeline_id, project_path=project_path,
