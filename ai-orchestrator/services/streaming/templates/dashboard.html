@@ -5,85 +5,172 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
     <link rel="stylesheet" href="/static/dashboard.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
 </head>
-<body class="dark-mode">
+<body>
     {% import "_dashboard_macros.html" as ui %}
     <div class="app-container">
+        
+        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="logo-area">
                 <div class="logo-icon"></div>
                 <h1>SINC <span>NOC</span></h1>
             </div>
+            
             <nav class="nav-menu">
-                {{ ui.nav_item("summary", "layout-dashboard", "Overview", active=true) }}
-                {{ ui.nav_item("fleet", "users", "Agent Fleet") }}
-                {{ ui.nav_item("governance", "shield-check", "Governance") }}
-                {{ ui.nav_item("config", "settings", "Cognitive Config") }}
+                <div class="nav-item active">
+                    <i data-lucide="layout-dashboard"></i>
+                    Observability
+                </div>
+                <div class="nav-item">
+                    <i data-lucide="crosshair"></i>
+                    Blast Radius
+                </div>
+                <div class="nav-item">
+                    <i data-lucide="users"></i>
+                    Agent Fleet
+                </div>
+                <div class="nav-item">
+                    <i data-lucide="orbit"></i>
+                    MCTS Planning
+                </div>
+                <div class="nav-item">
+                    <i data-lucide="settings"></i>
+                    Cognitive Config
+                </div>
             </nav>
-            <div class="sidebar-footer">
-                <div class="system-status">
-                    <div class="status-indicator online"></div>
-                    <span>System Online</span>
+            
+            <div style="flex: 1"></div>
+            
+            <div class="system-status">
+                <div class="status-indicator"></div>
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 13px; font-weight: 600;">System Online</span>
+                    <span style="font-size: 11px; color: var(--text-muted); font-family: 'Fira Code', monospace; margin-top: 2px;">Neo4j L2 Active</span>
                 </div>
             </div>
         </aside>
 
+        <!-- MAIN -->
         <main class="main-viewport">
             <header class="top-bar">
                 <div class="search-container">
-                    <i data-lucide="search"></i>
-                    <input type="text" placeholder="Search tasks, agents, or logs..." id="main-search">
+                    <i data-lucide="search" style="color: var(--text-muted)"></i>
+                    <input type="text" placeholder="Search cognition graph, tasks or risks..." id="main-search">
                 </div>
                 <div class="header-actions">
-                    <div class="mode-badge" id="system-mode-display">NORMAL MODE</div>
-                    <button class="icon-btn"><i data-lucide="bell"></i></button>
-                    <div class="user-profile">
-                        <div class="avatar">F</div>
-                    </div>
+                    <div class="mode-badge" id="system-mode-display">AUTONOMOUS_MODE</div>
+                    <button class="icon-btn" title="Alerts"><i data-lucide="bell"></i></button>
+                    <button class="icon-btn" title="Graph View"><i data-lucide="network"></i></button>
                 </div>
             </header>
 
             <section class="content-scroll">
+                
+                <!-- METRICS GRID -->
                 <div class="stats-grid">
-                    {{ ui.stat_card("metric-success-rate", "zap", "purple", "Success Rate", "0.0%", trend="+2.4%") }}
-                    {{ ui.stat_card("metric-autonomy-score", "brain", "blue", "Autonomy Score", "0.0", trend="stable") }}
-                    {{ ui.stat_card("metric-active-agents", "activity", "cyan", "Active Agents", "0") }}
-                    {{ ui.stat_card("metric-latency", "clock", "orange", "Avg Latency", "0ms") }}
+                    <div class="stat-card">
+                        <div class="stat-icon pu"><i data-lucide="zap"></i></div>
+                        <div class="stat-meta">
+                            <span class="label">Success Rate</span>
+                            <h2 id="metric-success-rate">0.0%</h2>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon cy"><i data-lucide="brain"></i></div>
+                        <div class="stat-meta">
+                            <span class="label">Autonomy Score</span>
+                            <h2 id="metric-autonomy-score">0.0</h2>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon gr"><i data-lucide="activity"></i></div>
+                        <div class="stat-meta">
+                            <span class="label">Active Neurons</span>
+                            <h2 id="metric-active-agents">0</h2>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="color: var(--warning); box-shadow: inset 0 0 20px rgba(255, 170, 0, 0.1)"><i data-lucide="clock"></i></div>
+                        <div class="stat-meta">
+                            <span class="label">P95 Latency</span>
+                            <h2 id="metric-latency">0ms</h2>
+                        </div>
+                    </div>
                 </div>
 
+                <!-- MAIN LAYOUT PANELS -->
                 <div class="layout-main">
-                    <div class="sub-layout-left">
-                        {% call ui.glass_card("Live Task Pipeline", action_label="View All") %}
-                        <div class="task-list" id="task-list-container">
-                            <div class="loading-state">Syncing with orchestrator...</div>
+                    
+                    <!-- LEFT COLUMN -->
+                    <div class="panel-column-left">
+                        
+                        <!-- BLAST RADIUS RADAR -->
+                        <div class="glass-panel">
+                            <div class="panel-header">
+                                <h3><i data-lucide="target"></i> Blast Radius Radar</h3>
+                                <div class="badge" style="background: var(--danger-glow); color: var(--danger)">Live Tracking</div>
+                            </div>
+                            
+                            <div class="radar-container" id="blast-radius-container">
+                                <div class="radar-target"><i data-lucide="crosshair" style="color: white; width: 30px; height: 30px;"></i></div>
+                                <div class="radar-ring ring-1"></div>
+                                <div class="radar-ring ring-2"></div>
+                                <div class="radar-ring ring-3"></div>
+                                
+                                <!-- Placeholder for JS injection -->
+                                <div style="position: absolute; bottom: 10px; font-family: 'Fira Code', monospace; font-size: 11px; color: var(--text-muted); text-align: center; width: 100%;">Waiting for task telemetry...</div>
+                            </div>
                         </div>
-                        {% endcall %}
 
-                        {% call ui.glass_card("Component Registry Health") %}
-                        <div class="registry-grid" id="registry-health-container"></div>
-                        {% endcall %}
+                        <!-- LIVE TASK PIPELINE -->
+                        <div class="glass-panel">
+                            <div class="panel-header">
+                                <h3><i data-lucide="cpu"></i> Agent Pipeline</h3>
+                                <button class="text-btn">View Graph</button>
+                            </div>
+                            <div id="task-list-container" style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="padding: 24px; text-align: center; color: var(--text-muted); font-family: 'Fira Code', monospace; font-size: 12px;">Syncing memory...</div>
+                            </div>
+                        </div>
+
                     </div>
+                    
+                    <!-- RIGHT COLUMN -->
+                    <div class="panel-column-right">
+                        
+                        <!-- MCTS PLANNER FEED -->
+                        <div class="glass-panel" style="height: 100%;">
+                            <div class="panel-header">
+                                <h3><i data-lucide="orbit"></i> MCTS Thoughts</h3>
+                            </div>
+                            <div id="activity-feed-container" style="padding-top: 16px;">
+                                <div class="feed-item active">
+                                    <div class="time">Just now</div>
+                                    <p>SINC Orchestrator initialized. Connecting to Neo4j graph and LSP layers.</p>
+                                </div>
+                                <div class="feed-item">
+                                    <div class="time">System</div>
+                                    <p>Loading Blast Radius matrices. Monitoring routing constraints.</p>
+                                </div>
+                            </div>
+                        </div>
 
-                    <div class="sub-layout-right">
-                        {% call ui.glass_card("Agent Reputation", compact=true) %}
-                        <div class="rep-list" id="rep-list-container"></div>
-                        {% endcall %}
-
-                        {% call ui.glass_card("Live Feed", compact=true) %}
-                        <div class="activity-feed" id="activity-feed-container"></div>
-                        {% endcall %}
                     </div>
+                    
                 </div>
             </section>
         </main>
     </div>
 
+    <!-- Modals -->
     <div id="modal-container" class="modal-overlay hidden">
         <div class="modal-card">
             <div id="modal-content"></div>
-            <button class="close-btn" id="close-modal"><i data-lucide="x"></i></button>
         </div>
     </div>
 

@@ -25,12 +25,32 @@ class ImpactAnalyzer:
             
             impacts = []
             for record in result:
+                file_path = record["file"] or ""
+                labels_raw = record["labels"] or []
+                depth = record["depth"]
+                
+                # Baseline Risk Map
+                risk = "HIGH" if depth == 1 else "MEDIUM" if depth == 2 else "LOW"
+                impact_type = labels_raw[0] if labels_raw else "Unknown"
+
+                # Cognitive Risk Overrides (Red Team Threat Matrix)
+                fp_lower = file_path.lower()
+                if "/routes/" in fp_lower or "api" in fp_lower:
+                    risk = "CRITICAL_ROUTE_BREAK"
+                    impact_type = "API Endpoint"
+                elif "db" in fp_lower or "redis" in fp_lower or "qdrant" in fp_lower or "http_client" in fp_lower:
+                    risk = "CRITICAL_STATE_BREAK"
+                    impact_type = "Data Sink/External"
+                elif "core/" in fp_lower:
+                    risk = "CRITICAL_CORE_DEPENDENCY"
+                    impact_type = "Kernel Module"
+
                 impacts.append({
                     "name": record["name"],
-                    "file": record["file"],
-                    "type": record["labels"][0] if record["labels"] else "Unknown",
-                    "depth": record["depth"],
-                    "risk": "HIGH" if record["depth"] == 1 else "MEDIUM" if record["depth"] == 2 else "LOW"
+                    "file": file_path,
+                    "type": impact_type,
+                    "depth": depth,
+                    "risk": risk
                 })
             
             return {

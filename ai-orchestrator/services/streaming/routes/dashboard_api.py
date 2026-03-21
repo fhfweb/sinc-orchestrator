@@ -31,6 +31,21 @@ from services.streaming.core.schema_compat import (
 router = APIRouter(prefix="/api/v5/dashboard", tags=["dashboard_api"])
 log = logging.getLogger("orchestrator.dashboard_api")
 
+from services.ast_analyzer import ASTAnalyzer
+from services.impact_analyzer import ImpactAnalyzer
+
+@router.get("/cognitive/blast-radius")
+async def get_blast_radius(symbol: str, tenant_id: str = Depends(get_tenant_id)):
+    """Fetches the blast radius to project structural impacts on the NOC dashboard."""
+    with ASTAnalyzer() as analyzer:
+        driver = analyzer._get_driver()
+        if not driver:
+            raise HTTPException(status_code=503, detail="Neo4j Graph unavailable")
+            
+        impact_svc = ImpactAnalyzer(driver)
+        result = impact_svc.analyze_impact(symbol, project_id="default", tenant_id=tenant_id)
+        return result
+
 
 @router.websocket("/ws/telemetry")
 async def websocket_telemetry(
