@@ -2,7 +2,7 @@
   "schema_version": "projection-v1",
   "source": "db-projection",
   "read_only": true,
-  "generated_at": "2026-03-21T00:45:50.789400+00:00",
+  "generated_at": "2026-03-21T00:48:51.614770+00:00",
   "tenant_id": "",
   "project_id": "",
   "tasks": [
@@ -23224,6 +23224,31 @@
       }
     },
     {
+      "id": "soak-task-1774054069-935",
+      "task_id": "soak-task-1774054069-935",
+      "title": "Soak validation task soak-task-1774054069-935",
+      "description": "Cycle 935 control-plane soak validation",
+      "status": "done",
+      "priority": "2",
+      "assigned_agent": "agent-e2e-35b7",
+      "project_id": "sinc",
+      "tenant_id": "local",
+      "depends_on": [],
+      "created_at": "2026-03-21 00:47:49.339194",
+      "updated_at": "2026-03-21 00:47:49.502747",
+      "completed_at": "2026-03-21 00:47:49.502747",
+      "requires_review": false,
+      "verification_required": false,
+      "verification_script": "",
+      "red_team_enabled": false,
+      "plan_id": "",
+      "metadata": {
+        "origin": "soak_python_control_plane",
+        "claim_token": "soak-task-1774054069-935",
+        "execution_mode": "llm-native"
+      }
+    },
+    {
       "id": "demo-task-5",
       "task_id": "demo-task-5",
       "title": "Refactor Dependency Graph",
@@ -23351,9 +23376,9 @@
     }
   ],
   "counts": {
-    "total": 934,
+    "total": 935,
     "by_status": {
-      "done": 883,
+      "done": 884,
       "pending": 47,
       "dead-letter": 3,
       "awaiting-review": 1
