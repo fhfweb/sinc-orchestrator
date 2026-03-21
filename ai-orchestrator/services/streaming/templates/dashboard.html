@@ -1,297 +1,1333 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SINC Cognitive NOC</title>
+    <title>SINC AI - N5 Centro de Operacoes</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/dashboard.css">
-    <!-- Lucide Icons -->
+    
+    <!-- Scripts Necessários -->
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
-    <!-- Vis-Network for 2D Graph Physics -->
+
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <!-- Particles.js para imersão Neural/MCTS -->
+
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 </head>
 <body>
-    <div class="app-container">
-        
-        <!-- SIDEBAR -->
-        <aside class="sidebar">
-            <div class="logo-area">
-                <div class="logo-icon"></div>
-                <h1>SINC <span>NOC</span></h1>
-            </div>
-            
-            <nav class="nav-menu">
-                <div class="nav-item active">
-                    <i data-lucide="crosshair"></i>
-                    Blast Radius Engine
-                </div>
-                <div class="nav-item">
-                    <i data-lucide="layout-dashboard"></i>
-                    Observability
-                </div>
-                <div class="nav-item">
-                    <i data-lucide="database"></i>
-                    L3 Qdrant Memory
-                </div>
-                <div class="nav-item">
-                    <i data-lucide="users"></i>
-                    Agent Fleet
-                </div>
-                <div class="nav-item">
-                    <i data-lucide="settings"></i>
-                    Cognitive Config
-                </div>
-            </nav>
-            
-            <div style="flex: 1"></div>
-            
-            <div class="system-status">
-                <div class="status-indicator"></div>
-                <div class="status-text">
-                    <span class="online-tag">System Online</span>
-                    <span class="sub-tag">Neo4j Graph Active</span>
-                </div>
-            </div>
-        </aside>
+    <div id="particles-js"></div>
 
-        <!-- MAIN -->
-        <main class="main-viewport">
-            <div id="particles-js" class="mesh-background"></div>
+<!-- LIVING GRID BACKGROUND -->
+<canvas id="grid-bg"></canvas>
+<!-- PARTICLES -->
+<canvas id="pts"></canvas>
+<!-- SCAN LINE -->
+<div id="scan"></div>
+<div id="tov"></div>
+<div class="sb-overlay" id="sbo" onclick="closeSidebar()"></div>
+<div class="tip" id="tip"></div>
+<div id="toast" class="toast"><div class="toast-dot" id="toast-dot"></div><span id="toast-msg"></span></div>
 
-            <header class="top-bar">
-                <div class="search-container">
-                    <i data-lucide="search" class="search-icon"></i>
-                    <input type="text" placeholder="Search cognitive graph, memory vectors, or active tasks..." id="main-search">
-                </div>
-                <div class="header-actions">
-                    <div class="tenant-selector-wrapper">
-                        <i data-lucide="building"></i>
-                        <select id="tenant-selector" class="tenant-select">
-                            <option value="default">🌐 Global SINC (Admin)</option>
-                            <option value="stark">🏢 Stark Industries</option>
-                            <option value="alpha">🛸 Project Alpha</option>
-                        </select>
-                    </div>
-                    <div class="mode-badge" id="system-mode-display">AUTONOMOUS_MODE</div>
-                    <button class="icon-btn" title="Alerts"><i data-lucide="bell"></i></button>
-                    <button class="icon-btn" title="Cluster View"><i data-lucide="network"></i></button>
-                </div>
-            </header>
-
-            <section class="content-scroll" id="view-main-dashboard">
-                
-                <!-- METRICS GRID -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon pu"><i data-lucide="zap"></i></div>
-                        <div class="stat-meta">
-                            <span class="label">Success Rate</span>
-                            <div class="odometer-container"><h2 id="metric-success-rate">100.0%</h2></div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon cy"><i data-lucide="brain"></i></div>
-                        <div class="stat-meta">
-                            <span class="label">Autonomy Score</span>
-                            <div class="odometer-container"><h2 id="metric-autonomy-score">9.8</h2></div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon gr"><i data-lucide="activity"></i></div>
-                        <div class="stat-meta">
-                            <span class="label">Active Neurons</span>
-                            <div class="odometer-container"><h2 id="metric-active-agents">72</h2></div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon am"><i data-lucide="clock"></i></div>
-                        <div class="stat-meta">
-                            <span class="label">P95 Latency</span>
-                            <div class="odometer-container"><h2 id="metric-latency">45ms</h2></div>
-                        </div>
-                    </div>
-                    <!-- FinOps Burn Rate -->
-                    <div class="stat-card danger-glow">
-                        <div class="stat-icon danger-icon"><i data-lucide="dollar-sign"></i></div>
-                        <div class="stat-meta">
-                            <span class="label">FinOps Burn (24h)</span>
-                            <div class="odometer-container"><h2 id="metric-burn-rate">$0.00</h2></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MAIN LAYOUT PANELS -->
-                <div class="layout-main">
-                    
-                    <!-- LEFT COLUMN -->
-                    <div class="panel-column-left">
-                        
-                        <!-- INTERACTIVE BLAST RADIUS GRAPH -->
-                        <div class="glass-panel" style="height: 480px;">
-                            <div class="panel-header">
-                                <h3><i data-lucide="network"></i> Interactive Graph (L2 Memory)</h3>
-                                <div class="badge danger">Live Blast Tracking</div>
-                            </div>
-                            
-                            <!-- Vis.js Container -->
-                            <div id="graph-network-container" class="network-container">
-                                <!-- Interactivity will be injected here -->
-                            </div>
-                        </div>
-
-                        <!-- LIVE KANBAN BOARD -->
-                        <div class="glass-panel kanban-panel">
-                            <div class="panel-header">
-                                <h3><i data-lucide="trello"></i> MCTS KanBan Board</h3>
-                            </div>
-                            <div class="kanban-board" id="kanban-board">
-                                <div class="kanban-col" id="col-pending">
-                                    <div class="k-header">Pending</div>
-                                    <div class="k-cards"></div>
-                                </div>
-                                <div class="kanban-col" id="col-running">
-                                    <div class="k-header">In Progress</div>
-                                    <div class="k-cards"></div>
-                                </div>
-                                <div class="kanban-col" id="col-review">
-                                    <div class="k-header">HIL Review</div>
-                                    <div class="k-cards"></div>
-                                </div>
-                                <div class="kanban-col" id="col-done">
-                                    <div class="k-header">L3 Cached</div>
-                                    <div class="k-cards"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- RIGHT COLUMN -->
-                    <div class="panel-column-right">
-                        
-                        <!-- MCTS PLANNER TERMINAL -->
-                        <div class="glass-panel term-panel">
-                            <div class="panel-header terminal-header">
-                                <h3><i data-lucide="terminal"></i> SINC Cognition Log</h3>
-                                <div class="blinking-cursor-header">_</div>
-                            </div>
-                            
-                            <div class="terminal-body" id="terminal-feed-container">
-                                <!-- Typewriter text injected here -->
-                                <div class="term-line prefix-system">SINC Orchestrator v19.0.4 initialized.</div>
-                                <div class="term-line prefix-system">Neo4j driver linked. Waiting for telemetry...</div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </section>
-
-            <!-- VIEW: ENGINE ROOM -->
-            <section class="content-scroll hidden" id="view-engine-room">
-                <div class="engine-header">
-                    <h2><i data-lucide="settings"></i> SINC Engine Room</h2>
-                    <p>Advanced LLM Ops and Infrastructure Control</p>
-                </div>
-                
-                <div class="engine-grid">
-                    <!-- MODEL ROUTER MATRIX -->
-                    <div class="engine-card glass-panel">
-                        <h3><i data-lucide="git-merge"></i> LLM Model Router</h3>
-                        <div class="table-container">
-                            <table class="matrix-table">
-                                <thead>
-                                    <tr><th>Agent Role</th><th>Provider</th><th>Model</th></tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Strategic Planner</td>
-                                        <td><span class="badge auth">Anthropic</span></td>
-                                        <td><select class="tenant-select"><option>claude-3-5-sonnet-latest</option><option>claude-3-5-haiku</option></select></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Code Generator</td>
-                                        <td><span class="badge data">OpenAI</span></td>
-                                        <td><select class="tenant-select"><option>gpt-4o</option><option>o1-preview</option></select></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Embeddings Engine</td>
-                                        <td><span class="badge neon">Ollama</span></td>
-                                        <td><select class="tenant-select"><option>nomic-embed-text</option></select></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- API KEYS VAULT -->
-                    <div class="engine-card glass-panel">
-                        <h3><i data-lucide="key"></i> Secure Identity Vault</h3>
-                        <div class="vault-container">
-                            <div class="vault-item">
-                                <label>ANTHROPIC_API_KEY</label>
-                                <div class="input-group">
-                                    <input type="password" value="sk-ant-api03-xxxxxxxxxx">
-                                    <button class="icon-btn small"><i data-lucide="eye"></i></button>
-                                </div>
-                            </div>
-                            <div class="vault-item">
-                                <label>OPENAI_API_KEY</label>
-                                <div class="input-group">
-                                    <input type="password" value="sk-proj-xxxxxxxxxxxxxx">
-                                    <button class="icon-btn small"><i data-lucide="eye"></i></button>
-                                </div>
-                            </div>
-                            <div class="vault-item">
-                                <label>Qdrant/Neo4j Identity Hash</label>
-                                <div class="input-group">
-                                    <input type="password" value="*******************">
-                                    <button class="icon-btn small"><i data-lucide="eye"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- CIRCUIT BREAKER -->
-                    <div class="engine-card glass-panel kill-switch-card">
-                        <h3><i data-lucide="triangle-alert" style="color:var(--danger)"></i> Global Circuit Breaker</h3>
-                        <p class="desc">Instantly halts all MCTS planners and active TCP/WebSocket streams. Requires Admin clearance.</p>
-                        <div class="switch-container">
-                            <button id="btn-kill-switch" class="btn-giant-red"><i data-lucide="power"></i> HALT ALL OPERATIONS</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-        </main>
+<!-- COMMAND PALETTE -->
+<div class="cmd-overlay" id="cmdOverlay" onclick="closeCmdIf(event)">
+  <div class="cmd-box">
+    <div class="cmd-input-wrap">
+      <span class="cmd-slash">/</span>
+      <input class="cmd-input" id="cmdInput" placeholder="reclaim task, kill agent, set threshold..." oninput="filterCmd(this.value)" onkeydown="cmdKey(event)" autocomplete="off" spellcheck="false"/>
     </div>
+    <div class="cmd-results" id="cmdResults"></div>
+    <div class="cmd-hint">
+      <span style="display:flex;align-items:center;gap:4px"><kbd style="font-family:var(--m);font-size:8px;padding:1px 5px;background:var(--bg4);border:1px solid var(--b);border-radius:2px">↑↓</kbd>navegar</span>
+      <span style="display:flex;align-items:center;gap:4px"><kbd style="font-family:var(--m);font-size:8px;padding:1px 5px;background:var(--bg4);border:1px solid var(--b);border-radius:2px">↵</kbd>executar</span>
+      <span style="display:flex;align-items:center;gap:4px"><kbd style="font-family:var(--m);font-size:8px;padding:1px 5px;background:var(--bg4);border:1px solid var(--b);border-radius:2px">Esc</kbd>fechar</span>
+    </div>
+  </div>
+</div>
 
-    <!-- Modals -->
-    <div id="modal-container" class="modal-overlay hidden">
-        <div class="modal-card">
-            <div id="modal-content"></div>
+<div class="shell">
+<!-- TOPBAR -->
+<header class="topbar">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="ham" id="ham" onclick="toggleSidebar()"><span></span><span></span><span></span></div>
+    <div class="logo">
+      <div class="lmark">N5</div>
+      <div><div class="lname">SINC AI</div><div class="lsub">Admin · Nível 5</div></div>
+    </div>
+    <div class="crumb">/ <span>NOC</span> / <span>Operações</span></div>
+  </div>
+  <div class="topbar-mid"></div>
+  <div class="tr">
+    <div class="cmd-btn" onclick="openCmd()"><span>⌘ Palette</span><kbd>Ctrl+K</kbd></div>
+    <div class="tt" onclick="toggleTheme()" id="tt">
+      <div class="tt-pill" id="tt-pill"></div>
+      <div class="tt-opt active" id="tt-d"><span>◐</span><span>Escuro</span></div>
+      <div class="tt-opt" id="tt-l"><span>○</span><span>Claro</span></div>
+    </div>
+    
+    <div style="display:flex;align-items:center;gap:6px;margin-right:12px;">
+        <select id="tenant-selector" style="background:var(--bg3);color:var(--t2);border:1px solid var(--b);border-radius:4px;padding:3px 8px;font-size:10px;font-family:var(--m);outline:none;cursor:pointer;">
+            <option value="default">🌐 Global SINC</option>
+            <option value="stark">🏢 Stark Industries</option>
+            <option value="alpha">🛸 Project Alpha</option>
+        </select>
+        <span class="nbadge" id="system-mode-display" style="background:var(--pud);color:var(--pu);border-color:var(--pu);">AUTONOMOUS</span>
+    </div>
+<div class="live-b"><div class="ldot"></div><span>Ao Vivo</span></div>
+    <div class="clk" id="clk">--:--:--</div>
+    <div class="av">AD</div>
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<aside class="sb" id="sb">
+  <div class="ng">NOC</div>
+  <div class="ni on" onclick="showPage('home')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
+    <span class="ni-label">Grid de Saúde</span>
+  </div>
+  <div class="ni" onclick="showPage('logs')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.5" y="1.5" width="11" height="9" rx="1"/><line x1="1.5" y1="4" x2="12.5" y2="4"/><line x1="4" y1="4" x2="4" y2="10.5"/></svg>
+    <span class="ni-label">Live Logs</span><span class="nbadge hot">ERR</span>
+  </div>
+  <div class="ni" onclick="showPage('kanban')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5.5"/><line x1="7" y1="4" x2="7" y2="7.5"/><line x1="9.5" y1="9" x2="7" y2="7.5"/></svg>
+    <span class="ni-label">Zombie Killer</span><span class="nbadge warn">2</span>
+  </div>
+  <div class="ni" onclick="showPage('metrics')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="1,10 4,5.5 8,7 13,2.5"/></svg>
+    <span class="ni-label">Métricas RED</span></div><div class="ni" onclick="showPage('engine-room')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5.5"/></svg><span class="ni-label">Engine Room</span>
+  </div>
+  <div class="ng" style="margin-top:6px">Inteligência</div>
+  <div class="ni" onclick="showPage('rep')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><polygon points="7,1.5 8.8,5.2 13,5.6 10,8.4 11,12.5 7,10.2 3,12.5 4,8.4 1,5.6 5.2,5.2"/></svg>
+    <span class="ni-label">Reputação</span>
+  </div>
+  <div class="ni" onclick="showPage('explorer')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="5" cy="5" r="2.5"/><circle cx="10" cy="5" r="1.5"/><line x1="7.5" y1="5" x2="8.5" y2="5"/><path d="M2 12a4 4 0 0 1 7.8-1"/></svg>
+    <span class="ni-label">Exploração N5</span>
+  </div>
+  <div class="ni" onclick="showPage('ask')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 2h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H5l-3 2V3a1 1 0 0 1 1-1z"/><line x1="4.5" y1="5.5" x2="9.5" y2="5.5"/><line x1="4.5" y1="7.5" x2="7.5" y2="7.5"/></svg>
+    <span class="ni-label">Ask N5</span>
+    <span class="nbadge" style="background:var(--pud);color:var(--pu);border-color:var(--pu);font-size:7px">LLM</span>
+  </div>
+  <div class="ni" onclick="showPage('lessons')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="2" width="10" height="10" rx="1.5"/><line x1="5" y1="2" x2="5" y2="12"/><line x1="2" y1="5.5" x2="12" y2="5.5"/></svg>
+    <span class="ni-label">Base de Lições</span><span class="nbadge new" id="sb-lessons-badge">53</span>
+  </div>
+  <div class="ng" style="margin-top:6px">Governança</div>
+  <div class="ni" onclick="showPage('tenants')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 1a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/><path d="M1 13a6.5 6.5 0 0 1 12 0"/></svg>
+    <span class="ni-label">Tenants</span>
+  </div>
+  <div class="ni" onclick="showPage('memory')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="3.5" width="12" height="8" rx="1.5"/><circle cx="4.5" cy="7.5" r="0.8" fill="currentColor"/><circle cx="7" cy="7.5" r="0.8" fill="currentColor"/><circle cx="9.5" cy="7.5" r="0.8" fill="currentColor"/></svg>
+    <span class="ni-label">Quotas</span>
+  </div>
+  <div class="ng" style="margin-top:6px">Deep Trace</div>
+  <div class="ni" onclick="showPage('prompt-inspector')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 3h10M2 7h7M2 11h5"/><circle cx="11" cy="10" r="2"/><line x1="12.5" y1="11.5" x2="13.5" y2="12.5"/></svg>
+    <span class="ni-label">Prompt Inspector</span>
+  </div>
+  <div class="ni" onclick="showPage('timeline')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="3" width="12" height="2.5" rx="1"/><rect x="1" y="7" width="8" height="2.5" rx="1"/><rect x="1" y="11" width="10" height="2.5" rx="1"/></svg>
+    <span class="ni-label">Tool Timeline</span>
+  </div>
+  <div class="ni" onclick="showPage('events')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="3.5" cy="3.5" r="1" fill="currentColor"/><circle cx="3.5" cy="7" r="1" fill="currentColor"/><circle cx="3.5" cy="10.5" r="1" fill="currentColor"/><line x1="6" y1="3.5" x2="12.5" y2="3.5"/><line x1="6" y1="7" x2="12.5" y2="7"/><line x1="6" y1="10.5" x2="10" y2="10.5"/></svg>
+    <span class="ni-label">Pulso do Sistema</span>
+  </div>
+  <div class="sfooter">
+    <div class="sft">CPU <span id="sv-cpu">0%</span></div>
+    <div class="sbr"><div class="sbf" id="sb-cpu" style="width:0%;background:linear-gradient(90deg,var(--bl),var(--pu))"></div></div>
+    <div class="sft">RAM <span id="sv-ram">0%</span></div>
+    <div class="sbr"><div class="sbf" id="sb-ram" style="width:0%;background:linear-gradient(90deg,var(--gr),var(--cy))"></div></div>
+    <div class="sft">Uptime <span style="color:var(--gr)">100%</span></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ENGINE ROOM SPA -->
+<div id="engine-room-spa" style="display:none; padding:14px 16px; background:var(--bg1);">
+    <div class="ph">
+        <div class="ptitle">Engine Room · Configurações Globais</div>
+        <div class="psub">MCT Router, Circuit Breakers e Multitenancy Keys</div>
+        <button class="btn p" onclick="showPage('home')">← Voltar ao NOC</button>
+    </div>
+    
+    <div class="gmain" style="margin-top: 14px;">
+        <div class="card">
+            <div class="chd"><div class="ct">Global Kill-Switches</div></div>
+            <div class="cbd">
+                <button id="btn-kill-switch" class="btn danger" style="padding: 14px 24px; font-size: 14px; display: block; width: 100%; border-radius: 8px;">
+                    ☠ HALT ALL OPERATIONS (CIRCUIT BREAKER)
+                </button>
+            </div>
+        </div>
+        <div class="card">
+            <div class="chd"><div class="ct">Model Router Configuration</div></div>
+            <div class="cbd">
+                <select id="model-router-select" style="width:100%; background:var(--bg3); color:var(--t1); border:1px solid var(--b); padding: 10px; border-radius: 6px; font-family:var(--m);">
+                    <option value="claude-3-opus">Claude 3 Opus (Complex Logic)</option>
+                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                    <option value="llama-3">Llama 3 70B (Fast Lane)</option>
+                </select>
+            </div>
         </div>
     </div>
+</div>
+
+<!-- ASK N5 · LLM CHAT SPA -->
+<div id="ask-spa" style="display:none; flex-direction:column; gap:10px; padding:14px 16px; background:var(--bg1); min-height:calc(100vh - 60px);">
+  <div class="ph" style="flex-shrink:0">
+    <div>
+      <div class="ptitle">Ask N5 · LLM Local sobre o Projeto</div>
+      <div class="psub">RAG Cognitivo L0→L4 · Qdrant + Neo4j + Ollama (streaming)</div>
+    </div>
+    <div class="pacts">
+      <div class="chip" id="ask-model-chip" style="font-family:var(--m);color:var(--pu);background:var(--pud);border-color:var(--pu)">⬡ Ollama</div>
+      <div class="chip" id="ask-session-chip" style="font-family:var(--m);color:var(--t3)">session: —</div>
+      <button class="btn" onclick="clearAskChat()">✕ Nova Sessão</button>
+      <button class="btn p" onclick="showPage('home')">← Voltar ao NOC</button>
+    </div>
+  </div>
+
+  <!-- Quick prompts -->
+  <div class="ask-quick-bar">
+    <div class="ask-quick-btn" onclick="setAskPrompt(this)">Quais são os endpoints principais da API?</div>
+    <div class="ask-quick-btn" onclick="setAskPrompt(this)">Como funciona o sistema de memória L0→L4?</div>
+    <div class="ask-quick-btn" onclick="setAskPrompt(this)">Explique o fluxo de autenticação e quotas</div>
+    <div class="ask-quick-btn" onclick="setAskPrompt(this)">Quais agentes existem e o que cada um faz?</div>
+    <div class="ask-quick-btn" onclick="setAskPrompt(this)">Como o blast radius é calculado no Neo4j?</div>
+    <div class="ask-quick-btn" onclick="setAskPrompt(this)">Qual o pipeline de ingestão de documentos?</div>
+    <div class="ask-quick-btn" onclick="setAskPrompt(this)">Como funciona o roteamento MCTS fast/deep path?</div>
+  </div>
+
+  <!-- Chat area -->
+  <div class="ask-chat" id="ask-chat-area">
+    <div class="ask-welcome">
+      <div style="font-size:38px;margin-bottom:14px;opacity:0.4">⬡</div>
+      <div style="font-size:15px;font-weight:700;color:var(--t1);margin-bottom:8px">SINC N5 · Assistente Cognitivo</div>
+      <div style="font-size:11px;color:var(--t3);line-height:1.7;max-width:400px">
+        Faça perguntas sobre o codebase em linguagem natural.<br>
+        O sistema usa RAG cognitivo com Qdrant (vetorial) + Neo4j (grafo)<br>
+        e responde via LLM local Ollama com streaming de tokens.
+      </div>
+    </div>
+  </div>
+
+  <!-- Input area -->
+  <div class="ask-input-wrap">
+    <textarea class="ask-textarea" id="ask-input" placeholder="Pergunte sobre o projeto... (Enter para enviar, Shift+Enter para nova linha)" rows="2" onkeydown="askKeyDown(event)"></textarea>
+    <div class="ask-controls">
+      <input type="text" class="ask-project-input" id="ask-project-id" placeholder="project_id" value="project0" title="ID do projeto para contexto RAG"/>
+      <div style="flex:1"></div>
+      <span id="ask-status" style="font-size:9px;font-family:var(--m);color:var(--t3)"></span>
+      <button class="btn p" id="ask-send-btn" onclick="sendAsk()">⬆ Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- KNOWLEDGE EXPLORER SPA -->
+<div id="explorer-spa" style="display:none; padding:14px 16px;">
+  <div class="ph">
+    <div>
+      <div class="ptitle">Exploração N5 · Grafo de Conhecimento</div>
+      <div class="psub">Mapa de dependências, blast radius e memória semântica L3 Qdrant</div>
+    </div>
+    <div class="pacts">
+      <button class="btn danger" onclick="searchBlastRadius(document.getElementById('explorer-search-input').value)">⚡ Blast Radius</button>
+      <button class="btn" onclick="resetExplorerGraph()">↺ Reset Grafo</button>
+      <button class="btn p" onclick="showPage('home')">← Voltar ao NOC</button>
+    </div>
+  </div>
+
+  <!-- Search bar -->
+  <div style="display:flex;gap:8px;align-items:center;margin:10px 0">
+    <input type="text" id="explorer-search-input" class="explorer-input" placeholder="Buscar símbolo, módulo, arquivo ou dependência..." onkeydown="if(event.key==='Enter')searchExplorer(this.value)"/>
+    <button class="btn p" onclick="searchExplorer(document.getElementById('explorer-search-input').value)">⌕ Buscar</button>
+  </div>
+
+  <!-- Legend -->
+  <div class="explorer-legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#4D80FF;box-shadow:0 0 5px #4D80FF"></div>Route</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#2ED47A;box-shadow:0 0 5px #2ED47A"></div>Service</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#9B7BFF;box-shadow:0 0 5px #9B7BFF"></div>Core</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#F0A020;box-shadow:0 0 5px #F0A020"></div>Agent</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#1ECFB8;box-shadow:0 0 5px #1ECFB8"></div>Storage</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#E04848;box-shadow:0 0 5px #E04848"></div>Risco</div>
+    <span style="margin-left:auto;font-size:9px;font-family:var(--m);color:var(--t3)">Clique num nó para explorar · Ctrl+Scroll para zoom</span>
+  </div>
+
+  <!-- Main layout: graph + detail panel -->
+  <div class="explorer-layout">
+    <!-- Graph -->
+    <div class="explorer-graph-wrap">
+      <div id="explorer-graph" style="width:100%;height:100%;"></div>
+      <!-- Mini controls overlay -->
+      <div class="explorer-graph-overlay">
+        <button class="exp-ctrl-btn" onclick="explorerNetwork&&explorerNetwork.fit({animation:{duration:600}})">⊡ Fit</button>
+        <button class="exp-ctrl-btn" onclick="explorerNetwork&&explorerNetwork.moveTo({scale:2,animation:true})">＋</button>
+        <button class="exp-ctrl-btn" onclick="explorerNetwork&&explorerNetwork.moveTo({scale:0.5,animation:true})">－</button>
+      </div>
+    </div>
+
+    <!-- Right panel: detail + memory search -->
+    <div class="explorer-right-panel">
+      <!-- Node detail -->
+      <div id="explorer-detail" class="explorer-detail-area">
+        <div style="padding:24px 16px;text-align:center;color:var(--t3);font-family:var(--m);font-size:10px">
+          <div style="font-size:28px;margin-bottom:10px;opacity:0.4">⬡</div>
+          Clique em um nó para<br>explorar suas conexões<br>e calcular blast radius
+        </div>
+      </div>
+
+      <!-- Semantic Memory Search -->
+      <div class="explorer-mem-section">
+        <div class="explorer-mem-title">
+          <span style="color:var(--cy)">⬡</span> Busca Semântica · Qdrant L3
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input type="text" id="mem-search-input" placeholder="Buscar na memória vetorial..." class="explorer-input" style="font-size:10px;padding:6px 10px" onkeydown="if(event.key==='Enter')searchMemoryL3(this.value)"/>
+          <button class="btn" style="padding:6px 10px;font-size:10px;white-space:nowrap" onclick="searchMemoryL3(document.getElementById('mem-search-input').value)">→</button>
+        </div>
+        <div id="mem-search-results"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="view-main-dashboard" style="display:flex;flex-direction:column;gap:12px;">
+
+  <!-- NOC BREADCRUMB (shown only in focus/page mode) -->
+  <div class="noc-breadcrumb" id="noc-breadcrumb" style="display:none">
+    <button class="btn" onclick="showPage('home')">⌂ NOC Home</button>
+    <span class="noc-bc-sep">›</span>
+    <span class="noc-bc-title" id="noc-bc-title">—</span>
+    <div style="flex:1"></div>
+    <div class="noc-bc-actions" id="noc-bc-actions"></div>
+  </div>
+
+  <div class="ph" data-home-only="1">
+    <div>
+      <div class="ptitle">Centro de Operações — N5</div>
+      <div class="psub" id="pdate">—</div>
+    </div>
+    <div class="pacts">
+      <button class="btn" onclick="exportDashboard()">↓ Exportar</button>
+      <button class="btn" onclick="openCmd()">⌘ Ctrl+K</button>
+      <button class="btn danger" onclick="killAllTasks()">☠ Kill Mode</button>
+      <button class="btn p" onclick="confirmSnapshot(this)">+ Snapshot</button>
+    </div>
+  </div>
+
+  <!-- KPI ROW -->
+  <div class="krow" data-home-only="1">
+    <div class="kpi" data-c="gr" id="k0" onclick="onKpiClick(event,this)">
+      <div class="kpi-bar gr"></div><div class="kpi-glow"></div>
+      <div class="klbl">Containers Ativos</div>
+      <div class="knum" id="metric-success-rate">0<span class="ksub">/0</span></div>
+      <div class="ksp"><canvas id="sp0"></canvas></div>
+      <div class="kft"><span class="delta up">✓ 100% uptime</span><span class="kper">stack N5</span></div>
+    </div>
+    <div class="kpi" data-c="bl" id="k1" onclick="onKpiClick(event,this)">
+      <div class="kpi-bar bl"></div><div class="kpi-glow"></div>
+      <div class="klbl">Tarefas / hora</div>
+      <div class="knum" id="metric-autonomy-score">0<span class="ksub"> tasks</span></div>
+      <div class="ksp"><canvas id="sp1"></canvas></div>
+      <div class="kft"><span class="delta up">↑ +12.4%</span><span class="kper">fast + deep path</span></div>
+    </div>
+    <div class="kpi" data-c="am" id="k2" onclick="onKpiClick(event,this)">
+      <div class="kpi-bar am"></div><div class="kpi-glow"></div>
+      <div class="klbl">Tokens / dia</div>
+      <div class="knum" id="metric-active-agents">0<span class="ksub">k</span></div>
+      <div class="ksp"><canvas id="sp2"></canvas></div>
+      <div class="kft"><span class="delta fl">→ Quota 82%</span><span class="kper">3 tenants</span></div>
+    </div>
+    <div class="kpi" data-c="rd" id="k3" onclick="onKpiClick(event,this)">
+      <div class="kpi-bar rd"></div><div class="kpi-glow"></div>
+      <div class="klbl">Agentes Zombie</div>
+      <div class="knum" id="metric-latency">0<span class="ksub"></span></div>
+      <div class="ksp"><canvas id="sp3"></canvas></div>
+      <div class="kft"><span class="delta dn">! HB +4min</span></div>
+    </div>
+  </div>
+
+  <!-- SERVICE HEALTH GRID -->
+  <div class="card" id="section-health" data-section="health">
+    <div class="chd">
+      <div class="ct">Saúde dos Serviços</div>
+      <div class="cacts">
+        <div class="chip grn" id="health-overall">● 6/6 Online</div>
+        <div class="chip" onclick="refreshHealth()" style="cursor:pointer;user-select:none">↻ Refresh</div>
+        <div class="chip" id="health-refresh-cd" style="font-family:var(--m);cursor:default;color:var(--t3)">↻ 30s</div>
+      </div>
+    </div>
+    <div class="health-svc-grid" id="health-grid">
+      <!-- populated by JS on boot -->
+    </div>
+  </div>
+
+  <!-- METRICS CARD (RED Metrics + Workers) — navigable via showPage('metrics') -->
+  <div data-section="metrics" style="display:flex;flex-direction:column;gap:0">
+    <div class="card">
+      <div class="chd">
+        <div class="ct">Desempenho dos Workers (RED Metrics)</div>
+        <div class="cacts">
+          <div class="ctabs">
+            <div class="ctab on" onclick="setPeriod('7d',this)">7d</div>
+            <div class="ctab" onclick="setPeriod('30d',this)">30d</div>
+            <div class="ctab" onclick="setPeriod('90d',this)">90d</div>
+            <div class="ctab" onclick="setPeriod('graph',this)">Grafo</div>
+          </div>
+        </div>
+      </div>
+      <!-- RED Metrics Chart (7d/30d/90d) -->
+      <div class="cbd" id="chart-view"><div class="cw"><canvas id="mc"></canvas></div></div>
+      <!-- Neo4j Impact Graph (Grafo tab) -->
+      <div class="cbd" id="graph-view" style="display:none;padding-top:0">
+        <div id="graph-network-container" class="network-container" style="height:220px;border-radius:9px;border:1px solid var(--b);"></div>
+      </div>
+      <div style="border-top:1px solid var(--b)"></div>
+      <div class="cbd" style="padding-top:8px">
+        <div id="live-workers-list">
+          <div style="padding:12px;color:var(--t3);text-align:center;font-size:10px;font-family:var(--m);">Aguardando Ocupação de Pool...</div>
+        </div>
+      </div>
+      <div class="ticker-wrap log-console" id="terminal-feed-container" style="height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 10px;" ></div>
+    </div>
+  </div>
+
+  <!-- HOME-ONLY: Gauges + Tenants column -->
+  <div class="gmain" data-home-only="1">
+    <div style="display:none"></div><!-- placeholder for grid alignment -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <!-- Infra Gauges -->
+      <div class="card">
+        <div class="chd">
+          <div class="ct">Infraestrutura</div>
+          <div class="cacts"><div class="chip grn">● Live</div></div>
+        </div>
+        <div class="gg">
+          <div class="gc" onclick="showToast('var(--bl)','CPU · 16 núcleos · Stack N5 completa')">
+            <div class="ro"><canvas id="g0" width="56" height="56"></canvas><div class="rc"><div class="rv" id="gv0">0%</div><div class="rl">CPU</div></div></div>
+            <div class="gc-info"><div class="gc-name">CPU</div><div class="gc-sub">16 núcleos</div><div class="gc-status up"><span class="sd"></span>nominal</div></div>
+          </div>
+          <div class="gc" onclick="showToast('var(--gr)','RAM 64GB · workers + vector store')">
+            <div class="ro"><canvas id="g1" width="56" height="56"></canvas><div class="rc"><div class="rv" id="gv1">0%</div><div class="rl">RAM</div></div></div>
+            <div class="gc-info"><div class="gc-name">RAM</div><div class="gc-sub">64GB DDR5</div><div class="gc-status up"><span class="sd"></span>nominal</div></div>
+          </div>
+          <div class="gc" onclick="showToast('var(--am)','NVMe · FAISS index + Neo4j')">
+            <div class="ro"><canvas id="g2" width="56" height="56"></canvas><div class="rc"><div class="rv" id="gv2">0%</div><div class="rl">DISK</div></div></div>
+            <div class="gc-info"><div class="gc-name">DISK</div><div class="gc-sub">NVMe Gen5</div><div class="gc-status up"><span class="sd"></span>ok</div></div>
+          </div>
+          <div class="gc" onclick="showToast('var(--pu)','GPU RTX 3090 · LLM inference local')">
+            <div class="ro"><canvas id="g3" width="56" height="56"></canvas><div class="rc"><div class="rv" id="gv3">0%</div><div class="rl">GPU</div></div></div>
+            <div class="gc-info"><div class="gc-name">GPU</div><div class="gc-sub">RTX 3090</div><div class="gc-status warn"><span class="sd"></span>alto</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tenants -->
+      <div class="card" id="section-tenants">
+        <div class="chd">
+          <div class="ct">Tenants Ativos</div>
+          <div class="cacts"><div class="chip" onclick="openTenantModal()">+ Novo</div></div>
+        </div>
+        <div class="cbd">
+          <div id="live-tenants-list">
+            <div style="padding:12px;color:var(--t3);text-align:center;font-size:10px;font-family:var(--m);">Sincronizando Identidades...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOME-ONLY: Pipeline + Feed (bottom overview) -->
+  <div class="gbot" data-home-only="1">
+    <!-- Pipeline -->
+    <div class="card">
+      <div class="chd">
+        <div class="ct">Pipeline de Execução</div>
+        <div class="cacts">
+          <div class="chip grn">● Ao vivo</div>
+          <div class="chip" onclick="addTask()">+</div>
+        </div>
+      </div>
+      <div class="cbd" style="padding-top:7px;padding-bottom:7px">
+        <div id="queue-list"></div>
+      </div>
+    </div>
+
+    <!-- Feed -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card" style="position:relative">
+        <div class="feed-flash" id="ffx"></div>
+        <div class="chd">
+          <div class="ct">Feed do Sistema</div>
+          <div class="cacts">
+            <div class="chip grn" id="fstatus">● Ativo</div>
+            <div class="chip" id="fpbtn" onclick="toggleFeed(this)">⏸</div>
+          </div>
+        </div>
+        <div class="cbd" style="padding:0 9px">
+          <div class="feed-wrap" id="feed-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Home autonomy overview -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <div class="chd">
+          <div class="ct">Controle de Autonomia N5</div>
+          <div class="cacts"><div class="chip on" id="pathMode">Fast Path</div></div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-label">Confiança Mínima Autônoma <span id="confVal">72%</span></div>
+          <input type="range" min="0" max="100" value="72" id="confSlider" oninput="updateConf(this.value)" style="--pct:72%">
+        </div>
+        <div class="cbd" style="padding-top:4px">
+          <div class="metric-cells">
+            <div class="metric-cell" onclick="showToast('var(--gr)','Fast Path: decisão autônoma rápida')">
+              <div class="metric-cell-num" style="color:var(--gr)" id="fastPct">68%</div>
+              <div class="metric-cell-lbl">Fast Path</div>
+            </div>
+            <div class="metric-cell" onclick="showToast('var(--pu)','Deep Path: análise profunda')">
+              <div class="metric-cell-num" style="color:var(--pu)" id="deepPct">32%</div>
+              <div class="metric-cell-lbl">Deep Path</div>
+            </div>
+            <div class="metric-cell" onclick="showToast('var(--am)','53 lições aprendidas · N5 memória')">
+              <div class="metric-cell-num" style="color:var(--am)" id="lessonCount">53</div>
+              <div class="metric-cell-lbl">Lições</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPUTATION PAGE — direct child, navigable -->
+  <div class="card" id="section-rep" data-section="rep">
+    <div class="chd">
+      <div class="ct">Reputação de Agentes</div>
+      <div class="cacts"><div class="chip on">Live</div></div>
+    </div>
+    <div class="cbd" style="padding-top:7px;padding-bottom:7px">
+      <div class="rep-row"><div class="rep-rank gold" style="--delay:0s">①</div><div class="rep-agent">orchestrator</div><div class="rep-bar-wrap"><div class="rep-bar" style="width:0%;background:linear-gradient(90deg,var(--gr),var(--cy))" data-w="97"></div></div><div class="rep-score">97%</div><div class="rep-badge" style="color:var(--gr);background:var(--grd)">A+</div></div>
+      <div class="rep-row"><div class="rep-rank">②</div><div class="rep-agent">qa_agent</div><div class="rep-bar-wrap"><div class="rep-bar" style="width:0%;background:linear-gradient(90deg,var(--bl),var(--pu))" data-w="88"></div></div><div class="rep-score">88%</div><div class="rep-badge" style="color:var(--bl);background:var(--bld)">A</div></div>
+      <div class="rep-row"><div class="rep-rank">③</div><div class="rep-agent">refactor</div><div class="rep-bar-wrap"><div class="rep-bar" style="width:0%;background:linear-gradient(90deg,var(--bl),var(--cy))" data-w="84"></div></div><div class="rep-score">84%</div><div class="rep-badge" style="color:var(--bl);background:var(--bld)">A</div></div>
+      <div class="rep-row"><div class="rep-rank">④</div><div class="rep-agent">ingest_w</div><div class="rep-bar-wrap"><div class="rep-bar" style="width:0%;background:linear-gradient(90deg,var(--am),var(--gr))" data-w="71"></div></div><div class="rep-score">71%</div><div class="rep-badge" style="color:var(--am);background:var(--amd)">B+</div></div>
+      <div class="rep-row"><div class="rep-rank">⑤</div><div class="rep-agent">ctx_retriev</div><div class="rep-bar-wrap"><div class="rep-bar" style="width:0%;background:linear-gradient(90deg,var(--rd),var(--am))" data-w="63"></div></div><div class="rep-score">63%</div><div class="rep-badge" style="color:var(--rd);background:var(--rdd)">C+</div></div>
+    </div>
+  </div>
+
+  <!-- LIVE LOGS PAGE — direct child, navigable -->
+  <div class="card" id="section-logs" data-section="logs">
+    <div class="chd">
+      <div class="ct">Live Logs · Streamer</div>
+      <div class="cacts" style="gap:4px">
+        <div class="log-filter active" onclick="toggleLogFilter('ALL',this)">ALL</div>
+        <div class="log-filter" onclick="toggleLogFilter('INFO',this)" style="color:var(--gr)">INFO</div>
+        <div class="log-filter" onclick="toggleLogFilter('WARN',this)" style="color:var(--am)">WARN</div>
+        <div class="log-filter" onclick="toggleLogFilter('ERROR',this)" style="color:var(--rd)">ERR</div>
+        <div class="chip" onclick="clearLogs()" style="cursor:pointer;user-select:none">✕</div>
+      </div>
+    </div>
+    <div class="cbd" style="padding:8px 10px">
+      <div class="log-console" id="logConsole"></div>
+    </div>
+  </div>
+
+  <!-- AUTONOMY PAGE — direct child, navigable -->
+  <div class="card" data-section="autonomy" id="section-autonomy">
+    <div class="chd">
+      <div class="ct">Controle de Autonomia N5</div>
+      <div class="cacts"><div class="chip on" id="pathMode-page">Fast Path</div></div>
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-label">Confiança Mínima Autônoma <span id="confVal-page">72%</span></div>
+      <input type="range" min="0" max="100" value="72" id="confSlider-page" oninput="updateConf(this.value);document.getElementById('confSlider').value=this.value" style="--pct:72%">
+    </div>
+    <div class="cbd" style="padding-top:4px">
+      <div class="metric-cells">
+        <div class="metric-cell"><div class="metric-cell-num" style="color:var(--gr)" id="fastPct-page">68%</div><div class="metric-cell-lbl">Fast Path</div></div>
+        <div class="metric-cell"><div class="metric-cell-num" style="color:var(--pu)" id="deepPct-page">32%</div><div class="metric-cell-lbl">Deep Path</div></div>
+        <div class="metric-cell"><div class="metric-cell-num" style="color:var(--am)" id="lessonCount-page">53</div><div class="metric-cell-lbl">Lições</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVE GOALS -->
+  <div class="card" id="section-goals" data-section="goals">
+    <div class="chd">
+      <div class="ct">Objetivos Ativos</div>
+      <div class="cacts">
+        <div class="chip grn" id="goals-status">● Analisando</div>
+        <div class="chip" onclick="loadActiveGoals()" style="cursor:pointer;user-select:none">↻</div>
+      </div>
+    </div>
+    <div class="cbd" id="goals-container" style="padding-top:8px;">
+      <div style="padding:20px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Aguardando objetivos do orquestrador...</div>
+    </div>
+  </div>
+
+  <!-- KNOWLEDGE BASE STATS -->
+  <div class="card" id="section-memory" data-section="memory">
+    <div class="chd">
+      <div class="ct">Base de Conhecimento N5</div>
+      <div class="cacts">
+        <div class="chip" style="background:var(--pud);color:var(--pu);border-color:var(--pu)">L3 Qdrant</div>
+        <div class="chip" onclick="loadMemoryStats()" style="cursor:pointer;user-select:none">↻</div>
+      </div>
+    </div>
+    <div class="cbd" id="memory-stats-container" style="padding-top:8px;">
+      <div style="padding:20px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Carregando estatísticas...</div>
+    </div>
+  </div>
+
+  <!-- MCTS KANBAN ENGINE -->
+  <div class="card" id="section-kanban" data-section="kanban" style="min-height: 400px; display: flex; flex-direction: column;">
+    <div class="chd">
+        <div class="ct">MCTS Live KanBan Board</div>
+        <div class="cacts"><div class="chip grn">Active Sync</div></div>
+    </div>
+    <div class="cbd" style="flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; overflow-x: auto; padding: 14px;">
+        <div class="kanban-col" id="col-pending" style="background: var(--bg2); border: 1px solid var(--b); border-radius: 8px; padding: 10px; display: flex; flex-direction: column;">
+            <div style="font-size: 10px; color: var(--t2); font-family: var(--m); font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">PENDING</div>
+            <div class="k-cards" style="flex: 1; display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+        <div class="kanban-col" id="col-running" style="background: var(--bg2); border: 1px solid var(--b); border-radius: 8px; padding: 10px; display: flex; flex-direction: column;">
+            <div style="font-size: 10px; color: var(--bl); font-family: var(--m); font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">RUNNING (THINKING)</div>
+            <div class="k-cards" style="flex: 1; display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+        <div class="kanban-col" id="col-review" style="background: var(--bg2); border: 1px solid var(--b); border-radius: 8px; padding: 10px; display: flex; flex-direction: column;">
+            <div style="font-size: 10px; color: var(--am); font-family: var(--m); font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">HIL REVIEW</div>
+            <div class="k-cards" style="flex: 1; display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+        <div class="kanban-col" id="col-done" style="background: var(--bg2); border: 1px solid var(--b); border-radius: 8px; padding: 10px; display: flex; flex-direction: column;">
+            <div style="font-size: 10px; color: var(--gr); font-family: var(--m); font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">COMPLETED</div>
+            <div class="k-cards" style="flex: 1; display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+    </div>
+  </div>
+
+  <!-- TOOL TIMELINE PAGE -->
+  <div data-section="timeline" class="card" id="section-timeline" style="display:none; flex-direction:column; min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">Tool Timeline · Cronograma de Execuções</div>
+      <div class="cacts">
+        <div class="chip grn">● Live</div>
+        <div class="chip" onclick="loadToolTimeline()" style="cursor:pointer">↻</div>
+      </div>
+    </div>
+    <div class="cbd" id="timeline-list" style="flex:1;overflow-y:auto;padding:8px 14px">
+      <div style="padding:40px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Aguardando dados de execução...</div>
+    </div>
+  </div>
+
+  <!-- SYSTEM EVENT TIMELINE -->
+  <div class="card" id="section-events" data-section="events">
+    <div class="chd">
+      <div class="ct">Pulso do Sistema · Event Timeline</div>
+      <div class="cacts">
+        <div class="chip grn" id="events-live-chip">● Live</div>
+        <span style="font-size:9px;font-family:var(--m);color:var(--t3);padding:0 4px" id="events-count-label">0 eventos</span>
+        <div class="chip" onclick="clearSystemEvents()" style="cursor:pointer;user-select:none">✕ Limpar</div>
+      </div>
+    </div>
+    <div id="event-timeline-list" class="evt-timeline">
+      <div style="padding:20px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Aguardando eventos do sistema...</div>
+    </div>
+  </div>
+
+  <!-- LESSONS LEARNED DATABASE -->
+  <div class="card" id="section-lessons" data-section="lessons">
+    <div class="chd">
+      <div class="ct">Base de Lições Aprendidas</div>
+      <div class="cacts">
+        <span class="nbadge new" id="lessons-count-badge">53</span>
+        <div class="chip" onclick="loadLessons()" style="cursor:pointer;user-select:none">↻</div>
+      </div>
+    </div>
+    <div class="cbd" id="lessons-container" style="padding-top:4px;">
+      <div style="padding:20px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Carregando base de lições...</div>
+    </div>
+  </div>
+
+  <!-- PROMPT INSPECTOR PAGE -->
+  <div data-section="prompt-inspector" class="card" id="section-prompt-inspector" style="display:none; flex-direction:column; min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">Prompt Inspector · Histórico de Execuções</div>
+      <div class="cacts">
+        <div class="chip" id="pi-count-chip">0 tasks</div>
+        <div class="chip" onclick="loadPromptInspector()" style="cursor:pointer">↻</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--b);flex-shrink:0">
+      <input type="text" id="pi-search" placeholder="Filtrar por prompt, agente ou status..." style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:6px 10px;outline:none" onkeydown="if(event.key==='Enter')loadPromptInspector()"/>
+      <select id="pi-status-filter" style="background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:10px;padding:6px 8px;outline:none" onchange="loadPromptInspector()">
+        <option value="">Todos</option>
+        <option value="running">Running</option>
+        <option value="done">Completed</option>
+        <option value="failed">Failed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+    <div class="cbd" id="pi-list" style="flex:1;overflow-y:auto;padding:8px 14px">
+      <div style="padding:40px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Carregando histórico...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TENANT CREATE MODAL -->
+<div class="wmodal-overlay" id="tenant-modal-overlay" onclick="closeTenantModal()" style="display:none"></div>
+<div class="wmodal" id="tenant-modal" style="width:380px;max-width:95vw">
+  <div class="wmodal-hd">
+    <div>
+      <div class="wmodal-title">Novo Tenant</div>
+      <div class="wmodal-sub">Provisionar acesso ao sistema</div>
+    </div>
+    <button class="wmodal-close" onclick="closeTenantModal()">✕</button>
+  </div>
+  <div class="wmodal-body" style="padding:20px;display:flex;flex-direction:column;gap:12px">
+    <div>
+      <label style="font-size:10px;color:var(--t2);font-family:var(--m);letter-spacing:.06em;display:block;margin-bottom:4px">NOME *</label>
+      <input id="tnew-name" type="text" placeholder="ex: empresa-alpha" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:8px 10px;outline:none"/>
+    </div>
+    <div>
+      <label style="font-size:10px;color:var(--t2);font-family:var(--m);letter-spacing:.06em;display:block;margin-bottom:4px">PLANO</label>
+      <select id="tnew-plan" style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:8px 10px;outline:none">
+        <option value="free">free</option>
+        <option value="pro">pro</option>
+        <option value="enterprise">enterprise</option>
+      </select>
+    </div>
+    <div>
+      <label style="font-size:10px;color:var(--t2);font-family:var(--m);letter-spacing:.06em;display:block;margin-bottom:4px">E-MAIL (opcional)</label>
+      <input id="tnew-email" type="email" placeholder="admin@empresa.com" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:8px 10px;outline:none"/>
+    </div>
+    <div id="tnew-result" style="display:none;background:var(--bg3);border:1px solid var(--gr);border-radius:6px;padding:10px;font-family:var(--m);font-size:11px;line-height:1.6;word-break:break-all"></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn" style="flex:1" onclick="closeTenantModal()">Cancelar</button>
+      <button class="btn p" style="flex:2" id="tnew-submit" onclick="createTenant()">✓ Provisionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- WORKER / AGENT DETAIL DRAWER -->
+<div class="wmodal-overlay" id="wmodal-overlay" onclick="closeWorkerModal()"></div>
+<div class="wmodal" id="wmodal">
+  <div class="wmodal-hd">
+    <div>
+      <div class="wmodal-title" id="wmodal-title">Detalhe do Agente</div>
+      <div class="wmodal-sub" id="wmodal-sub">—</div>
+    </div>
+    <button class="wmodal-close" onclick="closeWorkerModal()">✕ Fechar</button>
+  </div>
+  <div class="wmodal-body" id="wmodal-body">
+    <div style="padding:40px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Selecione um agente na lista de workers</div>
+  </div>
+</div>
+
+</main>
+</div>
+
+
+<script>
+// ══ SIDEBAR ══
+function toggleSidebar(){const sb=document.getElementById('sb'),sbo=document.getElementById('sbo'),ham=document.getElementById('ham');const open=sb.classList.toggle('open');sbo.classList.toggle('open',open);ham.classList.toggle('open',open);}
+function closeSidebar(){['sb','sbo','ham'].forEach(id=>document.getElementById(id)?.classList.remove('open'));}
+function updateHam(){const ham=document.getElementById('ham');if(ham)ham.style.display=window.innerWidth>900?'none':'flex';}
+updateHam();window.addEventListener('resize',updateHam);
+
+// ══ LIVING GRID BACKGROUND ══
+(function(){
+  const c=document.getElementById('grid-bg');if(!c)return;
+  const x=c.getContext('2d');let W,H,t=0;
+  function rs(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}
+  rs();window.addEventListener('resize',rs);
+  const COLS=Math.floor(W/60)+2,ROWS=Math.floor(H/60)+2;
+  function frame(){
+    t+=0.008;
+    x.clearRect(0,0,W,H);
+    const isDarkMode=document.documentElement.getAttribute('data-theme')==='dark';
+    // draw grid dots
+    for(let col=0;col<COLS;col++){
+      for(let row=0;row<ROWS;row++){
+        const px=col*60,py=row*60;
+        const wave=Math.sin(t+col*0.4)*Math.cos(t*0.7+row*0.3);
+        const a=isDarkMode?(wave*0.5+0.5)*0.06:(wave*0.5+0.5)*0.04;
+        x.beginPath();x.arc(px,py,1.2,0,Math.PI*2);
+        x.fillStyle=`rgba(77,128,255,${a})`;x.fill();
+      }
+    }
+    // draw flowing lines
+    for(let col=0;col<COLS-1;col++){
+      for(let row=0;row<ROWS;row++){
+        const px=col*60,py=row*60;
+        const wave=Math.sin(t*0.6+col*0.5+row*0.2);
+        const a=isDarkMode?(wave*0.5+0.5)*0.04:(wave*0.5+0.5)*0.02;
+        if(a>0.01){
+          x.beginPath();x.moveTo(px,py);x.lineTo(px+60,py);
+          x.strokeStyle=`rgba(77,128,255,${a})`;x.lineWidth=0.5;x.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+
+// ══ PARTICLES ══
+(function(){
+  const c=document.getElementById('pts');if(!c)return;
+  const x=c.getContext('2d');let W,H,pts=[];
+  function rs(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}
+  rs();window.addEventListener('resize',rs);
+  const cols=['rgba(77,128,255,','rgba(46,212,122,','rgba(155,123,255,','rgba(30,207,184,'];
+  for(let i=0;i<60;i++)pts.push({px:Math.random()*W,py:Math.random()*H,vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.14,r:Math.random()*1.3+.3,c:cols[Math.floor(Math.random()*cols.length)],a:Math.random()*.5+.08,pa:Math.random()*Math.PI*2,ps:Math.random()*.01+.003,pulse:Math.random()*Math.PI*2});
+  let t2=0;
+  function fr(){
+    t2+=0.015;
+    x.clearRect(0,0,W,H);
+    const isDarkMode=document.documentElement.getAttribute('data-theme')==='dark';
+    const pa=isDarkMode?.4:.15,ca=isDarkMode?.07:.03;
+    pts.forEach(p=>{
+      p.px+=p.vx;p.py+=p.vy;p.pa+=p.ps;p.pulse+=0.02;
+      if(p.px<0)p.px=W;if(p.px>W)p.px=0;
+      if(p.py<0)p.py=H;if(p.py>H)p.py=0;
+      const sz=p.r*(0.85+0.15*Math.sin(p.pulse));
+      const a=p.a*pa*(.5+.5*Math.sin(p.pa));
+      x.beginPath();x.arc(p.px,p.py,sz,0,Math.PI*2);
+      x.fillStyle=p.c+a+')';x.fill();
+    });
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].px-pts[j].px,dy=pts[i].py-pts[j].py,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<100){
+        x.beginPath();x.moveTo(pts[i].px,pts[i].py);x.lineTo(pts[j].px,pts[j].py);
+        const a=ca*(1-d/100)*(0.5+0.5*Math.sin(t2));
+        x.strokeStyle=`rgba(77,128,255,${a})`;x.lineWidth=.4;x.stroke();
+      }
+    }
+    requestAnimationFrame(fr);
+  }
+  fr();
+})();
+
+// ══ THEME ══
+let isDark=true,mainChart,gaugeCharts=[],sparkCharts=[];
+function toggleTheme(){
+  isDark=!isDark;
+  document.documentElement.setAttribute('data-theme',isDark?'dark':'light');
+  document.getElementById('tt-d').classList.toggle('active',isDark);
+  document.getElementById('tt-l').classList.toggle('active',!isDark);
+  const ov=document.getElementById('tov');
+  ov.style.background=isDark?'#000':'#fff';
+  ov.classList.remove('flash');void ov.offsetWidth;ov.classList.add('flash');
+  setTimeout(rebuildCharts,60);
+  showToast(isDark?'var(--pu)':'var(--am)',isDark?'Modo escuro ativado':'Modo claro ativado');
+}
+function cc(){return isDark?{grid:'rgba(255,255,255,0.025)',tick:'#363650',ttbg:'#101020',ring:'rgba(255,255,255,0.04)'}:{grid:'rgba(80,70,160,0.05)',tick:'#9090C0',ttbg:'#FFFFFF',ring:'rgba(80,70,160,0.06)'}}
+
+// ══ CLOCK ══
+function tick(){
+  const n=new Date();
+  const c=document.getElementById('clk');if(c)c.textContent=n.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const p=document.getElementById('pdate');if(p)p.textContent=n.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).toUpperCase()+' · SINC AI N5';
+}
+tick();setInterval(tick,1000);
+
+// ══ SPARKLINES ══
+function h2r(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`}
+function buildSparks(){
+  const datasets=[
+    {data:[12,13,13,14,14,14,14,14,14,14,14,14],c:'#2ED47A'},
+    {data:[88,92,94,96,102,110,118,120,124,128,130,134],c:'#4D80FF'},
+    {data:[280,310,295,340,380,390,420,440,410,450,470,480],c:'#F0A020'},
+    {data:[3,3,2,2,2,2,2,2,1,2,2,2],c:'#E04848'},
+  ];
+  datasets.forEach(({data,c},i)=>{
+    const ctx=document.getElementById('sp'+i);if(!ctx)return;
+    if(sparkCharts[i])sparkCharts[i].destroy();
+    sparkCharts[i]=new Chart(ctx,{type:'line',data:{labels:data.map((_,j)=>j),datasets:[{data,borderColor:c,borderWidth:1.5,pointRadius:0,fill:true,backgroundColor:h2r(c,.08),tension:.5}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:800},plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}});
+  });
+}
+buildSparks();
+
+// sparklines breathe: periodically nudge data
+setInterval(()=>{
+  sparkCharts.forEach((ch,i)=>{
+    if(!ch)return;
+    const d=ch.data.datasets[0].data;
+    const last=d[d.length-1];
+    const delta=(Math.random()-.48)*4;
+    d.push(Math.max(1,last+delta));
+    d.shift();
+    ch.update('none');
+  });
+},1800);
+
+// ══ MAIN CHART ══
+const periods={
+  '7d':{l:['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'],d1:[88,92,86,105,110,118,120],d2:[4,6,5,8,7,9,8]},
+  '30d':{l:['S1','S2','S3','S4'],d1:[78,95,108,120],d2:[3,5,8,8]},
+  '90d':{l:['Jan','Fev','Mar','Abr','Mai','Jun','Jul'],d1:[40,55,68,80,95,108,120],d2:[2,3,5,6,7,8,8]}
+};
+let curPeriod='7d';
+function buildMainChart(){
+  const ctx=document.getElementById('mc');if(!ctx)return;
+  if(mainChart)mainChart.destroy();
+  const p=periods[curPeriod],c=cc();
+  mainChart=new Chart(ctx,{type:'line',data:{labels:p.l,datasets:[
+    {label:'Request Rate',data:p.d1,borderColor:'#4D80FF',backgroundColor:'rgba(77,128,255,.08)',borderWidth:1.8,pointRadius:3,pointBackgroundColor:'#4D80FF',pointBorderColor:isDark?'#04040A':'#F2F1FA',pointBorderWidth:1.5,fill:true,tension:.42},
+    {label:'Error Rate',data:p.d2,borderColor:'#E04848',backgroundColor:'rgba(224,72,72,.05)',borderWidth:1.8,pointRadius:3,pointBackgroundColor:'#E04848',pointBorderColor:isDark?'#04040A':'#F2F1FA',pointBorderWidth:1.5,fill:true,tension:.42}
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},animation:{duration:700,easing:'easeInOutQuart'},plugins:{legend:{display:false},tooltip:{backgroundColor:c.ttbg,borderColor:isDark?'rgba(77,128,255,0.25)':'rgba(80,70,160,.15)',borderWidth:1,titleColor:isDark?'#6868A0':'#6060A0',bodyColor:isDark?'#EEECf8':'#181630',titleFont:{family:'DM Mono',size:9},bodyFont:{family:'DM Mono',size:10},padding:9,cornerRadius:6}},scales:{x:{grid:{color:c.grid},ticks:{color:c.tick,font:{family:'DM Mono',size:9}}},y:{grid:{color:c.grid},ticks:{color:c.tick,font:{family:'DM Mono',size:9}}}}}});
+}
+buildMainChart();
+function setPeriod(k,el){
+  document.querySelectorAll('.ctab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  const chartView=document.getElementById('chart-view');
+  const graphView=document.getElementById('graph-view');
+  if(k==='graph'){
+    if(chartView)chartView.style.display='none';
+    if(graphView)graphView.style.display='block';
+    if(APP_STATE&&APP_STATE.network)setTimeout(()=>{APP_STATE.network.redraw();APP_STATE.network.fit();},80);
+  }else{
+    if(chartView)chartView.style.display='block';
+    if(graphView)graphView.style.display='none';
+    curPeriod=k;buildMainChart();
+  }
+}
+
+// animate bars on load
+setTimeout(()=>{
+  document.querySelectorAll('.cbf[data-w]').forEach(b=>{b.style.transition='width 1.6s cubic-bezier(0.16,1,0.3,1)';b.style.width=b.dataset.w+'%';});
+  document.querySelectorAll('.tenant-bar[data-w]').forEach(b=>{b.style.transition='width 1.8s cubic-bezier(0.16,1,0.3,1)';b.style.width=b.dataset.w+'%';});
+  document.querySelectorAll('.rep-bar[data-w]').forEach(b=>{b.style.transition='width 1.4s cubic-bezier(0.16,1,0.3,1)';b.style.width=b.dataset.w+'%';});
+},400);
+
+// ══ GAUGES ══
+const gVals=[91,68,41,89];
+const gCols=['#4D80FF','#2ED47A','#F0A020','#9B7BFF'];
+function buildGauges(){
+  const c=cc();
+  gVals.forEach((v,i)=>{
+    const ctx=document.getElementById('g'+i);if(!ctx)return;
+    if(gaugeCharts[i])gaugeCharts[i].destroy();
+    gaugeCharts[i]=new Chart(ctx,{type:'doughnut',data:{datasets:[{data:[v,100-v],backgroundColor:[gCols[i],c.ring],borderWidth:0,borderRadius:5}]},options:{cutout:'72%',responsive:false,animation:{duration:1400,easing:'easeInOutQuart'},plugins:{legend:{display:false},tooltip:{enabled:false}}}});
+  });
+}
+buildGauges();
+
+// BREATHING gauge animation — continuously drift values
+let gaugePhases=[0,0.8,1.6,2.4];
+function tickGauges(){
+  gVals.forEach((v,i)=>{
+    gaugePhases[i]+=0.025;
+    // organic breathing: base value + slow sine wave
+    const breathFactor=Math.sin(gaugePhases[i])*4;
+    const nv=Math.max(5,Math.min(99,v+breathFactor+(Math.random()-.5)*1.2));
+    gVals[i]=nv;
+    const c=cc();
+    if(gaugeCharts[i]){
+      gaugeCharts[i].data.datasets[0].data=[nv,100-nv];
+      gaugeCharts[i].data.datasets[0].backgroundColor=[gCols[i],c.ring];
+      gaugeCharts[i].update('none');
+    }
+    const el=document.getElementById('gv'+i);
+    if(el){el.classList.remove('pop');void el.offsetWidth;el.textContent=Math.round(nv)+'%';el.classList.add('pop');}
+    if(i===0){const b=document.getElementById('sb-cpu'),sv=document.getElementById('sv-cpu');if(b)b.style.width=Math.round(nv)+'%';if(sv)sv.textContent=Math.round(nv)+'%';}
+    if(i===1){const b=document.getElementById('sb-ram'),sv=document.getElementById('sv-ram');if(b)b.style.width=Math.round(nv)+'%';if(sv)sv.textContent=Math.round(nv)+'%';}
+  });
+}
+setInterval(tickGauges,2400);
+function rebuildCharts(){buildMainChart();buildGauges();buildSparks();}
+
+// ══ TICKER ══
+const tMsgs=[
+  {c:'var(--gr)',t:'orchestrator: task-8821 concluída · Fast Path · 1.2s · 97% conf'},
+  {c:'var(--bl)',t:'refactor_agent: PR #142 · 14 arquivos · +280 -94 linhas · Deep Path'},
+  {c:'var(--am)',t:'ingest_worker: 38 docs · FAISS 768d atualizado · Qdrant ok'},
+  {c:'var(--pu)',t:'qa_agent: 3 testes auto-gerados · coverage +4.2% · N5'},
+  {c:'var(--rd)',t:'ALERTA: context_retriever latência 3.2s · threshold 2.0s · retry'},
+  {c:'var(--cy)',t:'Neo4j: grafo atualizado · 2.841 nós · 12.408 relações · 3ms'},
+  {c:'var(--gr)',t:'Lição #54 gravada · timeout pattern Deep Path · lessons_learned'},
+  {c:'var(--bl)',t:'Tenant antigravity: quota 82% · reset em 6h · N5 prod'},
+];
+(function(){
+  const wrap=document.getElementById('ticker-wrap');if(!wrap)return;
+  const inner=document.createElement('div');inner.className='ticker-inner';
+  inner.innerHTML=[...tMsgs,...tMsgs].map(m=>`<span class="tick-item"><span class="tick-dot" style="background:${m.c};box-shadow:0 0 4px ${m.c}"></span>${m.t}<span style="color:var(--t3);padding:0 8px">·</span></span>`).join('');
+  wrap.appendChild(inner);
+})();
+
+// ══ PIPELINE ══
+let tasks=[
+  {id:1,name:'Refactor auth module',sub:'orchestrator · Deep Path · N5',prog:62,status:'run',c:'var(--gr)'},
+  {id:2,name:'Ingest docs lote-42',sub:'ingest_worker · FAISS 768d',prog:28,status:'proc',c:'var(--bl)'},
+  {id:3,name:'QA suite v2.5.1',sub:'qa_agent · testes unitários',prog:0,status:'pause',c:'var(--am)'},
+  {id:4,name:'Context retriever fix',sub:'Deep Path · Neo4j query opt',prog:0,status:'sched',c:'var(--t3)'},
+  {id:5,name:'Deploy sandbox v2.6',sub:'container isolado · segurança',prog:0,status:'sched',c:'var(--t3)'},
+];
+let dragSrc=null;
+function stHTML(s){if(s==='run')return`<div class="pr run"></div><span style="color:var(--gr)">Exec.</span>`;if(s==='proc')return`<div class="pr proc"></div><span style="color:var(--bl)">Fila</span>`;if(s==='pause')return`<span style="color:var(--am)">⏸</span>`;if(s==='done')return`<span style="color:var(--gr)">✓</span>`;return`<span style="color:var(--t3)">○</span>`;}
+function renderQueue(){
+  const list=document.getElementById('queue-list');if(!list)return;
+  list.innerHTML=tasks.map((t,i)=>`<div class="qi ${t.status==='run'?'is-run':t.status==='proc'?'is-proc':''}" id="qi${t.id}" draggable="true" ondragstart="dStart(event,${i})" ondragover="dOver(event,${i})" ondragleave="dLeave(event)" ondrop="dDrop(event,${i})" onclick="qClick(this)"><div class="qh">⠿</div><div class="qr">${String(i+1).padStart(2,'0')}</div><div class="qi-info"><div class="qi-name">${t.name}</div><div class="qi-sub">${t.sub}</div></div><div class="qpw">${t.prog>0?`<div class="qpt"><div class="qpf ${t.status==='run'?'live':''}" id="qpf${t.id}" style="width:${t.prog.toFixed(0)}%;background:${t.c}"></div></div><div class="qpv" id="qpv${t.id}">${t.prog.toFixed(0)}%</div>`:'<div style="height:15px"></div>'}</div><div class="qst">${stHTML(t.status)}</div></div>`).join('');
+}
+renderQueue();
+function dStart(e,i){dragSrc=i;setTimeout(()=>{document.getElementById('qi'+tasks[i].id)?.classList.add('dragging-src')},0);}
+function dOver(e,i){e.preventDefault();if(i===dragSrc)return;document.querySelectorAll('.qi').forEach(el=>el.classList.remove('drag-over'));document.getElementById('qi'+tasks[i].id)?.classList.add('drag-over');}
+function dLeave(e){e.currentTarget.classList.remove('drag-over');}
+function dDrop(e,i){e.preventDefault();document.querySelectorAll('.qi').forEach(el=>{el.classList.remove('drag-over');el.classList.remove('dragging-src');});if(dragSrc===null||dragSrc===i)return;const moved=tasks.splice(dragSrc,1)[0];tasks.splice(i,0,moved);dragSrc=null;renderQueue();setTimeout(()=>{const el=document.getElementById('qi'+moved.id);if(el){el.classList.add('confirm-drop');setTimeout(()=>el.classList.remove('confirm-drop'),600);}},30);showToast('var(--bl)','Tarefa reordenada');}
+function qClick(el){el.classList.remove('click-c');void el.offsetWidth;el.classList.add('click-c');}
+function addTask(){const names=['Sync Neo4j cache','Export BibTeX','Audit lessons #55','Deploy N5 patch','Update vector store'];const name=names[Math.floor(Math.random()*names.length)];tasks.push({id:Date.now(),name,sub:'Nova tarefa · pendente',prog:0,status:'sched',c:'var(--t3)'});renderQueue();showToast('var(--gr)','Tarefa adicionada ao pipeline');}
+
+// pipeline progress animation with acceleration feel
+setInterval(()=>{
+  tasks.forEach(t=>{
+    if(t.status==='run'&&t.prog<100){
+      // non-linear progress for realism
+      const boost=t.prog<30?3:t.prog<70?1.8:.8;
+      t.prog=Math.min(100,t.prog+(Math.random()*boost+.3));
+      const f=document.getElementById('qpf'+t.id);
+      const v=document.getElementById('qpv'+t.id);
+      if(f)f.style.width=t.prog.toFixed(0)+'%';
+      if(v)v.textContent=t.prog.toFixed(0)+'%';
+      if(t.prog>=100){
+        t.status='done';
+        showToast('var(--gr)',`✓ ${t.name.substring(0,28)}…`);
+        setTimeout(()=>{const nx=tasks.find(x=>x.status==='proc');if(nx){nx.status='run';nx.prog=0;}renderQueue();},800);
+      }
+    }
+  });
+},450);
+
+// ══ FEED ══
+const evts=[
+  {dot:'var(--gr)',title:'orchestrator: task-8821 concluída · 1.2s',meta:'Fast Path · 97% conf · 2.1k tokens',tag:'tg',lbl:'N5'},
+  {dot:'var(--bl)',title:'refactor_agent gerou PR #142',meta:'14 arquivos · +280 -94 linhas',tag:'tb',lbl:'GIT'},
+  {dot:'var(--rd)',title:'ALERTA: context_retriever latência alta',meta:'3.2s médio · threshold excedido',tag:'tr2',lbl:'NOC'},
+  {dot:'var(--pu)',title:'qa_agent: 3 testes gerados auto',meta:'coverage +4.2% · Deep Path',tag:'tp',lbl:'QA'},
+  {dot:'var(--am)',title:'Tenant antigravity: quota 82%',meta:'82k tokens/dia · reset em 6h',tag:'ta',lbl:'QUOTA'},
+  {dot:'var(--cy)',title:'Neo4j: grafo de conhecimento sync',meta:'2.841 nós · 12.408 relações · 3ms',tag:'tc',lbl:'GRAPH'},
+  {dot:'var(--gr)',title:'Lição #54 gravada pela orquestração',meta:'timeout pattern · Deep Path',tag:'tg',lbl:'LL'},
+  {dot:'var(--bl)',title:'Sandbox: execução isolada segura',meta:'container #12 · 0 escapes detectados',tag:'tb',lbl:'SEC'},
+];
+let fidx=0,fpaused=false;
+function addFeed(){
+  if(fpaused)return;
+  const feedEl=document.getElementById('feed-list');if(!feedEl)return;
+  const ev=evts[fidx%evts.length];fidx++;
+  const ago=Math.floor(Math.random()*5)+1;
+  const el=document.createElement('div');el.className='fi entering';
+  const dotStyle=`background:${ev.dot};box-shadow:0 0 6px ${ev.dot}`;
+  el.innerHTML=`<div class="fdot" style="${dotStyle}"></div><div class="fbody"><div class="ftitle">${ev.title}</div><div class="fmeta">há ${ago}min · ${ev.meta}</div></div><div class="ftag ${ev.tag}">${ev.lbl}</div>`;
+  el.onclick=()=>{el.style.background='rgba(77,128,255,.08)';setTimeout(()=>el.style.background='',400);};
+  feedEl.insertBefore(el,feedEl.firstChild);
+  while(feedEl.children.length>5)feedEl.removeChild(feedEl.lastChild);
+  const fx=document.getElementById('ffx');if(fx){fx.classList.remove('go');void fx.offsetWidth;fx.classList.add('go');}
+}
+for(let i=0;i<4;i++)addFeed();
+setInterval(addFeed,3600);
+function toggleFeed(btn){fpaused=!fpaused;btn.textContent=fpaused?'▶':'⏸';const fs=document.getElementById('fstatus');if(fs){fs.textContent=fpaused?'Pausado':'● Ativo';fs.className='chip '+(fpaused?'on':'grn');}}
+
+// ══ LIVE LOGS — fetch from real backend, fallback to demo ══
+const _DEMO_LOG_MSGS=[
+  {lvl:'INFO',msg:'orchestrator: iniciando task · deep_path=false · conf=0.97'},
+  {lvl:'INFO',msg:'refactor_agent: contexto carregado · 14 arquivos · 1.4k tokens'},
+  {lvl:'WARN',msg:'context_retriever: latência 3.2s · threshold 2.0s excedido'},
+  {lvl:'ERROR',msg:'context_retriever: Neo4j timeout · retry 1/3 · backoff 800ms'},
+  {lvl:'INFO',msg:'ingest_worker: 38 PDFs · Qdrant synced'},
+  {lvl:'INFO',msg:'qa_agent: 3 testes gerados · coverage 84.2% · deep_path'},
+  {lvl:'WARN',msg:'tenant quota 82% · alerta preventivo'},
+  {lvl:'INFO',msg:'orchestrator: lição gravada · lessons_learned updated'},
+  {lvl:'INFO',msg:'sandbox_monitor: exec segura · 0 escapes'},
+  {lvl:'ERROR',msg:'zombie_detector: agent stale >4min → kill candidate'},
+];
+let _logDemoIdx=0;
+function _addLogLine(lvl,msg){
+  const c=document.getElementById('logConsole');if(!c)return;
+  const ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const line=document.createElement('div');line.className='log-line';
+  const lvlClass=lvl==='ERROR'?'log-lvl-error':lvl==='WARN'?'log-lvl-warn':'log-lvl-info';
+  // sanitize msg
+  const safe=String(msg).replace(/</g,'&lt;').replace(/>/g,'&gt;').substring(0,200);
+  line.innerHTML=`<span class="log-ts">${ts}</span><span class="${lvlClass}">[${lvl}]</span><span class="log-msg">${safe}</span>`;
+  c.insertBefore(line,c.firstChild);
+  while(c.children.length>14)c.removeChild(c.lastChild);
+  if(lvl==='ERROR'){c.style.background='rgba(224,72,72,0.06)';setTimeout(()=>c.style.background='rgba(0,0,0,0.4)',600);}
+}
+// Seed with demo lines immediately
+for(let i=0;i<6;i++){const m=_DEMO_LOG_MSGS[i%_DEMO_LOG_MSGS.length];_addLogLine(m.lvl,m.msg);}
+
+let _lastLogFetch=0;
+async function refreshLiveLogs(){
+  const now=Date.now();
+  if(now-_lastLogFetch<4000)return; // throttle
+  _lastLogFetch=now;
+  try{
+    const tid=(typeof APP_STATE!=='undefined'?APP_STATE.tenant_id:null)||'default';
+    const r=await fetch(`/api/v5/dashboard/diagnostics/logs?since_minutes=2&limit=8&tenant_id=${tid}`);
+    if(!r.ok)throw new Error(r.statusText);
+    const d=await r.json();
+    const lines=d.lines||d.logs||[];
+    if(lines.length>0){
+      lines.slice(0,8).reverse().forEach(l=>{
+        const lvl=l.level||l.lvl||'INFO';
+        const msg=l.message||l.msg||l.line||String(l);
+        _addLogLine(lvl.toUpperCase(),msg);
+      });
+      return;
+    }
+  }catch(_){}
+  // fallback: add one demo line
+  const m=_DEMO_LOG_MSGS[_logDemoIdx%_DEMO_LOG_MSGS.length];_logDemoIdx++;
+  _addLogLine(m.lvl,m.msg);
+}
+setInterval(refreshLiveLogs,4000);
+
+// ══ CONFIDENCE SLIDER ══
+let _confSaveTimer=null;
+function updateConf(v){
+  document.getElementById('confVal').textContent=v+'%';
+  document.getElementById('confSlider').style.setProperty('--pct',v+'%');
+  const fast=Math.round(30+(v*0.55));
+  const deep=100-fast;
+  const fp=document.getElementById('fastPct'),dp=document.getElementById('deepPct');
+  if(fp){fp.classList.remove('pop');void fp.offsetWidth;fp.textContent=fast+'%';fp.classList.add('pop');}
+  if(dp){dp.classList.remove('pop');void dp.offsetWidth;dp.textContent=deep+'%';dp.classList.add('pop');}
+  const pm=document.getElementById('pathMode');
+  if(pm)pm.textContent=fast>=60?'Fast Path':'Deep Path';
+  // Debounced persist to backend (600ms after last move)
+  clearTimeout(_confSaveTimer);
+  _confSaveTimer=setTimeout(async ()=>{
+    try{
+      const tid=(typeof APP_STATE!=='undefined'?APP_STATE.tenant_id:null)||'default';
+      await fetch(`/api/v5/dashboard/confidence?tenant_id=${tid}`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({value:Number(v)})
+      });
+      showToast('var(--bl)',`Threshold: ${v}% · Fast ${fast}% / Deep ${deep}% · salvo`);
+    }catch(e){showToast('var(--bl)',`Threshold: ${v}% · Fast ${fast}% / Deep ${deep}%`);}
+  },600);
+}
+
+// ══ SYSTEM METRICS + KPI POLLING (real data from /api/v5/dashboard/system-metrics) ══
+async function refreshSystemMetrics(){
+  try{
+    const tid=(typeof APP_STATE!=='undefined'?APP_STATE.tenant_id:null)||'default';
+    const r=await fetch(`/api/v5/dashboard/system-metrics?tenant_id=${tid}`);
+    if(!r.ok)throw new Error(r.status);
+    const d=await r.json();
+    // Update gauges via existing updateInfra()
+    if(typeof updateInfra==='function')
+      updateInfra({cpu:d.cpu,ram:d.ram,disk:d.disk,gpu:d.gpu??d.ram});
+    // Sync gVals so tickGauges breathes around real base
+    if(typeof gVals!=='undefined'){
+      if(d.cpu !=null)gVals[0]=d.cpu;
+      if(d.ram !=null)gVals[1]=d.ram;
+      if(d.disk!=null)gVals[2]=d.disk;
+      if(d.gpu !=null)gVals[3]=d.gpu;
+    }
+    // Update KPI cards
+    const c=d.counts||{};
+    const el0=document.getElementById('metric-success-rate');
+    if(el0){const active=(c.running||0)+(c.pending||0);el0.innerHTML=active+'<span class="ksub"> ativas</span>';}
+    const el1=document.getElementById('metric-autonomy-score');
+    if(el1)el1.innerHTML=d.tasks_per_hour+'<span class="ksub"> tasks/h</span>';
+    const el2=document.getElementById('metric-active-agents');
+    if(el2){const tok=Math.round((c.tokens_today||0)/1000);el2.innerHTML=tok+'<span class="ksub">k tok</span>';}
+    const el3=document.getElementById('metric-latency');
+    if(el3)el3.innerHTML=(c.zombie||0)+'<span class="ksub"> zombie</span>';
+  }catch(_){}
+}
+setTimeout(()=>{refreshSystemMetrics();setInterval(refreshSystemMetrics,8000);},2000);
+
+// ══ LESSON COUNT — sync real count from API ══
+async function syncLessonCount(){
+  try{
+    const tid=(typeof APP_STATE!=='undefined'?APP_STATE.tenant_id:null)||'default';
+    const r=await fetch(`/api/v5/dashboard/intelligence/lessons?limit=1&tenant_id=${tid}`);
+    if(!r.ok)return;
+    const d=await r.json();
+    if(d.count>0){
+      const el=document.getElementById('lessonCount');
+      const badge=document.getElementById('lessons-count-badge');
+      if(el){el.classList.remove('pop');void el.offsetWidth;el.textContent=d.count;el.classList.add('pop');}
+      if(badge)badge.textContent=d.count;
+    }
+  }catch(_){}
+}
+setTimeout(syncLessonCount,3500);
+
+// ══ KPI CLICK ══
+function onKpiClick(e,el){
+  const r=document.createElement('div');r.className='kpi-ripple';
+  const rect=el.getBoundingClientRect();const s=Math.max(el.offsetWidth,el.offsetHeight);
+  r.style.cssText=`width:${s}px;height:${s}px;top:${e.clientY-rect.top-s/2}px;left:${e.clientX-rect.left-s/2}px;background:${ {bl:'rgba(77,128,255,.25)',gr:'rgba(46,212,122,.25)',am:'rgba(240,160,32,.25)',rd:'rgba(224,72,72,.25)'}[el.dataset.c]}`;
+  el.appendChild(r);setTimeout(()=>r.remove(),800);
+}
+
+function confirmBtn(el){
+  const orig=el.innerHTML;
+  el.innerHTML='✓ Snapshot...';el.style.cssText='color:var(--gr);border-color:rgba(46,212,122,.4)';
+  setTimeout(()=>{el.innerHTML=orig;el.removeAttribute('style');},1400);
+  showToast('var(--gr)','Snapshot criado · stack N5 completa');
+}
+
+// ══ TOAST ══
+let tTimer;
+function showToast(color,msg){
+  const t=document.getElementById('toast'),td=document.getElementById('toast-dot'),tm=document.getElementById('toast-msg');
+  if(!t||!td||!tm)return;
+  td.style.background=color;td.style.boxShadow=`0 0 8px ${color}`;
+  tm.textContent=msg;t.classList.add('show');
+  clearTimeout(tTimer);tTimer=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ══ COMMAND PALETTE ══
+const commands=[
+  {cmd:'/reclaim task-{id}',desc:'Reclamar tarefa travada pelo ID',key:'R'},
+  {cmd:'/kill agent {name}',desc:'Terminar agente por nome',key:'K'},
+  {cmd:'/set confidence {0-100}',desc:'Ajustar threshold de autonomia',key:'C'},
+  {cmd:'/list zombies',desc:'Listar agentes com heartbeat stale',key:'Z'},
+  {cmd:'/snapshot stack',desc:'Criar snapshot do estado N5',key:'S'},
+  {cmd:'/inspect prompt {task-id}',desc:'Ver prompt enviado ao LLM',key:'P'},
+  {cmd:'/tenant quota {name} {tokens}',desc:'Ajustar quota diária de tokens',key:'Q'},
+  {cmd:'/logs tail {worker}',desc:'Seguir logs de um worker',key:'L'},
+  {cmd:'/reset confidence',desc:'Restaurar threshold padrão 72%',key:''},
+];
+let cmdIdx=0;
+function openCmd(){
+  document.getElementById('cmdOverlay').classList.add('open');
+  document.getElementById('cmdInput').value='';
+  filterCmd('');
+  setTimeout(()=>document.getElementById('cmdInput')?.focus(),60);
+}
+function closeCmd(){document.getElementById('cmdOverlay').classList.remove('open');}
+function closeCmdIf(e){if(e.target===document.getElementById('cmdOverlay'))closeCmd();}
+function filterCmd(v){
+  const results=document.getElementById('cmdResults');
+  const filtered=v.trim()===''?commands:commands.filter(c=>c.cmd.toLowerCase().includes(v.toLowerCase())||c.desc.toLowerCase().includes(v.toLowerCase()));
+  cmdIdx=0;
+  results.innerHTML=filtered.map((c,i)=>`<div class="cmd-item${i===0?' active':''}" onclick="execCmd('${c.cmd}')" onmouseenter="cmdIdx=${i};hiliteCmdItems()">${c.cmd}<span style="font-size:9px;color:var(--t3);margin-left:8px">${c.desc}</span>${c.key?`<span class="cmd-item-key">${c.key}</span>`:''}</div>`).join('');
+}
+function hiliteCmdItems(){document.querySelectorAll('.cmd-item').forEach((it,i)=>it.classList.toggle('active',i===cmdIdx));}
+function cmdKey(e){
+  const items=document.querySelectorAll('.cmd-item');
+  if(e.key==='ArrowDown'){e.preventDefault();cmdIdx=Math.min(cmdIdx+1,items.length-1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();cmdIdx=Math.max(cmdIdx-1,0);}
+  else if(e.key==='Enter'){const act=document.querySelector('.cmd-item.active');if(act)execCmd(act.childNodes[0].textContent);return;}
+  else if(e.key==='Escape'){closeCmd();return;}
+  hiliteCmdItems();
+}
+async function execCmd(cmd){
+  closeCmd();
+  const c=cmd.trim();
+  const tid=(typeof APP_STATE!=='undefined'?APP_STATE.tenant_id:null)||'default';
+  // /kill agent {name}
+  const killM=c.match(/^\/kill\s+agent\s+(.+)/i);
+  if(killM){
+    const agent=killM[1].trim();
+    try{
+      const r=await fetch(`/api/v5/dashboard/workers/${encodeURIComponent(agent)}/action?tenant_id=${tid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'terminate'})});
+      const d=await r.json();
+      showToast('var(--rd)',`☠ ${agent} terminado · ${d.affected_tasks||0} tasks canceladas`);
+      if(typeof addSystemEvent==='function')addSystemEvent('warn',`/kill agent ${agent}`,{agent:'command_palette'});
+    }catch(e){showToast('var(--rd)',`Erro: ${e.message}`);}
+    return;
+  }
+  // /kill all
+  if(/^\/kill\s+all$/i.test(c)){
+    if(typeof killAllTasks==='function'){killAllTasks();}
+    return;
+  }
+  // /set confidence {n} or /confidence {n}
+  const confM=c.match(/^\/(?:set\s+confidence|confidence)\s+(\d+)/i);
+  if(confM){
+    const v=Math.max(0,Math.min(100,parseInt(confM[1])));
+    const sl=document.getElementById('confSlider');
+    if(sl){sl.value=v;updateConf(v);}
+    return;
+  }
+  // /reset confidence
+  if(/^\/reset\s+confidence$/i.test(c)){
+    const sl=document.getElementById('confSlider');
+    if(sl){sl.value=72;updateConf(72);}
+    return;
+  }
+  // /ask {question}
+  const askM=c.match(/^\/ask\s+(.+)/i);
+  if(askM){
+    if(typeof openAskSpa==='function'){
+      openAskSpa();
+      const inp=document.getElementById('ask-input');
+      if(inp){inp.value=askM[1];if(typeof sendAsk==='function')sendAsk();}
+    }
+    return;
+  }
+  // /show {section}
+  const showM=c.match(/^\/show\s+(.+)/i);
+  if(showM){
+    if(typeof navTo==='function'){navTo(showM[1].trim().toLowerCase());}
+    return;
+  }
+  // /snapshot
+  if(/^\/snapshot$/i.test(c)){
+    const btn=document.querySelector('[onclick*="confirmSnapshot"]');
+    if(typeof confirmSnapshot==='function')confirmSnapshot(btn||null);
+    return;
+  }
+  // /logs tail {worker}
+  const logsM=c.match(/^\/logs\s+tail\s+(.+)/i);
+  if(logsM){
+    if(typeof navTo==='function')navTo('logs');
+    showToast('var(--bl)',`Seguindo logs: ${logsM[1]}`);
+    return;
+  }
+  // /reclaim task-{id}
+  const reclaimM=c.match(/^\/reclaim\s+task-?(\S+)/i);
+  if(reclaimM){
+    try{
+      const r=await fetch(`/api/v5/tasks/${reclaimM[1]}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'pending'})});
+      showToast(r.ok?'var(--gr)':'var(--rd)',r.ok?`Task ${reclaimM[1]} reclamada`:`Reclaim falhou (${r.status})`);
+    }catch(e){showToast('var(--rd)',`Erro: ${e.message}`);}
+    return;
+  }
+  // Default: show as info
+  showToast('var(--bl)','⌘ '+c.substring(0,60));
+}
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();openCmd();}
+  if(e.key==='Escape'){closeCmd();closeSidebar();}
+});
+
+// ══ TOOLTIP ══
+const tipEl=document.getElementById('tip');
+const tipData={
+  k0:'14 containers · orchestrator, workers, Qdrant, Neo4j, Redis...',
+  k1:'134 tasks/h · Fast Path 68% · Deep Path 32% · growing',
+  k2:'480k tokens/dia · 3 tenants · Anthropic + OpenAI combined',
+  k3:'2 agentes stale · task-8819 e task-8807 · HB >4min'
+};
+Object.keys(tipData).forEach(id=>{
+  const el=document.getElementById(id);if(!el)return;
+  el.addEventListener('mouseenter',()=>{tipEl.textContent=tipData[id];tipEl.classList.add('show');});
+  el.addEventListener('mousemove',e=>{tipEl.style.left=(e.clientX+16)+'px';tipEl.style.top=(e.clientY-34)+'px';});
+  el.addEventListener('mouseleave',()=>tipEl.classList.remove('show'));
+});
+</script>
+
 
     <script src="/static/dashboard.js"></script>
-    <script>
-        lucide.createIcons();
-    </script>
 
-    <!-- Command Palette (Cmd+K) -->
-    <dialog id="cmd-palette" class="cmd-palette">
-        <div class="cmd-content">
-            <div class="cmd-header">
-                <i data-lucide="terminal" class="cmd-icon"></i>
-                <input type="text" id="cmd-input" placeholder="Type a command or ask SINC L3 Memory..." autocomplete="off">
-            </div>
-            <div class="cmd-results" id="cmd-results">
-                <div class="cmd-item hint">
-                    <i data-lucide="info"></i> Try typing <span>/search [query]</span> or <span>/kill</span>
-                </div>
-            </div>
-        </div>
-    </dialog>
 </body>
 </html>

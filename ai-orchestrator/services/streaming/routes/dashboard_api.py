@@ -1,5 +1,5 @@
 from __future__ import annotations
-from services.streaming.core.config import env_get
+from services.streaming.core.config import env_get, OLLAMA_HOST as _OLLAMA_HOST
 
 import asyncio
 import json
@@ -9,8 +9,10 @@ import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+import psutil
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, WebSocket, WebSocketDisconnect
+import time as _time
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, StreamingResponse, WebSocket, WebSocketDisconnect
 from services.event_bus import get_event_bus
 
 from services.http_client import create_resilient_client
@@ -1430,7 +1432,40 @@ async def _get_summary_payload(tenant_id: str) -> dict[str, Any]:
         "simulations": simulations,
         "adaptations": adaptations,
         "red_metrics": red_metrics,
+        "system_metrics": _get_system_metrics(),
+        "active_tenants": await _fetch_all_tenants(cur),
+        "active_workers": agent_fleet,
     }
+
+def _get_system_metrics() -> dict[str, float]:
+    """Capture real hardware telemetry via psutil."""
+    try:
+        return {
+            "cpu": psutil.cpu_percent(),
+            "ram": psutil.virtual_memory().percent,
+            "disk": psutil.disk_usage('/').percent,
+            "gpu": 0.0, # GPU support would require pynvml or similar
+        }
+    except Exception:
+        return {"cpu": 0.0, "ram": 0.0, "disk": 0.0, "gpu": 0.0}
+
+async def _fetch_all_tenants(cur) -> list[dict[str, Any]]:
+    """Fetch all tenants from the database to populate the sidebar/tenants list."""
+    if not await _table_exists(cur, "tenants"):
+        return []
+    
+    await cur.execute("SELECT id, name, created_at FROM tenants LIMIT 20")
+    rows = await cur.fetchall()
+    tenants = []
+    for row in rows:
+        tenants.append({
+            "tenant_id": row["id"],
+            "name": row["name"] or row["id"],
+            "active_agents": 1, # Placeholder logic if not tracked per-tenant in a specific table
+            "tokens_today": 0,
+            "quota_pct": 10,
+        })
+    return tenants
 
 
 async def run_telemetry_broadcaster(tenant_id: str = "default"):
@@ -1443,6 +1478,7 @@ async def run_telemetry_broadcaster(tenant_id: str = "default"):
     while True:
         try:
             payload = await _get_summary_payload(tenant_id)
+            log.info("TELEMETRY_EMISSION tenant=%s metrics=%s", tenant_id, list(payload.get('metrics', {}).keys()))
             await bus.publish(channel, payload, use_stream=False)
         except Exception as e:
             log.debug("dashboard_broadcaster_error tenant=%s error=%s", tenant_id, e)
@@ -1909,3 +1945,453 @@ async def get_diagnostic_logs(
         effective_window=effective_window,
         pattern=pattern,
     )
+
+
+# ── Ask N5 · Dashboard LLM Chat (no API key required — internal NOC) ─────────
+
+@router.get("/ask")
+async def dashboard_ask(
+    prompt: str = Query(...),
+    project_id: str = Query(default="project0"),
+    session_id: str = Query(default=""),
+    tenant_id: str = Query(default="default"),
+):
+    """
+    SSE streaming endpoint for the NOC Ask N5 panel.
+    Calls Ollama directly with RAG context from ContextRetriever.
+    No API key required — internal dashboard use only.
+    """
+    ollama_host  = _OLLAMA_HOST
+    ollama_model = env_get("OLLAMA_MODEL_GENERAL", default="qwen2.5:7b-instruct-q4_K_M")
+
+    # ── Build system prompt + optional RAG context ────────────────────────────
+    system_prompt = (
+        "You are an expert software engineer assistant for the SINC AI Orchestrator project. "
+        "Answer questions about the codebase concisely and precisely. "
+        "Reference specific files, functions, and line numbers when relevant. "
+        "Use markdown formatting: code blocks, headers, bullet points."
+    )
+    context_text = ""
+    try:
+        from services.context_retriever import graph_aware_retrieve
+        ctx = await graph_aware_retrieve(prompt, project_id=project_id, tenant_id=tenant_id)
+        context_text = ctx.get("context", "") if isinstance(ctx, dict) else ""
+    except Exception as _ctx_err:
+        log.debug("dashboard_ask_context_error error=%s", _ctx_err)
+
+    if context_text:
+        system_prompt += f"\n\nCODEBASE CONTEXT:\n{context_text[:8000]}"
+
+    # ── Load Redis session history ────────────────────────────────────────────
+    history: list[dict] = []
+    redis_key = f"noc_session:{tenant_id}:{session_id}" if session_id else None
+    if redis_key:
+        try:
+            r = get_async_redis()
+            if r:
+                raw = await r.get(redis_key)
+                if raw:
+                    history = json.loads(raw if isinstance(raw, str) else raw.decode())
+        except Exception:
+            pass
+
+    messages = history + [{"role": "user", "content": prompt}]
+    t0 = _time.monotonic()
+
+    # ── SSE generator ─────────────────────────────────────────────────────────
+    async def _gen():
+        full_answer: list[str] = []
+        try:
+            async with create_resilient_client(service_name="dashboard-ask", timeout=120.0) as client:
+                async with client.stream(
+                    "POST",
+                    f"{ollama_host}/api/chat",
+                    json={
+                        "model":    ollama_model,
+                        "messages": [{"role": "system", "content": system_prompt}] + messages,
+                        "stream":   True,
+                    },
+                ) as resp:
+                    async for line in resp.aiter_lines():
+                        if not line.strip():
+                            continue
+                        try:
+                            chunk = json.loads(line)
+                        except Exception:
+                            continue
+                        token = chunk.get("message", {}).get("content", "")
+                        if token:
+                            full_answer.append(token)
+                            yield f"data: {json.dumps({'token': token})}\n\n"
+                        if chunk.get("done"):
+                            break
+
+            # Persist session ─────────────────────────────────────────────────
+            if redis_key:
+                try:
+                    r = get_async_redis()
+                    if r:
+                        updated = (history + [
+                            {"role": "user",      "content": prompt},
+                            {"role": "assistant", "content": "".join(full_answer)},
+                        ])[-20:]
+                        await r.setex(redis_key, 3600, json.dumps(updated))
+                except Exception:
+                    pass
+
+            latency_ms = int((_time.monotonic() - t0) * 1000)
+            yield f"data: {json.dumps({'done': True, 'latency_ms': latency_ms, 'model': ollama_model, 'session_id': session_id or None})}\n\n"
+
+        except Exception as exc:
+            log.warning("dashboard_ask_stream_error error=%s", exc)
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+
+    return StreamingResponse(
+        _gen(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+# ── System Metrics (real psutil + task counts — no auth) ─────────────────────
+
+@router.get("/system-metrics")
+async def dashboard_system_metrics(
+    tenant_id: str = Query(default="default"),
+):
+    """Return real CPU, RAM, disk, GPU usage + task counts for the NOC gauges."""
+    cpu     = psutil.cpu_percent(interval=0.1)
+    ram     = psutil.virtual_memory().percent
+    disk    = psutil.disk_usage("/").percent
+
+    gpu = None
+    try:
+        import subprocess
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=2
+        )
+        if result.returncode == 0:
+            gpu = float(result.stdout.strip().split("\n")[0])
+    except Exception:
+        pass
+
+    # Task counts
+    counts = {"running": 0, "pending": 0, "completed_today": 0, "zombie": 0, "total_today": 0, "tokens_today": 0}
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    """SELECT
+                          COUNT(*) FILTER (WHERE status = 'running')                           AS running,
+                          COUNT(*) FILTER (WHERE status = 'pending')                           AS pending,
+                          COUNT(*) FILTER (WHERE status IN ('done','completed','success')
+                                        AND updated_at >= NOW() - INTERVAL '24 hours')         AS completed_today,
+                          COUNT(*) FILTER (WHERE status = 'running'
+                                        AND updated_at < NOW() - INTERVAL '10 minutes')        AS zombie,
+                          COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '24 hours')    AS total_today,
+                          COALESCE(SUM(tokens_used) FILTER (
+                                   WHERE created_at >= NOW() - INTERVAL '24 hours'), 0)        AS tokens_today
+                      FROM tasks WHERE tenant_id = %s""",
+                    (tenant_id,),
+                )
+                row = await cur.fetchone()
+                if row:
+                    counts = dict(row)
+    except Exception as _exc:
+        log.debug("system_metrics_task_count_error error=%s", _exc)
+
+    tasks_per_hour = 0
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT COUNT(*) AS n FROM tasks WHERE tenant_id = %s AND updated_at >= NOW() - INTERVAL '1 hour'",
+                    (tenant_id,),
+                )
+                row = await cur.fetchone()
+                tasks_per_hour = int(row["n"]) if row else 0
+    except Exception:
+        pass
+
+    return {
+        "cpu":  round(cpu, 1),
+        "ram":  round(ram, 1),
+        "disk": round(disk, 1),
+        "gpu":  round(gpu, 1) if gpu is not None else None,
+        "counts": counts,
+        "tasks_per_hour": tasks_per_hour,
+    }
+
+
+# ── Agent Reputation (task-history based — no auth) ───────────────────────────
+
+@router.get("/intelligence/reputation")
+async def dashboard_reputation(
+    tenant_id: str = Query(default="default"),
+    limit: int = Query(default=10, le=30),
+):
+    """Compute agent reputation scores from task success/failure history."""
+    rows = []
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                if not await _table_exists(cur, "tasks"):
+                    return {"agents": []}
+                await cur.execute(
+                    """
+                    SELECT agent_name,
+                           COUNT(*)                                                  AS total,
+                           COUNT(*) FILTER (WHERE status IN ('done','completed','success')) AS success,
+                           COUNT(*) FILTER (WHERE status = 'cancelled')              AS cancelled,
+                           AVG(EXTRACT(EPOCH FROM (updated_at - created_at)))        AS avg_duration_s
+                      FROM tasks
+                     WHERE tenant_id = %s
+                       AND agent_name IS NOT NULL
+                       AND agent_name != ''
+                     GROUP BY agent_name
+                     ORDER BY success::float / NULLIF(total, 0) DESC, total DESC
+                     LIMIT %s
+                    """,
+                    (tenant_id, limit),
+                )
+                rows = await cur.fetchall()
+    except Exception as exc:
+        log.warning("reputation_error error=%s", exc)
+        return {"agents": [], "error": str(exc)}
+
+    agents = []
+    for r in rows:
+        d = dict(r)
+        total   = int(d.get("total", 0) or 0)
+        success = int(d.get("success", 0) or 0)
+        score   = round((success / total * 100) if total else 0, 1)
+        avg_s   = d.get("avg_duration_s")
+        agents.append({
+            "name":          d["agent_name"],
+            "score":         score,
+            "total_tasks":   total,
+            "success_tasks": success,
+            "cancelled":     int(d.get("cancelled", 0) or 0),
+            "avg_duration_s": round(float(avg_s), 1) if avg_s else None,
+            "badge": "A+" if score >= 95 else "A" if score >= 85 else "B+" if score >= 75 else "B" if score >= 65 else "C+",
+        })
+    return {"agents": agents}
+
+
+# ── Confidence Config (no auth — NOC) ─────────────────────────────────────────
+
+@router.post("/confidence")
+async def update_confidence(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Persist confidence threshold to Redis so the orchestrator picks it up."""
+    value = body.get("value")
+    if value is None or not isinstance(value, (int, float)) or not (0 <= value <= 100):
+        raise HTTPException(status_code=400, detail="value must be 0-100")
+    try:
+        r = get_async_redis()
+        if r:
+            await r.set(f"conf_threshold:{tenant_id}", str(value))
+            await r.publish("config_update", json.dumps({"tenant_id": tenant_id, "confidence_threshold": value}))
+    except Exception as exc:
+        log.warning("confidence_update_error error=%s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+    return {"ok": True, "confidence_threshold": value}
+
+
+# ── Lessons Learned (no auth — dashboard read-only) ───────────────────────────
+
+@router.get("/intelligence/lessons")
+async def dashboard_lessons(
+    limit: int = Query(default=20, le=100),
+    tenant_id: str = Query(default="default"),
+):
+    """Fetch recent lessons learned from the database. No API key required."""
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                if not await _table_exists(cur, "lessons_learned"):
+                    return {"lessons": [], "count": 0}
+                await cur.execute(
+                    """
+                    SELECT id, error_signature, context, attempted_fix,
+                           result, confidence, agent_name, task_id, created_at
+                      FROM lessons_learned
+                     WHERE tenant_id = %s
+                     ORDER BY created_at DESC
+                     LIMIT %s
+                    """,
+                    (tenant_id, limit),
+                )
+                rows = await cur.fetchall()
+        lessons = []
+        for i, r in enumerate(rows):
+            row = dict(r)
+            row["created_at"] = row["created_at"].isoformat() if hasattr(row.get("created_at"), "isoformat") else str(row.get("created_at", ""))
+            lessons.append(row)
+        return {"lessons": lessons, "count": len(lessons)}
+    except Exception as exc:
+        log.warning("dashboard_lessons_error error=%s", exc)
+        return {"lessons": [], "count": 0, "error": str(exc)}
+
+
+# ── Worker / Agent Actions (no auth — internal NOC) ───────────────────────────
+
+@router.post("/workers/{agent_id}/action")
+async def worker_action(
+    agent_id: str,
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """
+    Execute an action on a worker/agent: pause | restart | terminate.
+    - pause:     marks all pending tasks for this agent as 'paused'
+    - restart:   broadcasts restart event; marks paused tasks back to 'pending'
+    - terminate: cancels all running/pending tasks for this agent
+    """
+    action = (body.get("action") or "").lower()
+    if action not in ("pause", "restart", "terminate"):
+        raise HTTPException(status_code=400, detail="action must be pause | restart | terminate")
+
+    affected = 0
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                task_pk = await get_task_pk_column(cur)
+                if action == "pause":
+                    await cur.execute(
+                        f"UPDATE tasks SET status = 'paused', updated_at = NOW() "
+                        f"WHERE agent_name = %s AND tenant_id = %s AND status IN ('pending','running') "
+                        f"RETURNING {task_pk}",
+                        (agent_id, tenant_id),
+                    )
+                elif action == "restart":
+                    await cur.execute(
+                        f"UPDATE tasks SET status = 'pending', updated_at = NOW() "
+                        f"WHERE agent_name = %s AND tenant_id = %s AND status = 'paused' "
+                        f"RETURNING {task_pk}",
+                        (agent_id, tenant_id),
+                    )
+                elif action == "terminate":
+                    await cur.execute(
+                        f"UPDATE tasks SET status = 'cancelled', updated_at = NOW() "
+                        f"WHERE agent_name = %s AND tenant_id = %s AND status IN ('pending','running','paused') "
+                        f"RETURNING {task_pk}",
+                        (agent_id, tenant_id),
+                    )
+                rows = await cur.fetchall()
+                affected = len(rows)
+                await conn.commit()
+    except Exception as exc:
+        log.warning("worker_action_error agent=%s action=%s error=%s", agent_id, action, exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    from services.streaming.core.sse import broadcast
+    await broadcast(f"worker_{action}", {"agent_id": agent_id, "affected_tasks": affected}, tenant_id=tenant_id)
+    return {"ok": True, "agent_id": agent_id, "action": action, "affected_tasks": affected}
+
+
+# ── Kill All Running Tasks (no auth — NOC emergency stop) ─────────────────────
+
+@router.post("/tasks/kill-all")
+async def kill_all_tasks(
+    tenant_id: str = Query(default="default"),
+):
+    """Cancel ALL running and pending tasks for the tenant. NOC emergency stop."""
+    cancelled = 0
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                task_pk = await get_task_pk_column(cur)
+                await cur.execute(
+                    f"UPDATE tasks SET status = 'cancelled', updated_at = NOW() "
+                    f"WHERE tenant_id = %s AND status IN ('pending','running','paused') "
+                    f"RETURNING {task_pk}",
+                    (tenant_id,),
+                )
+                rows = await cur.fetchall()
+                cancelled = len(rows)
+                await conn.commit()
+    except Exception as exc:
+        log.warning("kill_all_error error=%s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    from services.streaming.core.sse import broadcast
+    await broadcast("kill_all", {"cancelled_tasks": cancelled}, tenant_id=tenant_id)
+    return {"ok": True, "cancelled_tasks": cancelled}
+
+
+# ── Dashboard Snapshot (server-side save) ─────────────────────────────────────
+
+@router.post("/snapshot")
+async def save_snapshot(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Persist a NOC dashboard snapshot JSON to disk (snapshots/ directory)."""
+    import datetime as _dt
+    snapshots_dir = Path(env_get("AGENT_WORKSPACE", default=".")) / "snapshots"
+    try:
+        snapshots_dir.mkdir(parents=True, exist_ok=True)
+        ts = _dt.datetime.now(_dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        filename = f"noc_snapshot_{tenant_id}_{ts}.json"
+        filepath = snapshots_dir / filename
+        filepath.write_text(json.dumps(body, indent=2, default=str), encoding="utf-8")
+    except Exception as exc:
+        log.warning("snapshot_save_error error=%s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+    return {"ok": True, "filename": filename, "path": str(filepath)}
+
+
+# ── Tenant Provisioning (no auth — NOC) ───────────────────────────────────────
+
+@router.post("/tenants/create")
+async def create_tenant_noc(body: dict):
+    """
+    Provision a new tenant from the NOC dashboard.
+    Requires: name (str). Optional: plan (free|pro|enterprise), email (str).
+    """
+    name = (body.get("name") or "").strip()
+    if not name or len(name) < 2:
+        raise HTTPException(status_code=400, detail="name must be at least 2 characters")
+    plan  = body.get("plan", "free")
+    email = body.get("email", "")
+    if plan not in ("free", "pro", "enterprise"):
+        plan = "free"
+
+    import secrets
+    import hashlib
+    api_key = "sk-" + secrets.token_hex(24)
+    api_key_hash = hashlib.sha256(api_key.encode()).hexdigest()
+    tenant_id = name.lower().replace(" ", "_")[:32]
+
+    try:
+        async with async_db(tenant_id="default") as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    """
+                    INSERT INTO tenants (tenant_id, name, plan, api_key_hash, email, created_at)
+                    VALUES (%s, %s, %s, %s, %s, NOW())
+                    ON CONFLICT (tenant_id) DO NOTHING
+                    RETURNING tenant_id
+                    """,
+                    (tenant_id, name, plan, api_key_hash, email),
+                )
+                row = await cur.fetchone()
+                await conn.commit()
+    except Exception as exc:
+        log.warning("tenant_create_error error=%s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    if not row:
+        raise HTTPException(status_code=409, detail=f"Tenant '{tenant_id}' already exists")
+
+    return {
+        "ok": True,
+        "tenant_id": tenant_id,
+        "name": name,
+        "plan": plan,
+        "api_key": api_key,   # shown once — user must copy
+    }
