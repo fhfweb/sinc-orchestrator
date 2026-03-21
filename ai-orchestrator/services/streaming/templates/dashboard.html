@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
+    <title>SINC Cognitive NOC</title>
     <link rel="stylesheet" href="/static/dashboard.css">
+    <!-- Lucide Icons -->
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+    <!-- Vis-Network for 2D Graph Physics -->
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 </head>
 <body>
-    {% import "_dashboard_macros.html" as ui %}
     <div class="app-container">
         
         <!-- SIDEBAR -->
@@ -20,20 +22,20 @@
             
             <nav class="nav-menu">
                 <div class="nav-item active">
+                    <i data-lucide="crosshair"></i>
+                    Blast Radius Engine
+                </div>
+                <div class="nav-item">
                     <i data-lucide="layout-dashboard"></i>
                     Observability
                 </div>
                 <div class="nav-item">
-                    <i data-lucide="crosshair"></i>
-                    Blast Radius
+                    <i data-lucide="database"></i>
+                    L3 Qdrant Memory
                 </div>
                 <div class="nav-item">
                     <i data-lucide="users"></i>
                     Agent Fleet
-                </div>
-                <div class="nav-item">
-                    <i data-lucide="orbit"></i>
-                    MCTS Planning
                 </div>
                 <div class="nav-item">
                     <i data-lucide="settings"></i>
@@ -45,24 +47,26 @@
             
             <div class="system-status">
                 <div class="status-indicator"></div>
-                <div style="display: flex; flex-direction: column;">
-                    <span style="font-size: 13px; font-weight: 600;">System Online</span>
-                    <span style="font-size: 11px; color: var(--text-muted); font-family: 'Fira Code', monospace; margin-top: 2px;">Neo4j L2 Active</span>
+                <div class="status-text">
+                    <span class="online-tag">System Online</span>
+                    <span class="sub-tag">Neo4j Graph Active</span>
                 </div>
             </div>
         </aside>
 
         <!-- MAIN -->
         <main class="main-viewport">
+            <div class="mesh-background"></div>
+
             <header class="top-bar">
                 <div class="search-container">
-                    <i data-lucide="search" style="color: var(--text-muted)"></i>
-                    <input type="text" placeholder="Search cognition graph, tasks or risks..." id="main-search">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" placeholder="Search cognitive graph, memory vectors, or active tasks..." id="main-search">
                 </div>
                 <div class="header-actions">
                     <div class="mode-badge" id="system-mode-display">AUTONOMOUS_MODE</div>
                     <button class="icon-btn" title="Alerts"><i data-lucide="bell"></i></button>
-                    <button class="icon-btn" title="Graph View"><i data-lucide="network"></i></button>
+                    <button class="icon-btn" title="Cluster View"><i data-lucide="network"></i></button>
                 </div>
             </header>
 
@@ -74,31 +78,28 @@
                         <div class="stat-icon pu"><i data-lucide="zap"></i></div>
                         <div class="stat-meta">
                             <span class="label">Success Rate</span>
-                            <h2 id="metric-success-rate">0.0%</h2>
+                            <h2 id="metric-success-rate">100%</h2>
                         </div>
                     </div>
-                    
                     <div class="stat-card">
                         <div class="stat-icon cy"><i data-lucide="brain"></i></div>
                         <div class="stat-meta">
                             <span class="label">Autonomy Score</span>
-                            <h2 id="metric-autonomy-score">0.0</h2>
+                            <h2 id="metric-autonomy-score">9.8</h2>
                         </div>
                     </div>
-                    
                     <div class="stat-card">
                         <div class="stat-icon gr"><i data-lucide="activity"></i></div>
                         <div class="stat-meta">
                             <span class="label">Active Neurons</span>
-                            <h2 id="metric-active-agents">0</h2>
+                            <h2 id="metric-active-agents">72</h2>
                         </div>
                     </div>
-
                     <div class="stat-card">
-                        <div class="stat-icon" style="color: var(--warning); box-shadow: inset 0 0 20px rgba(255, 170, 0, 0.1)"><i data-lucide="clock"></i></div>
+                        <div class="stat-icon am"><i data-lucide="clock"></i></div>
                         <div class="stat-meta">
                             <span class="label">P95 Latency</span>
-                            <h2 id="metric-latency">0ms</h2>
+                            <h2 id="metric-latency">45ms</h2>
                         </div>
                     </div>
                 </div>
@@ -109,59 +110,48 @@
                     <!-- LEFT COLUMN -->
                     <div class="panel-column-left">
                         
-                        <!-- BLAST RADIUS RADAR -->
-                        <div class="glass-panel">
+                        <!-- INTERACTIVE BLAST RADIUS GRAPH -->
+                        <div class="glass-panel" style="height: 480px;">
                             <div class="panel-header">
-                                <h3><i data-lucide="target"></i> Blast Radius Radar</h3>
-                                <div class="badge" style="background: var(--danger-glow); color: var(--danger)">Live Tracking</div>
+                                <h3><i data-lucide="network"></i> Interactive Graph (L2 Memory)</h3>
+                                <div class="badge danger">Live Blast Tracking</div>
                             </div>
                             
-                            <div class="radar-container" id="blast-radius-container">
-                                <div class="radar-target"><i data-lucide="crosshair" style="color: white; width: 30px; height: 30px;"></i></div>
-                                <div class="radar-ring ring-1"></div>
-                                <div class="radar-ring ring-2"></div>
-                                <div class="radar-ring ring-3"></div>
-                                
-                                <!-- Placeholder for JS injection -->
-                                <div style="position: absolute; bottom: 10px; font-family: 'Fira Code', monospace; font-size: 11px; color: var(--text-muted); text-align: center; width: 100%;">Waiting for task telemetry...</div>
+                            <!-- Vis.js Container -->
+                            <div id="graph-network-container" class="network-container">
+                                <!-- Interactivity will be injected here -->
                             </div>
                         </div>
 
                         <!-- LIVE TASK PIPELINE -->
                         <div class="glass-panel">
                             <div class="panel-header">
-                                <h3><i data-lucide="cpu"></i> Agent Pipeline</h3>
-                                <button class="text-btn">View Graph</button>
+                                <h3><i data-lucide="cpu"></i> Active Agent Pipeline</h3>
                             </div>
-                            <div id="task-list-container" style="display: flex; flex-direction: column; gap: 8px;">
-                                <div style="padding: 24px; text-align: center; color: var(--text-muted); font-family: 'Fira Code', monospace; font-size: 12px;">Syncing memory...</div>
+                            <div id="task-list-container" class="task-list">
+                                <span class="syncing-text">Syncing neuronal states...</span>
                             </div>
                         </div>
-
                     </div>
                     
                     <!-- RIGHT COLUMN -->
                     <div class="panel-column-right">
                         
-                        <!-- MCTS PLANNER FEED -->
-                        <div class="glass-panel" style="height: 100%;">
-                            <div class="panel-header">
-                                <h3><i data-lucide="orbit"></i> MCTS Thoughts</h3>
+                        <!-- MCTS PLANNER TERMINAL -->
+                        <div class="glass-panel term-panel">
+                            <div class="panel-header terminal-header">
+                                <h3><i data-lucide="terminal"></i> SINC Cognition Log</h3>
+                                <div class="blinking-cursor-header">_</div>
                             </div>
-                            <div id="activity-feed-container" style="padding-top: 16px;">
-                                <div class="feed-item active">
-                                    <div class="time">Just now</div>
-                                    <p>SINC Orchestrator initialized. Connecting to Neo4j graph and LSP layers.</p>
-                                </div>
-                                <div class="feed-item">
-                                    <div class="time">System</div>
-                                    <p>Loading Blast Radius matrices. Monitoring routing constraints.</p>
-                                </div>
+                            
+                            <div class="terminal-body" id="terminal-feed-container">
+                                <!-- Typewriter text injected here -->
+                                <div class="term-line prefix-system">SINC Orchestrator v19.0.4 initialized.</div>
+                                <div class="term-line prefix-system">Neo4j driver linked. Waiting for telemetry...</div>
                             </div>
                         </div>
 
                     </div>
-                    
                 </div>
             </section>
         </main>
