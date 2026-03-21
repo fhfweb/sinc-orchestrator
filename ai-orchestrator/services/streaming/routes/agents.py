@@ -720,14 +720,22 @@ async def estimate_task_completion(
     """
     async with async_db(tenant_id=tenant_id) as conn:
         async with conn.cursor() as cur:
-            heartbeat_time_col = await _get_heartbeat_time_column(cur)
+            has_tenant = await _table_has_tenant(cur, "heartbeats")
+            if has_tenant and not tenant_id:
+                 # Safety guard: if table has tenant but no tenant_id provided, error out
+                 return {"task_id": task_id, "eta": None, "reason": "unscoped_tenant_access_denied"}
+                 
             await cur.execute("""
                 SELECT {heartbeat_time_col} AS heartbeat_at, progress_pct
                   FROM heartbeats
                  WHERE task_id = %s
+                   AND ({tenant_scope})
                    AND progress_pct IS NOT NULL
                  ORDER BY {heartbeat_time_col} ASC
-            """.format(heartbeat_time_col=heartbeat_time_col), (task_id,))
+            """.format(
+                heartbeat_time_col=heartbeat_time_col,
+                tenant_scope="tenant_id = %s" if has_tenant else "1=1"
+            ), (task_id, tenant_id) if has_tenant else (task_id,))
             rows = await cur.fetchall()
 
     if len(rows) < 2:

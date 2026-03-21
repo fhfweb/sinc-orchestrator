@@ -20,19 +20,17 @@ from typing import Optional, List, Dict, Any
 
 from httpx import QueryParams
 
-from services.streaming.core.config import DB_CONFIG as STREAMING_DB_CONFIG
+from services.streaming.core.log_handler import setup_canonical_logging
 
 log = logging.getLogger("agent-worker")
+# Canonical logging for the Python control plane (MIG-P5-004)
+setup_canonical_logging("agent-worker")
 
 def _log(msg: str):
-    line = f"[{datetime.now(timezone.utc).isoformat()}] [agent-worker] {msg}"
-    print(line, flush=True)
-    try:
-        LOGS_DIR.mkdir(parents=True, exist_ok=True)
-        with open(LOGS_DIR / "agent_worker.log", "a", encoding="utf-8") as f:
-            f.write(line + "\n")
-    except Exception:
-        pass
+    """Standard logging (now captured by setup_canonical_logging)."""
+    log.info(msg)
+    # Legacy print for stdout visibility in Docker logs
+    print(f"[{datetime.now(timezone.utc).isoformat()}] [agent-worker] {msg}", flush=True)
 
 try:
     from tenacity import (

@@ -31,6 +31,10 @@ class JSParser(BaseParser):
             block_text = "\n".join(fn_block).lower()
             if any(dec in block_text for dec in ["@get()", "@post()", "@body()", "@query()", "@param()"]):
                 fn["tags"] = fn.get("tags", []) + ["DATA_SOURCE"]
+                # Extrai endpoint: ex @Get("/users") -> /users
+                ep_match = re.search(r'["\'](/[^"\']+)["\']', block_text)
+                if ep_match:
+                    fn["url_endpoint"] = ep_match.group(1)
             
             # Data Lineage: SINK Identification
             if any(sink in block_text for sink in ["save(", "update(", "insert(", "remove(", "collection("]):
@@ -92,7 +96,14 @@ class JSParser(BaseParser):
 
                 if node_type == "call_expression":
                     fn_node = node.child_by_field_name("function")
-                    if fn_node: symbols["calls"].append(fn_node.text.decode("utf-8", errors="replace"))
+                    arg_node = node.child_by_field_name("arguments")
+                    if fn_node:
+                        name = fn_node.text.decode("utf-8", errors="replace")
+                        args = arg_node.text.decode("utf-8", errors="replace") if arg_node else ""
+                        symbols["calls"].append({
+                            "name": name,
+                            "args_content": args
+                        })
 
                 if node_type in ("variable_declarator", "assignment_expression"):
                     right = node.child_by_field_name("value") or node.child_by_field_name("right")

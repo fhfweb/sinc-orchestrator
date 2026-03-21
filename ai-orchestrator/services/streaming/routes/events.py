@@ -34,8 +34,8 @@ async def _resolve_tenant_id(tenant_id: str = Depends(get_tenant_id)) -> str:
     return tenant_id
 
 
-async def _resolve_tenant() -> dict:
-    return await get_tenant()
+async def _resolve_tenant(request: Request) -> dict:
+    return await get_tenant(request)
 
 @router.get("/events")
 async def stream_events(
@@ -120,10 +120,10 @@ async def get_task_events(
                     """
                     SELECT event_type, actor, payload, created_at
                     FROM agent_events
-                    WHERE task_id = %s
+                    WHERE task_id = %s AND tenant_id = %s
                     ORDER BY created_at ASC
                     """,
-                    (task_id,),
+                    (task_id, tenant_id),
                 )
                 events = await cur.fetchall()
 

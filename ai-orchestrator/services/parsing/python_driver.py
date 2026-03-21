@@ -28,6 +28,10 @@ class PythonParser(BaseParser):
             block_text = "\n".join(fn_block).lower()
             if any(dec in block_text for dec in ["@get", "@post", "@put", "@delete", "@api", "@app."]):
                 fn["tags"] = fn.get("tags", []) + ["DATA_SOURCE"]
+                # Extrai endpoint: ex @app.get("/users") -> /users
+                ep_match = re.search(r'["\'](/[^"\']+)["\']', block_text)
+                if ep_match:
+                    fn["url_endpoint"] = ep_match.group(1)
             
             if "execute" in block_text or "save" in block_text or "commit" in block_text:
                 fn["tags"] = fn.get("tags", []) + ["DATA_SINK"]
@@ -91,9 +95,12 @@ class PythonParser(BaseParser):
                             if attr: c_name = attr.text.decode("utf-8", errors="replace")
                         
                         if c_name:
+                            args = node.child_by_field_name("arguments")
+                            args_text = args.text.decode("utf-8", errors="replace") if args else ""
                             symbols["calls"].append({
                                 "name": c_name,
-                                "parent_function": scope_funcs[-1] if scope_funcs else None
+                                "parent_function": scope_funcs[-1] if scope_funcs else None,
+                                "args_content": args_text
                             })
 
                 if nt in ["import_statement", "import_from_statement"]:

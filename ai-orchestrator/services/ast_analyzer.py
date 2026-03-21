@@ -161,13 +161,15 @@ def _upsert_file_graph(tx, rel_path: str, lang: str, symbols: dict,
         tx.run("""
             MERGE (m:Function {name: $name, file: $path, project_id: $pid, tenant_id: $tid})
             SET m.line = $line, m.line_end = $lend, m.type = $type, 
-                m.complexity = $cc, m.docstring = $doc, m.tags = $tags
+                m.complexity = $cc, m.docstring = $doc, m.tags = $tags,
+                m.url_endpoint = $endpoint
             WITH m
             MATCH (f:File {path: $path, project_id: $pid, tenant_id: $tid})
             MERGE (f)-[:DEFINES]->(m)
         """, name=fn["name"], path=rel_path, line=fn.get("line", 0), lend=fn.get("line_end", 0),
              type=fn.get("type", "function"), cc=fn.get("complexity", 1),
              doc=fn.get("docstring", ""), tags=fn.get("tags", []),
+             endpoint=fn.get("url_endpoint"),
              pid=project_id, tid=tenant_id)
 
         # Link to owner class if it's a method
@@ -196,6 +198,7 @@ def _upsert_file_graph(tx, rel_path: str, lang: str, symbols: dict,
         tx.run("""
             MATCH (f:File {path: $path, project_id: $pid, tenant_id: $tid})
             MERGE (c:Call {name: $name, file_path: $path, tenant_id: $tid})
+            SET c.args_content = $args
             MERGE (f)-[:CONTAINS_CALL]->(c)
             WITH c
             // Link to parent function for Taint Analysis
@@ -203,7 +206,7 @@ def _upsert_file_graph(tx, rel_path: str, lang: str, symbols: dict,
             FOREACH (p IN CASE WHEN parent IS NOT NULL THEN [1] ELSE [] END |
                 MERGE (parent)-[:CALLS_INTERNAL]->(c)
             )
-        """, name=c_name, path=rel_path, pname=p_func, pid=project_id, tid=tenant_id)
+        """, name=c_name, path=rel_path, pname=p_func, args=call.get("args_content", ""), pid=project_id, tid=tenant_id)
 
     # Raw Reference nodes for Global XRef (Classes, Types)
     for ref_name in symbols.get("references", []):
@@ -224,6 +227,15 @@ def _upsert_file_graph(tx, rel_path: str, lang: str, symbols: dict,
             SET v.last_assigned_source = val
         """, var=ass.get("var"), val=ass.get("value") or ass.get("type"), 
              path=rel_path, pid=project_id, tid=tenant_id)
+
+    # Global Services (Phase 16 - Global Infrastructure)
+    for svc_name in symbols.get("services", []):
+        tx.run("""
+            MERGE (s:Service {name: $name, tenant_id: $tid})
+            WITH s
+            MATCH (f:File {path: $path, project_id: $pid, tenant_id: $tid})
+            MERGE (s)-[:DEFINED_IN]->(f)
+        """, name=svc_name, path=rel_path, pid=project_id, tid=tenant_id)
 
     # Import edges (File -> File or File -> Module)
     # We prioritize File -> File for resolved imports

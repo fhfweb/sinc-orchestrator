@@ -49,10 +49,29 @@ class XRefResolver:
             logging.info(f"Resolved {count} class type references for tenant {tenant_id}")
             return count
 
+    def resolve_network_calls(self, tenant_id: str):
+        """
+        Vincula chamadas de rede (URLs) a definições de endpoints de API.
+        """
+        query = """
+        MATCH (c:Call {tenant_id: $tenant_id})
+        WHERE c.name IN ["get", "post", "put", "delete", "fetch", "axios"]
+        MATCH (f:Function {tenant_id: $tenant_id})
+        WHERE f.url_endpoint IS NOT NULL AND c.args_content CONTAINS f.url_endpoint
+        MERGE (c)-[r:NETWORK_RESOLVES_TO]->(f)
+        RETURN count(r) as resolved_count
+        """
+        with self.driver.session() as session:
+            result = session.run(query, tenant_id=tenant_id)
+            count = result.single()["resolved_count"]
+            logging.info(f"Resolved {count} network call references for tenant {tenant_id}")
+            return count
+
     def run_all(self, tenant_id: str):
         c1 = self.resolve_global_calls(tenant_id)
         c2 = self.resolve_class_references(tenant_id)
-        return {"calls": c1, "classes": c2}
+        c3 = self.resolve_network_calls(tenant_id)
+        return {"calls": c1, "classes": c2, "network": c3}
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

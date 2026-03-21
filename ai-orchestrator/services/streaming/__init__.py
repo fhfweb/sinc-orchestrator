@@ -19,12 +19,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .core.config import CORS_ORIGINS
-from .core import auth as _auth  # imported for side effects/context wiring
-from .core import sse as _sse  # imported for side effects/context wiring
+from .core import auth as _auth
+from .core import sse as _sse
 from .core.db import async_db, get_async_pool, get_pool
 from .core.runtime_plane import ensure_runtime_plane_schema
+from .core.log_handler import setup_canonical_logging
 
 _LOG = logging.getLogger("orchestrator")
+setup_canonical_logging("orchestrator")
 
 _CRITICAL_ROUTERS = (
     "health",
@@ -231,9 +233,18 @@ async def _run_shutdown(app: FastAPI) -> None:
     pool = get_pool()
     if pool:
         pool.close()
-    apool = get_async_pool()
     if apool:
         await apool.close()
+
+    # Close pooled Neo4j driver
+    try:
+        from .routes import tasks
+        if hasattr(tasks, "_neo4j_driver") and tasks._neo4j_driver:
+            tasks._neo4j_driver.close()
+            tasks._neo4j_driver = None
+    except Exception:
+        pass
+
     _LOG.info("FastAPI application shutting down")
 
 
@@ -319,29 +330,58 @@ def create_app() -> FastAPI:
     @app.middleware("http")
     async def global_middleware(request, call_next):
         import uuid
+        import time
         from .core.auth import set_trace_id
 
+        # Trace ID injection
         trace_id = request.headers.get("X-Trace-Id") or uuid.uuid4().hex[:16]
         request.state.trace_id = trace_id
         set_trace_id(trace_id)
 
-        response = await call_next(request)
-        response.headers["X-Trace-Id"] = trace_id
-        return response
+        start_time = time.perf_counter()
+        try:
+            response = await call_next(request)
+            process_time = time.perf_counter() - start_time
+            response.headers["X-Trace-Id"] = trace_id
+            response.headers["X-Process-Time"] = f"{process_time:.4f}"
+            return response
+        except Exception as exc:
+            # Re-raise so the exception handler catches it
+            raise exc
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request, exc):
         from .core.auth import get_trace_id
-        trace_id = get_trace_id()
-        _LOG.exception("unhandled_exception trace_id=%s path=%s error=%s", trace_id, request.url.path, exc)
         from fastapi.responses import JSONResponse
+        from fastapi import HTTPException
+        
+        trace_id = get_trace_id()
+        is_prod = env_get("APP_ENV") == "production"
+        
+        if isinstance(exc, HTTPException):
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={
+                    "ok": False,
+                    "error": "http_error",
+                    "message": exc.detail,
+                    "trace_id": trace_id
+                }
+            )
+            
+        _LOG.exception("unhandled_exception trace_id=%s method=%s path=%s error=%s", 
+                       trace_id, request.method, request.url.path, exc)
+        
+        msg = "Internal Server Error" if is_prod else f"Unhandled Exception: {str(exc)}"
+        
         return JSONResponse(
             status_code=500,
             content={
                 "ok": False,
-                "error": "Internal Server Error",
-                "message": str(exc),
-                "trace_id": trace_id
+                "error": "internal_error",
+                "message": msg,
+                "trace_id": trace_id,
+                "path": request.url.path
             }
         )
 

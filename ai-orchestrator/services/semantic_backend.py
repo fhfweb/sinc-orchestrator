@@ -8,14 +8,15 @@ from services.http_client import create_sync_resilient_client
 from services.streaming.core.config import env_get
 
 
+from services.streaming.core.config import env_get, QDRANT_HOST, QDRANT_PORT, OLLAMA_HOST
+
+
 def qdrant_url() -> str:
-    host = env_get("QDRANT_HOST", default="qdrant")
-    port = int(env_get("QDRANT_PORT", default="6333"))
-    return f"http://{host}:{port}"
+    return f"http://{QDRANT_HOST}:{QDRANT_PORT}"
 
 
 def ollama_url() -> str:
-    return env_get("OLLAMA_HOST", default="http://ollama:11434").rstrip("/")
+    return OLLAMA_HOST.rstrip("/")
 
 
 def _request_json(

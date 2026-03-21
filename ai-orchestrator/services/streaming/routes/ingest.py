@@ -54,19 +54,23 @@ async def _run_ingest_pipeline(pipeline_id: str, project_id: str, tenant_id: str
     
     try:
         def _sync_run():
-            from ...ingest_pipeline import IngestPipeline
-            pipeline = IngestPipeline(project_id=project_id, tenant_id=tenant_id)
+            from services.ingest_pipeline import IngestPipeline
+            pipeline = IngestPipeline()
             return pipeline.run(
+                pipeline_id=pipeline_id,
                 project_path=body.project_path,
+                project_id=project_id,
+                tenant_id=tenant_id,
+                deep=body.deep,
                 repo_url=body.repo_url,
                 branch=body.branch,
-                deep=body.deep,
             )
         
         result = await asyncio.to_thread(_sync_run)
-        files_indexed = result.get("files_indexed", 0)
-        nodes_created = result.get("nodes_created", 0)
-        edges_created = result.get("edges_created", 0)
+        files_indexed = result.get("files", 0)
+        ast_stats     = result.get("ast", {})
+        nodes_created = ast_stats.get("nodes_created", 0)
+        edges_created = ast_stats.get("edges_created", 0)
         final_status  = "done"
     except Exception as exc:
         error_msg    = str(exc)

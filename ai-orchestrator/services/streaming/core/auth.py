@@ -27,7 +27,10 @@ from .redis_ import async_check_rate_limit, async_incr_token_usage, async_get_to
 log = logging.getLogger("orchestrator")
 
 _EXPECTED_AUTH_NOISE_PREFIXES = (
-    "/dashboard/state",
+    "/health",
+    "/metrics",
+    "/favicon.ico",
+    "/events",
     "/api/v5/dashboard/",
     "/system/infra",
     "/readiness/live",
@@ -66,10 +69,12 @@ async def _update_last_used_at(key: str) -> None:
 
 # ── Tenant resolution dependency ──────────────────────────────────────────────
 
+from fastapi import Request, HTTPException, Header, Depends, status, Query
+...
 async def get_tenant_id(
     request: Request,
-    x_api_key: Optional[str] = Header(None),
-    api_key: Optional[str] = None
+    x_api_key: Optional[str] = Header(None, alias="X-Api-Key"),
+    api_key: Optional[str] = Query(None)
 ) -> str:
     """
     FastAPI dependency to resolve tenant from X-Api-Key.
@@ -149,10 +154,18 @@ async def get_tenant_id(
     return tenant["id"]
 
 
-async def get_tenant(request: Request) -> Dict[str, Any]:
-    """Dependency to get full tenant object (requires get_tenant_id to have run)."""
+async def get_tenant(request: Optional[Request] = None) -> Dict[str, Any]:
+    """
+    Dependency to get full tenant object.
+    If called without request (manual call), it will fail gracefully or attempt to resolve.
+    """
+    if request is None:
+        log.warning("get_tenant_called_without_request")
+        return {}
+        
     if not hasattr(request.state, "tenant"):
-        # This shouldn't happen if dependencies are ordered correctly
+        # If get_tenant_id hasn't run, we can't easily resolve here without the full machinery.
+        # But we return empty dict to avoid crashing.
         return {}
     return request.state.tenant
 

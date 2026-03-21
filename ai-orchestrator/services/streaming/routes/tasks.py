@@ -35,14 +35,15 @@ log = logging.getLogger("orch")
 
 router = APIRouter(tags=["tasks"])
 _semantic_batcher = None
+_neo4j_driver = None
 
 
 async def _resolve_tenant_id(tenant_id: str = Depends(get_tenant_id)) -> str:
     return tenant_id
 
 
-async def _resolve_tenant() -> dict:
-    return await get_tenant()
+async def _resolve_tenant(tenant: dict = Depends(get_tenant)) -> dict:
+    return tenant
 
 
 def _get_semantic_batcher():
@@ -824,32 +825,38 @@ async def get_task_context(task_id: str, tenant_id: str = Depends(_resolve_tenan
 @circuit_breaker(name="neo4j")
 async def get_task_impact(task_id: str, tenant_id: str = Depends(_resolve_tenant_id)):
     """Transitive dependency radius via Neo4j."""
+    global _neo4j_driver
     neo4j_uri = env_get("NEO4J_URI", default="")
     if not neo4j_uri:
         return {"task_id": task_id, "impacted": [], "note": "Neo4j not configured"}
 
     try:
         from neo4j import GraphDatabase
-        driver = GraphDatabase.driver(neo4j_uri, auth=(
-            env_get("NEO4J_USER", default="neo4j"),
-            env_get("NEO4J_PASSWORD", default="")
-        ))
+        if _neo4j_driver is None:
+            _neo4j_driver = GraphDatabase.driver(
+                neo4j_uri,
+                auth=(
+                    env_get("NEO4J_USER", default="neo4j"),
+                    env_get("NEO4J_PASSWORD", default="")
+                )
+            )
 
-        # Transitive impact analysis: who depends on this task (direct and indirect)
+        # Transitive impact analysis: only within the tenant's tasks
         def _get_impact():
-            with driver.session() as session:
+            with _neo4j_driver.session() as session:
                 result = session.run("""
-                    MATCH (t:Task {id: $tid})<-[:DEPENDS_ON*1..5]-(impacted:Task)
+                    MATCH (t:Task {id: $tid, tenant_id: $tenant})<-[:DEPENDS_ON*1..5]-(impacted:Task)
+                    WHERE impacted.tenant_id = $tenant
                     RETURN DISTINCT impacted.id AS id, impacted.title AS title
-                """, tid=task_id)
+                """, tid=task_id, tenant=tenant_id)
                 return [{"id": r["id"], "title": r["title"]} for r in result]
 
         impacted = await asyncio.to_thread(_get_impact)
-        driver.close()
         return {"task_id": task_id, "impacted": impacted, "count": len(impacted)}
     except Exception as e:
         log.error(f"neo4j_impact_error: {e}")
-        return {"task_id": task_id, "impacted": [], "error": str(e)}
+        # Re-raising so the @circuit_breaker decorator can detect the failure
+        raise e
 
 
 @router.get("/analytics/routing")
@@ -883,6 +890,7 @@ async def get_routing_distribution(tenant_id: str = Depends(_resolve_tenant_id))
             "deep_path_rate": "ok" if counts[3] / total < 0.30 else "alto — calibrar thresholds",
         }
     }
+@router.post("/tasks/batch/semantic")
 async def batch_semantic(
     req: SemanticBatchRequest,
     tenant_id: str = Depends(_resolve_tenant_id)

@@ -123,12 +123,33 @@ async def create_tenant(request: Request, body: Dict[str, Any]):
     # RLS policies would block INSERT into the tenants table for non-existent tenants.
     async with async_db(bypass_rls=True) as conn:
         async with conn.cursor() as cur:
-            await cur.execute("""
-                INSERT INTO tenants
-                    (id, name, api_key, plan, requests_per_minute, tokens_per_day)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                RETURNING id, name, plan, api_key
-            """, (tid, name, api_key, plan, rpm, tpd))
+            # Check if metadata column exists in tenants table
+            tenant_cols = await get_table_columns_cached(cur, "tenants")
+            has_metadata = "metadata" in tenant_cols
+            
+            common_metadata = body.get("metadata", {})
+            if not isinstance(common_metadata, dict):
+                 common_metadata = {}
+            
+            # Add default metadata fields
+            common_metadata.setdefault("created_by_ip", src_ip)
+            common_metadata.setdefault("version", "3.0")
+            
+            if has_metadata:
+                await cur.execute("""
+                    INSERT INTO tenants
+                        (id, name, api_key, plan, requests_per_minute, tokens_per_day, metadata)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id, name, plan, api_key, metadata
+                """, (tid, name, api_key, plan, rpm, tpd, json.dumps(common_metadata)))
+            else:
+                await cur.execute("""
+                    INSERT INTO tenants
+                        (id, name, api_key, plan, requests_per_minute, tokens_per_day)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    RETURNING id, name, plan, api_key
+                """, (tid, name, api_key, plan, rpm, tpd))
+            
             row = await cur.fetchone()
 
             await cur.execute("""
@@ -143,7 +164,7 @@ async def create_tenant(request: Request, body: Dict[str, Any]):
 
 @router.post(
     "/control",
-    dependencies=[Depends(get_tenant_id)]
+    dependencies=[Depends(verify_admin), Depends(get_tenant_id)]
 )
 async def system_control(body: Dict[str, Any], tenant_id: str = Depends(get_tenant_id)):
     """

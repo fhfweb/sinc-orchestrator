@@ -125,8 +125,20 @@ services:
     image: ollama/ollama:latest
     container_name: sinc-ollama-model-puller
     environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: /bin/sh
+    command:
+      - "-c"
+      - |
+        sleep 10
+        ollama pull qwen2.5:7b-instruct-q4_K_M
+        ollama pull qwen2.5-coder:14b-instruct-q4_K_M
+        ollama pull qwen2.5:32b-instruct-q4_K_M
+        ollama pull nomic-embed-text
     networks:
       - sinc-platform-net
+    depends_on:
+      - ollama
 
   orchestrator-streaming:
     build:

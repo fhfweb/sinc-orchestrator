@@ -180,6 +180,25 @@ async def ensure_runtime_plane_schema() -> None:
             await cur.execute("ALTER TABLE readiness_reports ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()")
             await cur.execute(
                 """
+                CREATE TABLE IF NOT EXISTS tenants (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    api_key TEXT UNIQUE NOT NULL,
+                    plan TEXT DEFAULT 'free',
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                )
+                """
+            )
+            await cur.execute("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free'")
+            await cur.execute("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS requests_per_minute INTEGER DEFAULT 60")
+            await cur.execute("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS tokens_per_day BIGINT DEFAULT 500000")
+            await cur.execute("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS webhook_url TEXT")
+            await cur.execute("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS webhook_secret TEXT")
+            await cur.execute("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb")
+            await cur.execute("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()")
+
+            await cur.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_readiness_reports_tenant_created
                     ON readiness_reports (tenant_id, created_at DESC)
                 """

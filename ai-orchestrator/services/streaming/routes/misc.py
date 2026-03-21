@@ -281,6 +281,7 @@ async def signup(
     request: Request
 ):
     """Self-service tenant provisioning."""
+    await ensure_runtime_plane_schema()
     if not _SIGNUP_ENABLED:
         raise HTTPException(status_code=403, detail="Self-service signup is disabled")
 

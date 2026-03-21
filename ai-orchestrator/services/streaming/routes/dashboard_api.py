@@ -179,8 +179,8 @@ def _diagnostic_log_offset_key(component: str) -> str:
     return f"{_DIAGNOSTIC_LOG_OFFSET_PREFIX}{component}"
 
 
-def _diagnostic_log_stream_name() -> str:
-    return f"sinc:stream:{_DIAGNOSTIC_LOG_STREAM}"
+def _diagnostic_log_stream_name(component: str) -> str:
+    return f"sinc:stream:{_DIAGNOSTIC_LOG_STREAM}:{component}"
 
 
 def _build_diagnostic_log_entry(component: str, line: str, source_path: Path) -> dict[str, Any]:
@@ -233,7 +233,10 @@ async def _project_diagnostic_logs_once(*, max_lines_per_component: int = 500) -
                     if not line:
                         break
                     payload = _build_diagnostic_log_entry(component_name, line, log_file)
-                    await bus.publish(_DIAGNOSTIC_LOG_STREAM, payload, use_stream=True)
+                    stream_key = _diagnostic_log_stream_name(component_name)
+                    # We publish to the component-specific stream.
+                    # This ensures thatChatty components don't evict logs from silent ones.
+                    await bus.publish(stream_key, payload, use_stream=True)
                     projected += 1
                     emitted += 1
                 next_offset = handle.tell()
@@ -375,15 +378,6 @@ async def _query_diagnostic_log_stream(
     if not redis_client:
         return None
 
-    try:
-        raw_entries = await redis_client.xrevrange(
-            _diagnostic_log_stream_name(),
-            count=max(limit * max(len(requested_components), 1) * 8, 300),
-        )
-    except Exception as exc:
-        log.debug("diagnostic_log_stream_query_error error=%s", exc)
-        return None
-
     cutoff = (
         datetime.now(timezone.utc) - timedelta(minutes=effective_window)
         if effective_window > 0
@@ -391,30 +385,44 @@ async def _query_diagnostic_log_stream(
     )
     per_component: dict[str, list[dict[str, Any]]] = {name: [] for name in requested_components}
 
-    for _msg_id, data in raw_entries:
-        raw_payload = data.get("data", "{}")
+    for component_name in requested_components:
         try:
-            payload = json.loads(raw_payload)
-        except json.JSONDecodeError:
+            # Query the specific stream for this component.
+            # This is 100% accurate and doesn't depend on other components' chatters.
+            raw_entries = await redis_client.xrevrange(
+                _diagnostic_log_stream_name(component_name),
+                count=limit * 2,  # Buffer for pattern/cutoff filtering
+            )
+        except Exception as exc:
+            log.debug("diagnostic_log_stream_query_error component=%s error=%s", component_name, exc)
             continue
-        component_name = str(payload.get("component") or "").strip().lower()
-        if component_name not in per_component:
-            continue
-        parsed_ts = _extract_log_timestamp(str(payload.get("line") or "")) or _extract_log_timestamp(str(payload.get("ts") or ""))
-        if cutoff and parsed_ts and parsed_ts < cutoff:
-            continue
-        if pattern and pattern.lower() not in str(payload.get("line") or "").lower():
-            continue
-        per_component[component_name].append(
-            {
-                "component": component_name,
-                "line": str(payload.get("line") or ""),
-                "level": str(payload.get("level") or _log_level_from_line(str(payload.get("line") or ""))),
-                "fingerprint": str(payload.get("fingerprint") or _log_fingerprint(str(payload.get("line") or ""))),
-                "parsed_ts": parsed_ts,
-                "source_path": str(payload.get("source_path") or ""),
-            }
-        )
+
+        for _msg_id, data in raw_entries:
+            raw_payload = data.get("data", "{}")
+            try:
+                payload = json.loads(raw_payload)
+            except json.JSONDecodeError:
+                continue
+            payload_component = str(payload.get("component") or "").strip().lower()
+            # Verification: ensure payload matches the component (defensive)
+            if payload_component != component_name:
+                continue
+
+            parsed_ts = _extract_log_timestamp(str(payload.get("line") or "")) or _extract_log_timestamp(str(payload.get("ts") or ""))
+            if cutoff and parsed_ts and parsed_ts < cutoff:
+                continue
+            if pattern and pattern.lower() not in str(payload.get("line") or "").lower():
+                continue
+            per_component[component_name].append(
+                {
+                    "component": component_name,
+                    "line": str(payload.get("line") or ""),
+                    "level": str(payload.get("level") or _log_level_from_line(str(payload.get("line") or ""))),
+                    "fingerprint": str(payload.get("fingerprint") or _log_fingerprint(str(payload.get("line") or ""))),
+                    "parsed_ts": parsed_ts,
+                    "source_path": str(payload.get("source_path") or ""),
+                }
+            )
 
     reports = []
     for component_name in requested_components:
@@ -1772,7 +1780,9 @@ async def get_diagnostic_logs(
     requested_components = _normalize_diagnostic_components(component, components)
     effective_window = since_minutes or (since_hours * 60)
 
-    await _project_diagnostic_logs_once(max_lines_per_component=max(limit, 100))
+    # Proactively project a small burst to ensure real-time reactivity
+    # The background loop will handle the bulk, but this catches very recent lines.
+    await _project_diagnostic_logs_once(max_lines_per_component=max(limit, 50))
     stream_payload = await _query_diagnostic_log_stream(
         requested_components=requested_components,
         effective_window=effective_window,

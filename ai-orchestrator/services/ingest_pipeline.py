@@ -41,6 +41,7 @@ import asyncio
 import logging
 from pathlib import Path
 from typing import Optional, Callable
+from services.xref_resolver import XRefResolver
 
 _ID_RE = _re.compile(r'^[a-zA-Z0-9_\-.]{1,128}$')
 
@@ -60,49 +61,17 @@ except ImportError:
     def _span(_name: str, **_kw):  # type: ignore[misc]
         return nullcontext()
 
-# ── HTTP client (httpx preferred, urllib fallback) ────────────────────────────
-try:
-    import httpx as _httpx
-    _HAS_HTTPX = True
-    _http_ingest: "_httpx.Client | None" = None
-
-    def _get_http() -> "_httpx.Client":
-        global _http_ingest
-        if _http_ingest is None:
-            _http_ingest = _httpx.Client(
-                timeout=_httpx.Timeout(connect=5.0, read=30.0, write=10.0),
-            )
-        return _http_ingest
-
-except ImportError:
-    import urllib.request as _urllib_req  # type: ignore[assignment]
-    import urllib.error   as _urllib_err  # type: ignore[assignment]
-    _HAS_HTTPX = False
-
-# ── Retry (tenacity) ──────────────────────────────────────────────────────────
-try:
-    from tenacity import retry as _t_retry, stop_after_attempt, wait_exponential
-    _HAS_TENACITY = True
-except ImportError:
-    _HAS_TENACITY = False
-
+import httpx as _httpx
+# tenacity and other retries are handled by the resilient client or explicitly in the logic
 
 # ── CONFIGURATION ─────────────────────────────────────────────────────────────
 
-NEO4J_URI  = env_get("NEO4J_URI", default="bolt://localhost:7687")
-NEO4J_USER = env_get("NEO4J_USER", default="neo4j")
-NEO4J_PASS = env_get("NEO4J_PASS") or env_get("NEO4J_AUTH", default="neo4j/neo4j").split("/", 1)[-1]
-
-QDRANT_HOST = env_get("QDRANT_HOST", default="localhost")
-QDRANT_PORT = int(env_get("QDRANT_PORT", default="6333"))
-
-OLLAMA_HOST  = env_get("OLLAMA_HOST", default="http://localhost:11434")
-EMBED_MODEL  = env_get("OLLAMA_EMBED_MODEL", default="nomic-embed-text")
-
-CHUNK_SIZE    = int(env_get("INGEST_CHUNK_SIZE", default="512"))
-CHUNK_OVERLAP = int(env_get("INGEST_CHUNK_OVERLAP", default="64"))
-
-DISPATCHES_DIR = env_get("DISPATCHES_DIR", default="DISPATCHES")
+from services.streaming.core.config import (
+    env_get, QDRANT_HOST, QDRANT_PORT, OLLAMA_HOST,
+    CHUNK_SIZE, CHUNK_OVERLAP, DISPATCHES_DIR,
+    NEO4J_URI, NEO4J_USER, NEO4J_PASS
+)
+from services.http_client import create_sync_resilient_client
 
 # ── DATABASE HELPERS ──────────────────────────────────────────────────────
 
@@ -172,36 +141,16 @@ def _chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP)
 # ──────────────────────────────────────────────
 
 def _embed_one(text: str) -> list[float]:
-    """Embed a single text via Ollama. Retried by _embed if tenacity available."""
-    payload = json.dumps({"model": EMBED_MODEL, "prompt": text}).encode()
-    if _HAS_HTTPX:
-        resp = _get_http().post(
-            f"{OLLAMA_HOST}/api/embeddings",
-            content=payload,
-            headers={"Content-Type": "application/json"},
-        )
+    """Embed a single text via Ollama using the resilient client."""
+    payload = {"model": EMBED_MODEL, "prompt": text}
+    with create_sync_resilient_client(service_name="ingest-ollama", timeout=30) as client:
+        resp = client.post(f"{OLLAMA_HOST}/api/embeddings", json=payload)
         resp.raise_for_status()
         return resp.json().get("embedding", [])
-    # urllib fallback — only reachable when _HAS_HTTPX is False (so _urllib_req is defined)
-    req = _urllib_req.Request(  # type: ignore[name-defined]
-        f"{OLLAMA_HOST}/api/embeddings",
-        data=payload, method="POST",
-        headers={"Content-Type": "application/json"},
-    )
-    with _urllib_req.urlopen(req, timeout=30) as r:  # type: ignore[name-defined]
-        return json.loads(r.read()).get("embedding", [])
-
-
-if _HAS_TENACITY:
-    _embed_one = _t_retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=1, max=8),
-        reraise=True,
-    )(_embed_one)
 
 
 def _embed(texts: list[str]) -> list[list[float]]:
-    """Get embeddings via Ollama /api/embeddings (with retry per text)."""
+    """Get embeddings with retry logic (if provided by _embed_one)."""
     embeddings = []
     for text in texts:
         try:
@@ -229,50 +178,29 @@ def _qdrant_collection_name(project_id: str, tenant_id: str) -> str:
 
 
 def _ensure_qdrant_collection(collection: str, dim: int):
-    """Create Qdrant collection if it doesn't exist."""
+    """Create Qdrant collection if it doesn't exist using the resilient client."""
     url = f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{collection}"
     try:
-        if _HAS_HTTPX:
-            status = _get_http().get(url).status_code
-        else:
-            try:
-                _urllib_req.urlopen(url, timeout=5)
-                status = 200
-            except _urllib_err.HTTPError as e:
-                status = e.code
-        if status != 404:
-            return  # already exists or unreachable
-    except Exception:
-        return
-
-    payload = json.dumps({"vectors": {"size": dim, "distance": "Cosine"}}).encode()
-    try:
-        if _HAS_HTTPX:
-            _get_http().put(url, content=payload,
-                            headers={"Content-Type": "application/json"}).raise_for_status()
-        else:
-            req = _urllib_req.Request(url, data=payload, method="PUT",
-                                      headers={"Content-Type": "application/json"})
-            _urllib_req.urlopen(req, timeout=10)
-        print(f"[ingest] created Qdrant collection: {collection}", flush=True)
+        with create_sync_resilient_client(service_name="ingest-qdrant", timeout=10) as client:
+            resp = client.get(url)
+            if resp.status_code == 200:
+                return
+            if resp.status_code == 404:
+                payload = {"vectors": {"size": dim, "distance": "Cosine"}}
+                client.put(url, json=payload).raise_for_status()
+                print(f"[ingest] created Qdrant collection: {collection}", flush=True)
     except Exception as exc:
-        print(f"[ingest] Qdrant collection create error: {exc}", flush=True)
+        print(f"[ingest] Qdrant collection management error: {exc}", flush=True)
 
 
 def _qdrant_upsert(collection: str, points: list[dict]):
-    """Batch upsert points into Qdrant."""
+    """Batch upsert points into Qdrant using the resilient client."""
     if not points:
         return
-    url     = f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{collection}/points"
-    payload = json.dumps({"points": points}).encode()
+    url = f"http://{QDRANT_HOST}:{QDRANT_PORT}/collections/{collection}/points"
     try:
-        if _HAS_HTTPX:
-            _get_http().put(url, content=payload,
-                            headers={"Content-Type": "application/json"}).raise_for_status()
-        else:
-            req = _urllib_req.Request(url, data=payload, method="PUT",
-                                      headers={"Content-Type": "application/json"})
-            _urllib_req.urlopen(req, timeout=30)
+        with create_sync_resilient_client(service_name="ingest-qdrant", timeout=30) as client:
+            client.put(url, json={"points": points}).raise_for_status()
     except Exception as exc:
         print(f"[ingest] Qdrant upsert error: {exc}", flush=True)
 
@@ -405,10 +333,24 @@ class IngestPipeline:
                 "ast_files": ast_stats.get("files", 0),
             })
 
+            # ── Step 1.5: XRef Global Resolution ─────
+            _update_pipeline(pipeline_id, "running_xref", 30)
+            self._emit("ingest_progress", {"pipeline_id": pipeline_id, "step": "xref", "progress": 30})
+            with _span("ingest.xref", project_id=project_id):
+                try:
+                    xref = XRefResolver(uri=NEO4J_URI, user=NEO4J_USER, password=NEO4J_PASS)
+                    xref_stats = xref.run_all(tenant_id)
+                    xref.close()
+                    stats["xref"] = xref_stats
+                except Exception as xref_err:
+                    print(f"[ingest] xref resolution failed: {xref_err}")
+
             # ── Step 2: Chunk + Embed → Qdrant ───────
             if deep:
                 with _span("ingest.vectors", project_id=project_id):
-                    vec_stats = self._run_vectors(project_path, project_id, tenant_id, pipeline_id)
+                    # Pass symbols from AST to vector phase for Docstring indexing
+                    symbols = stats.get("ast", {}).get("symbols")
+                    vec_stats = self._run_vectors(project_path, project_id, tenant_id, pipeline_id, symbols=symbols)
                 stats["chunks"]  = vec_stats["chunks"]
                 stats["vectors"] = vec_stats["vectors"]
                 stats["errors"] += vec_stats["errors"]
@@ -452,8 +394,9 @@ class IngestPipeline:
             return {"files": 0, "nodes_created": 0, "edges_created": 0, "errors": 1}
 
     def _run_vectors(self, project_path: str, project_id: str,
-                     tenant_id: str, _pipeline_id: str = "") -> dict:
-        """Chunk files, embed, upsert to Qdrant."""
+                     tenant_id: str, _pipeline_id: str = "",
+                     symbols: Any = None) -> dict:
+        """Chunk files, embed, upsert to Qdrant. Also indexes docstrings if provided."""
         collection = _qdrant_collection_name(project_id, tenant_id)
         stats = {"chunks": 0, "vectors": 0, "errors": 0}
 
@@ -510,6 +453,27 @@ class IngestPipeline:
                     flush_batch()
 
         flush_batch()
+        
+        # --- PHASE 7: Index Docstrings (Cognitive Intent) ---
+        if symbols:
+            print(f"[ingest] indexing docstrings for deep memory...", flush=True)
+            for sym_id, sym in getattr(symbols, "symbols", {}).items():
+                if sym.docstring and len(sym.docstring) > 10:
+                    pt_id = str(uuid.UUID(hashlib.md5(f"doc/{sym_id}".encode()).hexdigest()))
+                    batch_ids.append(pt_id)
+                    batch_texts.append(f"Documentation for {sym.name} in {sym.file_path}:\n{sym.docstring}")
+                    batch_payloads.append({
+                        "project_id": project_id,
+                        "tenant_id":  tenant_id,
+                        "file":       sym.file_path,
+                        "type":       "docstring",
+                        "symbol":     sym.name,
+                        "text":       sym.docstring,
+                    })
+                    if len(batch_texts) >= BATCH_SIZE:
+                        flush_batch()
+            flush_batch()
+
         return stats
 
 

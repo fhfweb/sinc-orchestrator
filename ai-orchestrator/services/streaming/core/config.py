@@ -153,6 +153,22 @@ def _resolve_redis_host_port() -> tuple[str, int]:
     return raw_host, raw_port
 
 
+def _resolve_qdrant_host_port() -> tuple[str, int]:
+    raw_host = env_get("QDRANT_HOST", default="qdrant") or "qdrant"
+    raw_port = env_get_int("QDRANT_PORT", default=6333)
+    docker_aliases = {"qdrant", "vector-db", "memory"}
+    if not _running_in_container() and raw_host.strip().lower() in docker_aliases:
+        return "127.0.0.1", raw_port
+    return raw_host, raw_port
+
+
+def _resolve_ollama_url() -> str:
+    raw_url = env_get("OLLAMA_HOST", default="http://ollama:11434") or "http://ollama:11434"
+    if not _running_in_container() and "ollama" in raw_url:
+        return raw_url.replace("ollama", "127.0.0.1")
+    return raw_url.rstrip("/")
+
+
 
 DB_HOST, DB_PORT = _resolve_db_host_port()
 DB_CONFIG = {
@@ -189,6 +205,9 @@ ORCHESTRATOR_API_KEY = env_get("ORCHESTRATOR_API_KEY", default="") or ""
 TASK_MAX_RETRIES = env_get_int("TASK_MAX_RETRIES", default=3)
 TASK_STALE_TIMEOUT_M = env_get_int("TASK_STALE_TIMEOUT_M", default=2)
 TASK_RETRY_BACKOFF_S = [60, 300, 1800]
+
+QDRANT_HOST, QDRANT_PORT = _resolve_qdrant_host_port()
+OLLAMA_HOST = _resolve_ollama_url()
 
 ASK_CACHE_TTL = env_get_int("ASK_CACHE_TTL", default=300)
 MEMORY_L2_TIMEOUT_S = env_get_float("MEMORY_L2_TIMEOUT_S", default=3.0)
