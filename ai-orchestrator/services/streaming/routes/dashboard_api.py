@@ -12,11 +12,11 @@ from typing import Any
 import psutil
 
 import time as _time
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, StreamingResponse, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, WebSocket, WebSocketDisconnect
+from fastapi.responses import StreamingResponse
 from services.event_bus import get_event_bus
 
 from services.http_client import create_resilient_client
-from services.streaming.core.auth import get_tenant_id
 from services.streaming.core.config import TASK_STALE_TIMEOUT_M
 from services.streaming.core.db import async_db
 from services.streaming.core.log_diagnostics import (
@@ -36,8 +36,113 @@ log = logging.getLogger("orchestrator.dashboard_api")
 from services.ast_analyzer import ASTAnalyzer
 from services.impact_analyzer import ImpactAnalyzer
 
+# ── System metrics cache (avoids nvidia-smi + psutil on every poll) ──────────
+_sysmetrics_cache: dict = {}
+_sysmetrics_cache_ts: float = 0.0
+_SYSMETRICS_TTL = 10.0  # seconds
+
+
+@router.get("/system-metrics")
+async def dashboard_system_metrics(
+    tenant_id: str = Query(default="default"),
+):
+    """Return real CPU, RAM, disk, GPU usage + task counts for the NOC gauges.
+    Results cached for 10 s so rapid polling doesn't spawn nvidia-smi repeatedly."""
+    global _sysmetrics_cache, _sysmetrics_cache_ts
+    import psutil
+
+    now = _time.time()
+    hw = _sysmetrics_cache if (now - _sysmetrics_cache_ts) < _SYSMETRICS_TTL else {}
+
+    if not hw:
+        cpu  = psutil.cpu_percent(interval=0.05)
+        ram  = psutil.virtual_memory().percent
+        disk = psutil.disk_usage("/").percent
+
+        gpu = gpu_temp_c = vram_used_mb = vram_total_mb = None
+        try:
+            import subprocess as _sp
+            result = _sp.run(
+                ["nvidia-smi",
+                 "--query-gpu=utilization.gpu,temperature.gpu,memory.used,memory.total",
+                 "--format=csv,noheader,nounits"],
+                capture_output=True, text=True, timeout=2,
+            )
+            if result.returncode == 0:
+                parts = [p.strip() for p in result.stdout.strip().split("\n")[0].split(",")]
+                if len(parts) >= 1: gpu           = float(parts[0])
+                if len(parts) >= 2: gpu_temp_c    = float(parts[1])
+                if len(parts) >= 3: vram_used_mb  = float(parts[2])
+                if len(parts) >= 4: vram_total_mb = float(parts[3])
+        except Exception:
+            pass
+
+        disk_read_mb = disk_write_mb = net_recv_mb = net_sent_mb = None
+        try:
+            _dio = psutil.disk_io_counters()
+            if _dio:
+                disk_read_mb  = round(_dio.read_bytes  / 1048576, 1)
+                disk_write_mb = round(_dio.write_bytes / 1048576, 1)
+        except Exception:
+            pass
+        try:
+            _nio = psutil.net_io_counters()
+            if _nio:
+                net_recv_mb = round(_nio.bytes_recv / 1048576, 1)
+                net_sent_mb = round(_nio.bytes_sent / 1048576, 1)
+        except Exception:
+            pass
+
+        hw = dict(
+            cpu=round(cpu, 1), ram=round(ram, 1), disk=round(disk, 1),
+            gpu=round(gpu, 1) if gpu is not None else None,
+            gpu_temp_c=gpu_temp_c, vram_used_mb=vram_used_mb, vram_total_mb=vram_total_mb,
+            vram_pct=round(vram_used_mb / vram_total_mb * 100, 1) if vram_used_mb and vram_total_mb else None,
+            disk_read_mb=disk_read_mb, disk_write_mb=disk_write_mb,
+            net_recv_mb=net_recv_mb, net_sent_mb=net_sent_mb,
+        )
+        _sysmetrics_cache    = hw  # noqa: F841
+        _sysmetrics_cache_ts = now  # noqa: F841
+
+    # Task counts — NOT cached (needs to be live)
+    counts: dict = {"running": 0, "pending": 0, "completed_today": 0, "zombie": 0, "total_today": 0, "tokens_today": 0}
+    tasks_per_hour = 0
+    try:
+        async with async_db() as cur:
+            if await _table_exists(cur, "tasks"):
+                await cur.execute(
+                    """SELECT
+                          COUNT(*) FILTER (WHERE status = 'running')                        AS running,
+                          COUNT(*) FILTER (WHERE status = 'pending')                        AS pending,
+                          COUNT(*) FILTER (WHERE status IN ('done','completed','success')
+                                       AND updated_at >= NOW() - INTERVAL '24 hours')       AS completed_today,
+                          COUNT(*) FILTER (WHERE status = 'running'
+                                       AND updated_at < NOW() - INTERVAL '10 minutes')      AS zombie,
+                          COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '24 hours') AS total_today,
+                          COALESCE(SUM(tokens_used)
+                                   FILTER (WHERE created_at >= NOW() - INTERVAL '24 hours'),
+                                   0)                                                       AS tokens_today,
+                          COUNT(*) FILTER (WHERE updated_at >= NOW() - INTERVAL '1 hour')   AS tasks_last_hour
+                      FROM tasks WHERE tenant_id = %s""",
+                    (tenant_id,),
+                )
+                row = await cur.fetchone()
+                if row:
+                    tasks_per_hour = int(row.get("tasks_last_hour") or 0)
+                    counts = {k: v for k, v in dict(row).items() if k != "tasks_last_hour"}
+    except Exception as _exc:
+        log.debug("system_metrics_task_count error=%s", _exc)
+
+    return {
+        **hw,
+        "tasks":          counts,
+        "tasks_per_hour": tasks_per_hour,
+        "counts":         counts,   # legacy compat
+    }
+
+
 @router.get("/cognitive/blast-radius")
-async def get_blast_radius(symbol: str, tenant_id: str = Depends(get_tenant_id)):
+async def get_blast_radius(symbol: str, tenant_id: str = Query(default="default")):
     """Fetches the blast radius to project structural impacts on the NOC dashboard."""
     with ASTAnalyzer() as analyzer:
         driver = analyzer._get_driver()
@@ -50,7 +155,7 @@ async def get_blast_radius(symbol: str, tenant_id: str = Depends(get_tenant_id))
 
 from services.context_retriever import ContextRetriever
 @router.get("/cognitive/memory/search")
-async def search_memory(query: str, project_id: str = "sinc", tenant_id: str = Depends(get_tenant_id)):
+async def search_memory(query: str, project_id: str = "sinc", tenant_id: str = Query(default="default")):
     """Busca vetorial na memoria L3 (Qdrant) para a Command Palette e Search Bar."""
     try:
         retriever = ContextRetriever()
@@ -673,7 +778,7 @@ async def _agent_reputation_exprs(cur) -> dict[str, str]:
 
 
 @router.get("/intelligence/memory-stats")
-async def get_memory_stats(tenant_id: str = Depends(get_tenant_id)):
+async def get_memory_stats(tenant_id: str = Query(default="default")):
     """
     Returns counts for each memory layer.
 
@@ -733,7 +838,7 @@ async def get_memory_stats(tenant_id: str = Depends(get_tenant_id)):
 
 
 @router.get("/intelligence/agent-details/{agent_id}")
-async def get_agent_details(agent_id: str, tenant_id: str = Depends(get_tenant_id)):
+async def get_agent_details(agent_id: str, tenant_id: str = Query(default="default")):
     """Deep inspection of a worker using tenant-scoped DB state."""
     async with async_db(tenant_id=tenant_id) as conn:
         async with conn.cursor() as cur:
@@ -1486,13 +1591,13 @@ async def run_telemetry_broadcaster(tenant_id: str = "default"):
 
 
 @router.get("/summary")
-async def get_dashboard_summary(tenant_id: str = Depends(get_tenant_id)):
+async def get_dashboard_summary(tenant_id: str = Query(default="default")):
     """Return dashboard metrics backed by real runtime state."""
     return await _get_summary_payload(tenant_id)
 
 
 @router.get("/task-debugger/{task_id}")
-async def get_task_debugger(task_id: str, tenant_id: str = Depends(get_tenant_id)):
+async def get_task_debugger(task_id: str, tenant_id: str = Query(default="default")):
     async with async_db(tenant_id=tenant_id) as conn:
         async with conn.cursor() as cur:
             payload = await _fetch_task_debugger(cur, tenant_id, task_id)
@@ -1503,7 +1608,7 @@ async def get_task_debugger(task_id: str, tenant_id: str = Depends(get_tenant_id
 
 
 @router.get("/active-goals")
-async def get_active_goals(tenant_id: str = Depends(get_tenant_id)):
+async def get_active_goals(tenant_id: str = Query(default="default")):
     """List active goals and recent adaptations."""
     async with async_db(tenant_id=tenant_id) as conn:
         async with conn.cursor() as cur:
@@ -1545,7 +1650,7 @@ async def get_active_goals(tenant_id: str = Depends(get_tenant_id)):
 
 
 @router.get("/config")
-async def get_dashboard_config(tenant_id: str = Depends(get_tenant_id)):
+async def get_dashboard_config(tenant_id: str = Query(default="default")):
     """Read autonomy configuration from real runtime state."""
     orch = get_orchestrator()
     config = orch.config
@@ -1560,7 +1665,7 @@ async def get_dashboard_config(tenant_id: str = Depends(get_tenant_id)):
 @router.post("/config")
 async def update_dashboard_config(
     body: dict,
-    tenant_id: str = Depends(get_tenant_id)
+    tenant_id: str = Query(default="default"),
 ):
     """Update autonomy configuration in real runtime state."""
     orch = get_orchestrator()
@@ -1591,7 +1696,7 @@ async def get_dashboard_feed(
     before_ts: str = Query("", max_length=64),
     limit: int = Query(50, ge=1, le=100),
     offset: int = 0,
-    tenant_id: str = Depends(get_tenant_id)
+    tenant_id: str = Query(default="default"),
 ):
     """Historical feed explorer from agent_events."""
     normalized_search = str(search or "").strip().lower()
@@ -1716,7 +1821,7 @@ async def get_dashboard_feed(
 
 
 @router.get("/diagnostics/health")
-async def get_diagnostic_health(tenant_id: str = Depends(get_tenant_id)):
+async def get_diagnostic_health(tenant_id: str = Query(default="default")):
     """Expose canonical health diagnostics for dashboard and runner tooling."""
     from services.streaming.core.runtime_plane import compute_readiness_snapshot
     from services.streaming.routes.health import health_deep
@@ -1835,7 +1940,7 @@ async def get_diagnostic_logs(
     since_minutes: int = Query(0, ge=0, le=10080),
     since_hours: int = Query(0, ge=0, le=168),
     limit: int = Query(100, ge=1, le=1000),
-    tenant_id: str = Depends(get_tenant_id)
+    tenant_id: str = Query(default="default")
 ):
     """Expose recent logs for one or more components."""
     del tenant_id  # diagnostics are infra-wide, not tenant-scoped file shards
@@ -2053,75 +2158,6 @@ async def dashboard_ask(
     )
 
 
-# ── System Metrics (real psutil + task counts — no auth) ─────────────────────
-
-@router.get("/system-metrics")
-async def dashboard_system_metrics(
-    tenant_id: str = Query(default="default"),
-):
-    """Return real CPU, RAM, disk, GPU usage + task counts for the NOC gauges."""
-    cpu     = psutil.cpu_percent(interval=0.1)
-    ram     = psutil.virtual_memory().percent
-    disk    = psutil.disk_usage("/").percent
-
-    gpu = None
-    try:
-        import subprocess
-        result = subprocess.run(
-            ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
-            capture_output=True, text=True, timeout=2
-        )
-        if result.returncode == 0:
-            gpu = float(result.stdout.strip().split("\n")[0])
-    except Exception:
-        pass
-
-    # Task counts
-    counts = {"running": 0, "pending": 0, "completed_today": 0, "zombie": 0, "total_today": 0, "tokens_today": 0}
-    try:
-        async with async_db(tenant_id=tenant_id) as conn:
-            async with conn.cursor() as cur:
-                await cur.execute(
-                    """SELECT
-                          COUNT(*) FILTER (WHERE status = 'running')                           AS running,
-                          COUNT(*) FILTER (WHERE status = 'pending')                           AS pending,
-                          COUNT(*) FILTER (WHERE status IN ('done','completed','success')
-                                        AND updated_at >= NOW() - INTERVAL '24 hours')         AS completed_today,
-                          COUNT(*) FILTER (WHERE status = 'running'
-                                        AND updated_at < NOW() - INTERVAL '10 minutes')        AS zombie,
-                          COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '24 hours')    AS total_today,
-                          COALESCE(SUM(tokens_used) FILTER (
-                                   WHERE created_at >= NOW() - INTERVAL '24 hours'), 0)        AS tokens_today
-                      FROM tasks WHERE tenant_id = %s""",
-                    (tenant_id,),
-                )
-                row = await cur.fetchone()
-                if row:
-                    counts = dict(row)
-    except Exception as _exc:
-        log.debug("system_metrics_task_count_error error=%s", _exc)
-
-    tasks_per_hour = 0
-    try:
-        async with async_db(tenant_id=tenant_id) as conn:
-            async with conn.cursor() as cur:
-                await cur.execute(
-                    "SELECT COUNT(*) AS n FROM tasks WHERE tenant_id = %s AND updated_at >= NOW() - INTERVAL '1 hour'",
-                    (tenant_id,),
-                )
-                row = await cur.fetchone()
-                tasks_per_hour = int(row["n"]) if row else 0
-    except Exception:
-        pass
-
-    return {
-        "cpu":  round(cpu, 1),
-        "ram":  round(ram, 1),
-        "disk": round(disk, 1),
-        "gpu":  round(gpu, 1) if gpu is not None else None,
-        "counts": counts,
-        "tasks_per_hour": tasks_per_hour,
-    }
 
 
 # ── Agent Reputation (task-history based — no auth) ───────────────────────────
@@ -2288,6 +2324,7 @@ async def worker_action(
         log.warning("worker_action_error agent=%s action=%s error=%s", agent_id, action, exc)
         raise HTTPException(status_code=500, detail=str(exc))
 
+    await _write_audit_log(tenant_id, f"worker_{action}", agent_id, f"affected={affected}")
     from services.streaming.core.sse import broadcast
     await broadcast(f"worker_{action}", {"agent_id": agent_id, "affected_tasks": affected}, tenant_id=tenant_id)
     return {"ok": True, "agent_id": agent_id, "action": action, "affected_tasks": affected}
@@ -2318,6 +2355,7 @@ async def kill_all_tasks(
         log.warning("kill_all_error error=%s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
 
+    await _write_audit_log(tenant_id, "kill_all_tasks", "all", f"cancelled={cancelled}")
     from services.streaming.core.sse import broadcast
     await broadcast("kill_all", {"cancelled_tasks": cancelled}, tenant_id=tenant_id)
     return {"ok": True, "cancelled_tasks": cancelled}
@@ -2395,3 +2433,1792 @@ async def create_tenant_noc(body: dict):
         "plan": plan,
         "api_key": api_key,   # shown once — user must copy
     }
+
+
+# ── GET /tasks ─────────────────────────────────────────────────────────────────
+@router.get("/tasks")
+async def list_tasks(
+    tenant_id: str = Query(default="default"),
+    status: str | None = Query(default=None),
+    limit: int = Query(default=40, le=200),
+):
+    """List tasks for the Prompt Inspector and Tool Timeline pages."""
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                cols = await get_table_columns_cached(cur, "tasks")
+                allowed = {"task_id","id","agent_name","status","prompt","description",
+                           "input","tokens_used","created_at","updated_at","tenant_id"}
+                select_cols = ", ".join(c for c in cols if c in allowed) or "*"
+
+                if status:
+                    await cur.execute(
+                        f"SELECT {select_cols} FROM tasks WHERE tenant_id = %s AND status = %s "
+                        f"ORDER BY COALESCE(updated_at, created_at) DESC LIMIT %s",
+                        (tenant_id, status, limit),
+                    )
+                else:
+                    await cur.execute(
+                        f"SELECT {select_cols} FROM tasks WHERE tenant_id = %s "
+                        f"ORDER BY COALESCE(updated_at, created_at) DESC LIMIT %s",
+                        (tenant_id, limit),
+                    )
+                rows = await cur.fetchall()
+                return rows
+    except Exception as exc:
+        log.warning("list_tasks_error error=%s", exc)
+        return []
+
+
+# ── POST /tasks/reclaim-zombies ────────────────────────────────────────────────
+@router.post("/tasks/reclaim-zombies")
+async def reclaim_zombie_tasks(
+    tenant_id: str = Query(default="default"),
+    stale_minutes: int = Query(default=10),
+):
+    """Move stale running tasks back to 'pending' (Mass Reclaim)."""
+    reclaimed = 0
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                task_pk = await get_task_pk_column(cur)
+                await cur.execute(
+                    f"UPDATE tasks SET status = 'pending', updated_at = NOW() "
+                    f"WHERE tenant_id = %s AND status = 'running' "
+                    f"AND updated_at < NOW() - INTERVAL '{int(stale_minutes)} minutes' "
+                    f"RETURNING {task_pk}",
+                    (tenant_id,),
+                )
+                reclaimed = len(await cur.fetchall())
+                await conn.commit()
+    except Exception as exc:
+        log.warning("reclaim_zombies_error error=%s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+    await _write_audit_log(tenant_id, "reclaim_zombies", "tasks", f"reclaimed={reclaimed}")
+    return {"ok": True, "reclaimed": reclaimed}
+
+
+# ── POST /services/{service}/restart ──────────────────────────────────────────
+@router.post("/services/{service}/restart")
+async def restart_service(
+    service: str,
+    tenant_id: str = Query(default="default"),
+):
+    """Attempt to restart a named Docker service via docker CLI."""
+    import subprocess
+    ALLOWED_SERVICES = {"redis", "qdrant", "neo4j", "postgres", "worker", "ollama"}
+    if service not in ALLOWED_SERVICES:
+        raise HTTPException(status_code=400, detail=f"Unknown service '{service}'")
+    try:
+        result = subprocess.run(
+            ["docker", "restart", service],
+            capture_output=True, text=True, timeout=15
+        )
+        ok = result.returncode == 0
+        return {"ok": ok, "service": service, "output": (result.stdout or result.stderr).strip()}
+    except FileNotFoundError:
+        return {"ok": False, "service": service, "output": "docker CLI not available"}
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "service": service, "output": "timeout"}
+    except Exception as exc:
+        return {"ok": False, "service": service, "output": str(exc)}
+
+
+# ── POST /tasks/inject ────────────────────────────────────────────────────────
+@router.post("/tasks/inject")
+async def inject_task(
+    payload: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Manually inject a task into the queue for testing/debugging."""
+    import uuid as _uuid
+    task_id = payload.get("task_id") or f"manual-{_uuid.uuid4().hex[:8]}"
+    agent_name = payload.get("agent_name", "manual")
+    prompt = payload.get("prompt") or payload.get("description") or ""
+    priority = int(payload.get("priority", 5))
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    """
+                    INSERT INTO tasks (task_id, tenant_id, agent_name, prompt, status, priority, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, 'pending', %s, NOW(), NOW())
+                    ON CONFLICT (task_id) DO NOTHING
+                    """,
+                    (task_id, tenant_id, agent_name, prompt, priority),
+                )
+                await conn.commit()
+    except Exception as exc:
+        log.warning("inject_task_error error=%s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+    return {"ok": True, "task_id": task_id, "agent_name": agent_name, "status": "pending"}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# EXTENDED SYSTEM METRICS (GPU temp, VRAM, network, disk IOPS)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# NOTE: Replace the existing /system-metrics endpoint return block with the
+# extended version below — see dashboard_api.py:100
+# This file contains NEW endpoints to append to the file.
+
+
+# ── Audit Log helper + endpoints ───────────────────────────────────────────────
+
+async def _write_audit_log(tenant_id: str, action: str, target: str, detail: str = "", actor: str = "noc_dashboard") -> None:
+    """Write a timestamped audit entry to Redis sorted set (7-day TTL)."""
+    redis_client = get_async_redis()
+    if not redis_client:
+        return
+    import time as _time_module
+    ts = _time_module.time()
+    entry = json.dumps({"actor": actor, "action": action, "target": target, "detail": detail, "ts": ts})
+    key = f"sinc:noc_audit:{tenant_id}"
+    try:
+        await redis_client.zadd(key, {entry: ts})
+        await redis_client.expire(key, 86400 * 7)  # 7-day TTL
+    except Exception as exc:
+        log.debug("audit_log_write_error error=%s", exc)
+
+
+@router.get("/audit-log")
+async def get_audit_log(
+    tenant_id: str = Query(default="default"),
+    limit: int = Query(default=50, le=200),
+):
+    """Return recent NOC audit log entries from Redis."""
+    redis_client = get_async_redis()
+    if not redis_client:
+        return {"entries": [], "source": "redis_unavailable"}
+    key = f"sinc:noc_audit:{tenant_id}"
+    try:
+        raw = await redis_client.zrevrangebyscore(key, "+inf", "-inf", start=0, num=limit)
+        entries = []
+        for item in raw:
+            try:
+                if isinstance(item, bytes):
+                    item = item.decode("utf-8")
+                entries.append(json.loads(item))
+            except Exception:
+                pass
+        return {"entries": entries, "count": len(entries)}
+    except Exception as exc:
+        log.debug("audit_log_read_error error=%s", exc)
+        return {"entries": [], "error": str(exc)}
+
+
+# ── Agent Control endpoints ────────────────────────────────────────────────────
+
+@router.get("/agents")
+async def list_agents(
+    tenant_id: str = Query(default="default"),
+):
+    """Return agent roster with status, reputation, and zombie detection."""
+    agents: dict[str, dict] = {}
+
+    # 1. Reputation + task stats from tasks table
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                if await _table_exists(cur, "tasks"):
+                    await cur.execute(
+                        """
+                        SELECT agent_name,
+                               COUNT(*)                                                            AS total,
+                               COUNT(*) FILTER (WHERE status = 'running')                         AS running,
+                               COUNT(*) FILTER (WHERE status = 'pending')                         AS pending,
+                               COUNT(*) FILTER (WHERE status IN ('done','completed','success'))   AS success,
+                               COUNT(*) FILTER (WHERE status = 'failed')                          AS failed,
+                               COUNT(*) FILTER (WHERE status = 'running'
+                                             AND updated_at < NOW() - INTERVAL '10 minutes')      AS zombie_count,
+                               COALESCE(SUM(tokens_used), 0)                                      AS tokens_total,
+                               AVG(EXTRACT(EPOCH FROM (updated_at - created_at)))
+                                   FILTER (WHERE status IN ('done','completed','success'))         AS avg_duration_s,
+                               MAX(updated_at)                                                     AS last_active
+                          FROM tasks
+                         WHERE tenant_id = %s AND agent_name IS NOT NULL AND agent_name != ''
+                         GROUP BY agent_name
+                         ORDER BY (COUNT(*) FILTER (WHERE status = 'running')) DESC, MAX(updated_at) DESC
+                        """,
+                        (tenant_id,),
+                    )
+                    for row in await cur.fetchall():
+                        name = row["agent_name"]
+                        total = int(row["total"] or 0)
+                        success = int(row["success"] or 0)
+                        running = int(row["running"] or 0)
+                        zombie_count = int(row["zombie_count"] or 0)
+                        rep_score = round(success / total * 100, 1) if total > 0 else 0
+
+                        if zombie_count > 0:
+                            status = "zombie"
+                        elif running > 0:
+                            status = "busy"
+                        elif int(row.get("pending") or 0) > 0:
+                            status = "queued"
+                        else:
+                            status = "idle"
+
+                        last_active_raw = row.get("last_active")
+                        last_active_str = last_active_raw.isoformat() if hasattr(last_active_raw, "isoformat") else str(last_active_raw or "")
+
+                        agents[name] = {
+                            "name": name,
+                            "status": status,
+                            "total_tasks": total,
+                            "running": running,
+                            "pending": int(row.get("pending") or 0),
+                            "success": success,
+                            "failed": int(row.get("failed") or 0),
+                            "zombie": zombie_count > 0,
+                            "tokens_total": int(row.get("tokens_total") or 0),
+                            "avg_duration_s": round(float(row["avg_duration_s"]), 1) if row.get("avg_duration_s") else None,
+                            "rep_score": rep_score,
+                            "last_active": last_active_str,
+                        }
+    except Exception as exc:
+        log.debug("agents_tasks_query_error error=%s", exc)
+
+    # 2. Live heartbeats (if available)
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                fleet = await _fetch_agent_fleet(cur, tenant_id)
+                for item in fleet:
+                    name = item.get("agent_name", "")
+                    if not name:
+                        continue
+                    if name not in agents:
+                        agents[name] = {"name": name, "status": "idle", "total_tasks": 0, "running": 0,
+                                        "pending": 0, "success": 0, "failed": 0, "zombie": False,
+                                        "tokens_total": 0, "avg_duration_s": None, "rep_score": 0, "last_active": ""}
+                    beat_at = item.get("beat_at")
+                    agents[name]["heartbeat"] = beat_at.isoformat() if hasattr(beat_at, "isoformat") else str(beat_at or "")
+                    agents[name]["progress_pct"] = item.get("progress_pct")
+                    agents[name]["current_step"] = item.get("current_step")
+                    agents[name]["task_id"] = item.get("task_id")
+                    agents[name]["task_title"] = item.get("task_title") or item.get("current_step") or ""
+    except Exception as exc:
+        log.debug("agents_heartbeat_query_error error=%s", exc)
+
+    return {"agents": list(agents.values()), "count": len(agents)}
+
+
+@router.get("/agents/{agent_id}/config")
+async def get_agent_config(
+    agent_id: str,
+    tenant_id: str = Query(default="default"),
+):
+    """Read per-agent inference config from Redis."""
+    temperature = await _get_runtime_config(tenant_id, f"agent:{agent_id}:temperature", default="0.7")
+    model       = await _get_runtime_config(tenant_id, f"agent:{agent_id}:model",       default="")
+    max_tokens  = await _get_runtime_config(tenant_id, f"agent:{agent_id}:max_tokens",  default="4096")
+    top_p       = await _get_runtime_config(tenant_id, f"agent:{agent_id}:top_p",       default="1.0")
+    return {
+        "agent_id": agent_id,
+        "temperature": float(temperature),
+        "model": str(model),
+        "max_tokens": int(max_tokens),
+        "top_p": float(top_p),
+    }
+
+
+@router.post("/agents/{agent_id}/config")
+async def set_agent_config(
+    agent_id: str,
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Write per-agent inference config to Redis. Orchestrator reads these on next task start."""
+    allowed = {"temperature": float, "model": str, "max_tokens": int, "top_p": float}
+    saved = {}
+    for key, cast in allowed.items():
+        if key in body:
+            val = cast(body[key])
+            await _set_runtime_config(tenant_id, f"agent:{agent_id}:{key}", val)
+            saved[key] = val
+
+    await _write_audit_log(tenant_id, "agent_config_update", agent_id, str(saved))
+    return {"ok": True, "agent_id": agent_id, "saved": saved}
+
+
+# ── Cost Attribution endpoint ──────────────────────────────────────────────────
+
+# Approximate cost per 1000 tokens by model family
+_COST_PER_1K: dict[str, float] = {
+    "claude-3-opus":   0.015,
+    "claude-3-sonnet": 0.003,
+    "claude-3-haiku":  0.0008,
+    "gpt-4":           0.030,
+    "gpt-4-turbo":     0.010,
+    "gpt-3.5-turbo":   0.001,
+    "llama":           0.0,
+    "ollama":          0.0,
+    "mistral":         0.0,
+    "default":         0.001,
+}
+
+
+def _estimate_cost(tokens: int, model: str) -> float:
+    if not tokens:
+        return 0.0
+    model_lower = str(model or "").lower()
+    rate = _COST_PER_1K.get("default", 0.001)
+    for prefix, cost in _COST_PER_1K.items():
+        if prefix in model_lower:
+            rate = cost
+            break
+    return round(tokens / 1000 * rate, 6)
+
+
+@router.get("/cost-attribution")
+async def get_cost_attribution(
+    tenant_id: str = Query(default="default"),
+    period: str = Query(default="7d"),
+    group_by: str = Query(default="agent"),
+):
+    """Token cost attribution by agent/model/day."""
+    days = {"1d": 1, "7d": 7, "30d": 30}.get(period, 7)
+    rows: list[dict] = []
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                # Try mv_llm_lineage first (has model column)
+                has_lineage = await _table_exists(cur, "mv_llm_lineage")
+                if has_lineage:
+                    await cur.execute(
+                        f"""
+                        SELECT agent_name,
+                               COALESCE(model, 'unknown') AS model,
+                               COALESCE(SUM(COALESCE(input_tokens, 0) + COALESCE(output_tokens, 0)), 0) AS tokens,
+                               COUNT(*) AS calls,
+                               DATE_TRUNC('day', created_at) AS day
+                          FROM mv_llm_lineage
+                         WHERE tenant_id = %s
+                           AND created_at >= NOW() - INTERVAL '{int(days)} days'
+                         GROUP BY agent_name, model, DATE_TRUNC('day', created_at)
+                         ORDER BY day DESC, tokens DESC
+                        """,
+                        (tenant_id,),
+                    )
+                    raw = await cur.fetchall()
+                    for r in raw:
+                        rows.append({
+                            "agent": r.get("agent_name") or "unknown",
+                            "model": r.get("model") or "unknown",
+                            "tokens": int(r.get("tokens") or 0),
+                            "calls": int(r.get("calls") or 0),
+                            "day": str(r.get("day", ""))[:10],
+                        })
+                else:
+                    # fallback: tasks.tokens_used
+                    if await _table_exists(cur, "tasks"):
+                        await cur.execute(
+                            f"""
+                            SELECT agent_name,
+                                   COALESCE(SUM(tokens_used), 0) AS tokens,
+                                   COUNT(*) AS calls,
+                                   DATE_TRUNC('day', created_at) AS day
+                              FROM tasks
+                             WHERE tenant_id = %s
+                               AND created_at >= NOW() - INTERVAL '{int(days)} days'
+                             GROUP BY agent_name, DATE_TRUNC('day', created_at)
+                             ORDER BY day DESC, tokens DESC
+                            """,
+                            (tenant_id,),
+                        )
+                        raw = await cur.fetchall()
+                        for r in raw:
+                            rows.append({
+                                "agent": r.get("agent_name") or "unknown",
+                                "model": "unknown",
+                                "tokens": int(r.get("tokens") or 0),
+                                "calls": int(r.get("calls") or 0),
+                                "day": str(r.get("day", ""))[:10],
+                            })
+    except Exception as exc:
+        log.debug("cost_attribution_error error=%s", exc)
+
+    # Aggregate by agent for summary
+    summary: dict[str, dict] = {}
+    for r in rows:
+        key = r["agent"] if group_by == "agent" else r.get("model", "unknown")
+        if key not in summary:
+            summary[key] = {"name": key, "tokens": 0, "calls": 0, "cost_usd": 0.0}
+        summary[key]["tokens"] += r["tokens"]
+        summary[key]["calls"] += r["calls"]
+        summary[key]["cost_usd"] = round(summary[key]["cost_usd"] + _estimate_cost(r["tokens"], r.get("model", "")), 6)
+
+    total_tokens = sum(v["tokens"] for v in summary.values())
+    total_cost   = round(sum(v["cost_usd"] for v in summary.values()), 6)
+
+    return {
+        "period": period,
+        "group_by": group_by,
+        "rows": rows,
+        "summary": sorted(summary.values(), key=lambda x: x["tokens"], reverse=True),
+        "total_tokens": total_tokens,
+        "total_cost_usd": total_cost,
+    }
+
+
+# ── PATCH /tasks/{task_id} (edit + re-run) ────────────────────────────────────
+
+@router.patch("/tasks/{task_id}")
+async def patch_task(
+    task_id: str,
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Edit a task's prompt/priority and optionally re-queue it."""
+    allowed_fields = {"prompt", "description", "priority", "agent_name"}
+    updates = {k: v for k, v in body.items() if k in allowed_fields}
+    rerun = bool(body.get("rerun", False))
+    if rerun:
+        updates["status"] = "pending"
+
+    if not updates:
+        return {"ok": False, "detail": "No valid fields to update"}
+
+    set_clauses = ", ".join(f"{k} = %s" for k in updates)
+    values = list(updates.values()) + ["NOW()", tenant_id, task_id]
+
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                task_pk = await get_task_pk_column(cur)
+                await cur.execute(
+                    f"UPDATE tasks SET {set_clauses}, updated_at = %s "
+                    f"WHERE tenant_id = %s AND {task_pk} = %s",
+                    values,
+                )
+                await conn.commit()
+    except Exception as exc:
+        log.warning("patch_task_error task_id=%s error=%s", task_id, exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    action = "task_rerun" if rerun else "task_edit"
+    await _write_audit_log(tenant_id, action, task_id, str(updates))
+    return {"ok": True, "task_id": task_id, "rerun": rerun, "updated": list(updates.keys())}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# L0 — INFRA CONTROL: circuit breaker, mode, worker scaling, rate limiter
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/infra/status")
+async def get_infra_status(tenant_id: str = Query(default="default")):
+    """Current state of circuit breaker, operating mode, worker scale, rate limit."""
+    cb      = await _get_runtime_config(tenant_id, "circuit_breaker",  default="off")
+    mode    = await _get_runtime_config(tenant_id, "operating_mode",   default="balanced")
+    workers = await _get_runtime_config(tenant_id, "worker_replicas",  default="2")
+    rpm     = await _get_runtime_config(tenant_id, "global_rpm_limit", default="60")
+    failover= await _get_runtime_config(tenant_id, "failover_mode",    default="local")
+    return {
+        "circuit_breaker": str(cb),
+        "operating_mode":  str(mode),
+        "worker_replicas": int(workers),
+        "global_rpm_limit": int(rpm),
+        "failover_mode":   str(failover),
+    }
+
+
+@router.post("/infra/circuit-breaker")
+async def toggle_circuit_breaker(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Toggle global circuit breaker (halts all LLM + tool calls when ON)."""
+    state = "on" if body.get("enabled", False) else "off"
+    await _set_runtime_config(tenant_id, "circuit_breaker", state)
+    redis_client = get_async_redis()
+    if redis_client:
+        try:
+            await redis_client.publish("config_update", json.dumps({"circuit_breaker": state, "tenant_id": tenant_id}))
+        except Exception:
+            pass
+    await _write_audit_log(tenant_id, "circuit_breaker_toggle", "global", f"state={state}")
+    return {"ok": True, "circuit_breaker": state}
+
+
+@router.post("/infra/mode")
+async def set_operating_mode(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Set operating mode: low_cost | balanced | high_performance."""
+    allowed = {"low_cost", "balanced", "high_performance"}
+    mode = str(body.get("mode", "balanced")).lower()
+    if mode not in allowed:
+        raise HTTPException(status_code=400, detail=f"mode must be one of {allowed}")
+    await _set_runtime_config(tenant_id, "operating_mode", mode)
+    # Adjust confidence threshold automatically per mode
+    conf_map = {"low_cost": 0.85, "balanced": 0.72, "high_performance": 0.55}
+    await _set_runtime_config(tenant_id, "conf_threshold", conf_map[mode])
+    redis_client = get_async_redis()
+    if redis_client:
+        try:
+            await redis_client.publish("config_update", json.dumps({"operating_mode": mode, "tenant_id": tenant_id}))
+        except Exception:
+            pass
+    await _write_audit_log(tenant_id, "mode_change", "global", f"mode={mode}")
+    return {"ok": True, "operating_mode": mode, "auto_confidence": conf_map[mode]}
+
+
+@router.post("/infra/scale-workers")
+async def scale_workers(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Set number of worker replicas (1-32). Also attempts docker scale if available."""
+    replicas = max(1, min(32, int(body.get("replicas", 2))))
+    await _set_runtime_config(tenant_id, "worker_replicas", replicas)
+    docker_result = "no_docker"
+    try:
+        import subprocess as _sp
+        result = _sp.run(
+            ["docker", "compose", "scale", f"worker={replicas}"],
+            capture_output=True, text=True, timeout=15
+        )
+        docker_result = "ok" if result.returncode == 0 else result.stderr.strip()[:120]
+    except Exception as exc:
+        docker_result = str(exc)[:80]
+    await _write_audit_log(tenant_id, "scale_workers", "worker", f"replicas={replicas}")
+    return {"ok": True, "worker_replicas": replicas, "docker_result": docker_result}
+
+
+@router.post("/infra/rate-limiter")
+async def set_rate_limiter(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Set global requests-per-minute limit."""
+    rpm = max(1, min(10000, int(body.get("rpm", 60))))
+    await _set_runtime_config(tenant_id, "global_rpm_limit", rpm)
+    await _write_audit_log(tenant_id, "rate_limiter_update", "global", f"rpm={rpm}")
+    return {"ok": True, "global_rpm_limit": rpm}
+
+
+@router.post("/infra/failover")
+async def set_failover_mode(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Set failover mode: local | cloud | hybrid."""
+    allowed = {"local", "cloud", "hybrid"}
+    mode = str(body.get("mode", "local")).lower()
+    if mode not in allowed:
+        raise HTTPException(status_code=400, detail=f"mode must be one of {allowed}")
+    await _set_runtime_config(tenant_id, "failover_mode", mode)
+    await _write_audit_log(tenant_id, "failover_change", "global", f"mode={mode}")
+    return {"ok": True, "failover_mode": mode}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# L1 — AGENT CONTROL: clone, reassign, version history
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/agents/{agent_id}/clone")
+async def clone_agent(
+    agent_id: str,
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Clone an agent's config to a new name."""
+    new_name = str(body.get("new_name", f"{agent_id}_clone")).strip()
+    if not new_name or len(new_name) < 2:
+        raise HTTPException(status_code=400, detail="new_name must be at least 2 chars")
+    # Copy all config keys from source to new agent
+    for key in ("temperature", "model", "max_tokens", "top_p"):
+        val = await _get_runtime_config(tenant_id, f"agent:{agent_id}:{key}")
+        if val is not None:
+            await _set_runtime_config(tenant_id, f"agent:{new_name}:{key}", val)
+    await _write_audit_log(tenant_id, "agent_clone", agent_id, f"new_name={new_name}")
+    return {"ok": True, "source": agent_id, "clone": new_name}
+
+
+@router.post("/agents/{agent_id}/reassign")
+async def reassign_agent_task(
+    agent_id: str,
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Reassign all running/pending tasks from one agent to another."""
+    target_agent = str(body.get("target_agent", "")).strip()
+    if not target_agent:
+        raise HTTPException(status_code=400, detail="target_agent required")
+    moved = 0
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                task_pk = await get_task_pk_column(cur)
+                await cur.execute(
+                    f"UPDATE tasks SET agent_name = %s, updated_at = NOW() "
+                    f"WHERE tenant_id = %s AND agent_name = %s AND status IN ('pending','running','paused') "
+                    f"RETURNING {task_pk}",
+                    (target_agent, tenant_id, agent_id),
+                )
+                moved = len(await cur.fetchall())
+                await conn.commit()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    await _write_audit_log(tenant_id, "agent_reassign", agent_id, f"target={target_agent} moved={moved}")
+    return {"ok": True, "from": agent_id, "to": target_agent, "tasks_moved": moved}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# L2 — COGNITIVE ORCHESTRATION: reputation controls, auto-learning
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/intelligence/reputation/{agent_id}/adjust")
+async def adjust_agent_reputation(
+    agent_id: str,
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Manually adjust an agent's reputation score offset stored in Redis."""
+    delta = float(body.get("delta", 0))  # +/- percentage points
+    if abs(delta) > 100:
+        raise HTTPException(status_code=400, detail="delta must be between -100 and +100")
+    key = f"agent:{agent_id}:rep_offset"
+    current = float(await _get_runtime_config(tenant_id, key, default="0") or 0)
+    new_val  = max(-100.0, min(100.0, current + delta))
+    await _set_runtime_config(tenant_id, key, new_val)
+    action = "rep_boost" if delta > 0 else "rep_penalty"
+    await _write_audit_log(tenant_id, action, agent_id, f"delta={delta:+.1f} new_offset={new_val:.1f}")
+    return {"ok": True, "agent": agent_id, "delta": delta, "new_offset": new_val}
+
+
+@router.post("/intelligence/reputation/auto-learning")
+async def set_auto_learning(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Toggle auto-learning (reputation updates from task outcomes)."""
+    enabled = bool(body.get("enabled", True))
+    await _set_runtime_config(tenant_id, "auto_learning", "on" if enabled else "off")
+    redis_client = get_async_redis()
+    if redis_client:
+        try:
+            await redis_client.publish("config_update", json.dumps({"auto_learning": enabled, "tenant_id": tenant_id}))
+        except Exception:
+            pass
+    await _write_audit_log(tenant_id, "auto_learning_toggle", "global", f"enabled={enabled}")
+    return {"ok": True, "auto_learning": enabled}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# L3 — TASK CONTROL: duplicate, full details, timeout config
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/tasks/{task_id}/duplicate")
+async def duplicate_task(
+    task_id: str,
+    tenant_id: str = Query(default="default"),
+):
+    """Clone a task into a new pending task."""
+    import uuid as _uuid
+    new_id = f"dup-{_uuid.uuid4().hex[:8]}"
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                task_pk = await get_task_pk_column(cur)
+                cols = await get_table_columns_cached(cur, "tasks")
+                copy_cols = [c for c in cols if c not in (task_pk, "id", "created_at", "updated_at", "status")]
+                select_cols = ", ".join(copy_cols)
+                await cur.execute(
+                    f"SELECT {select_cols} FROM tasks WHERE tenant_id = %s AND {task_pk} = %s",
+                    (tenant_id, task_id),
+                )
+                src = await cur.fetchone()
+                if not src:
+                    raise HTTPException(status_code=404, detail="Task not found")
+                vals = [new_id, tenant_id] + [src.get(c) for c in copy_cols if c not in ("task_id", "tenant_id")]
+                placeholders = ", ".join(["%s"] * (len(copy_cols) + 1))
+                insert_cols = ", ".join(["task_id"] + [c for c in copy_cols if c not in ("task_id",)])
+                await cur.execute(
+                    f"INSERT INTO tasks ({insert_cols}, status, created_at, updated_at) "
+                    f"VALUES ({placeholders}, 'pending', NOW(), NOW()) ON CONFLICT DO NOTHING",
+                    [new_id] + [src.get(c) for c in copy_cols if c not in ("task_id",)],
+                )
+                await conn.commit()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        log.warning("duplicate_task_error task_id=%s error=%s", task_id, exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+    await _write_audit_log(tenant_id, "task_duplicate", task_id, f"new_id={new_id}")
+    return {"ok": True, "source_task_id": task_id, "new_task_id": new_id}
+
+
+@router.post("/infra/zombie-timeout")
+async def set_zombie_timeout(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Configure zombie detection timeout in minutes."""
+    minutes = max(1, min(1440, int(body.get("minutes", 10))))
+    await _set_runtime_config(tenant_id, "zombie_timeout_minutes", minutes)
+    await _write_audit_log(tenant_id, "zombie_timeout_update", "global", f"minutes={minutes}")
+    return {"ok": True, "zombie_timeout_minutes": minutes}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# L4 — MEMORY CONTROL: vector search playground, pruning
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/memory/vector-search")
+async def memory_vector_search(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Search Qdrant vector store directly from the playground."""
+    query      = str(body.get("query", "")).strip()
+    project_id = str(body.get("project_id", "project0"))
+    top_k      = min(20, max(1, int(body.get("top_k", 5))))
+    threshold  = float(body.get("threshold", 0.0))
+    if not query:
+        raise HTTPException(status_code=400, detail="query required")
+    try:
+        from services.context_retriever import ContextRetriever
+        retriever = ContextRetriever()
+        result = retriever.retrieve(query=query, project_id=project_id, tenant_id=tenant_id, top_k=top_k)
+        # Filter by threshold
+        if threshold > 0 and isinstance(result, list):
+            result = [r for r in result if (r.get("score") or 0) >= threshold]
+        return {"ok": True, "query": query, "results": result, "count": len(result) if isinstance(result, list) else 0}
+    except Exception as exc:
+        log.warning("vector_search_error error=%s", exc)
+        return {"ok": False, "error": str(exc), "results": []}
+
+
+@router.delete("/memory/lessons/{lesson_id}")
+async def delete_lesson(
+    lesson_id: str,
+    tenant_id: str = Query(default="default"),
+):
+    """Delete a lesson from the lessons_learned table by ID."""
+    deleted = False
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                if not await _table_exists(cur, "lessons_learned"):
+                    raise HTTPException(status_code=503, detail="lessons_learned table unavailable")
+                await cur.execute(
+                    "DELETE FROM lessons_learned WHERE id = %s AND (tenant_id = %s OR tenant_id IS NULL)",
+                    (lesson_id, tenant_id),
+                )
+                deleted = cur.rowcount > 0
+                await conn.commit()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    await _write_audit_log(tenant_id, "lesson_delete", lesson_id, "pruned")
+    return {"ok": deleted, "lesson_id": lesson_id}
+
+
+@router.post("/memory/vector-prune")
+async def prune_vector(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Delete a specific vector from Qdrant by ID."""
+    vector_id = str(body.get("id", "")).strip()
+    collection = str(body.get("collection", "sinc_memory"))
+    if not vector_id:
+        raise HTTPException(status_code=400, detail="id required")
+    try:
+        from qdrant_client import QdrantClient
+        import os
+        client = QdrantClient(host=os.environ.get("QDRANT_HOST", "localhost"), port=int(os.environ.get("QDRANT_PORT", 6333)))
+        client.delete(collection_name=collection, points_selector=[vector_id])
+        await _write_audit_log(tenant_id, "vector_prune", f"{collection}/{vector_id}", "deleted")
+        return {"ok": True, "id": vector_id, "collection": collection}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# L5 — DEEP TRACE: full task trace, tool stats
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/tasks/{task_id}/trace")
+async def get_task_trace(
+    task_id: str,
+    tenant_id: str = Query(default="default"),
+):
+    """Full execution trace for a task: prompt, response, tools, timing."""
+    result: dict = {"task_id": task_id, "found": False}
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                task_pk = await get_task_pk_column(cur)
+                cols    = await get_table_columns_cached(cur, "tasks")
+                await cur.execute(
+                    f"SELECT * FROM tasks WHERE tenant_id = %s AND {task_pk} = %s",
+                    (tenant_id, task_id),
+                )
+                row = await cur.fetchone()
+                if row:
+                    result.update(dict(row))
+                    result["found"] = True
+
+                # Tool calls from mv_llm_lineage if available
+                if await _table_exists(cur, "mv_llm_lineage"):
+                    await cur.execute(
+                        "SELECT * FROM mv_llm_lineage WHERE task_id = %s ORDER BY created_at",
+                        (task_id,),
+                    )
+                    result["llm_calls"] = await cur.fetchall()
+    except Exception as exc:
+        log.debug("task_trace_error task_id=%s error=%s", task_id, exc)
+    return result
+
+
+@router.get("/diagnostics/tool-stats")
+async def get_tool_stats(
+    tenant_id: str = Query(default="default"),
+    period: str = Query(default="24h"),
+):
+    """Tool usage statistics: calls per tool, avg latency, failure rate."""
+    hours = {"1h": 1, "24h": 24, "7d": 168}.get(period, 24)
+    stats: list = []
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                if await _table_exists(cur, "mv_llm_lineage"):
+                    await cur.execute(
+                        f"""
+                        SELECT model AS tool_name,
+                               COUNT(*) AS calls,
+                               AVG(latency_ms) AS avg_latency_ms,
+                               COUNT(*) FILTER (WHERE status IN ('error','failed')) AS failures
+                          FROM mv_llm_lineage
+                         WHERE tenant_id = %s AND created_at >= NOW() - INTERVAL '{int(hours)} hours'
+                         GROUP BY model
+                         ORDER BY calls DESC
+                        """,
+                        (tenant_id,),
+                    )
+                    stats = await cur.fetchall()
+    except Exception as exc:
+        log.debug("tool_stats_error error=%s", exc)
+    return {"period": period, "stats": stats}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# L6 — SECURITY: API keys management
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/security/api-keys")
+async def list_api_keys(tenant_id: str = Query(default="default")):
+    """List API keys for the tenant (masked)."""
+    keys: list = []
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                if await _table_exists(cur, "api_keys"):
+                    await cur.execute(
+                        """
+                        SELECT id, key, label, created_at, last_used_at, revoked_at
+                          FROM api_keys
+                         WHERE tenant_id = %s
+                         ORDER BY created_at DESC
+                        """,
+                        (tenant_id,),
+                    )
+                    for row in await cur.fetchall():
+                        k = dict(row)
+                        # Mask key: show first 8 + last 4 chars
+                        raw = str(k.get("key", ""))
+                        k["key_masked"] = raw[:8] + "****" + raw[-4:] if len(raw) > 12 else raw[:4] + "****"
+                        k.pop("key", None)
+                        keys.append(k)
+    except Exception as exc:
+        log.debug("list_api_keys_error error=%s", exc)
+    return {"keys": keys, "count": len(keys)}
+
+
+@router.post("/security/api-keys")
+async def create_api_key(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Create a new API key for the tenant."""
+    import secrets as _sec
+    import hashlib as _hl
+    label = str(body.get("label", "noc-generated")).strip()[:64]
+    raw_key = "sk-" + _sec.token_hex(24)
+    key_hash = _hl.sha256(raw_key.encode()).hexdigest()
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                if not await _table_exists(cur, "api_keys"):
+                    raise HTTPException(status_code=503, detail="api_keys table unavailable")
+                await cur.execute(
+                    "INSERT INTO api_keys (tenant_id, key, label, created_at) VALUES (%s, %s, %s, NOW())",
+                    (tenant_id, raw_key, label),
+                )
+                await conn.commit()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    await _write_audit_log(tenant_id, "api_key_create", label, "new key issued")
+    return {"ok": True, "api_key": raw_key, "label": label}  # shown once
+
+
+@router.delete("/security/api-keys/{key_id}")
+async def revoke_api_key(
+    key_id: str,
+    tenant_id: str = Query(default="default"),
+):
+    """Revoke an API key by ID."""
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "UPDATE api_keys SET revoked_at = NOW() WHERE id = %s AND tenant_id = %s",
+                    (key_id, tenant_id),
+                )
+                await conn.commit()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    await _write_audit_log(tenant_id, "api_key_revoke", key_id, "revoked")
+    return {"ok": True, "key_id": key_id, "revoked": True}
+
+
+@router.get("/security/anomalies")
+async def get_security_anomalies(
+    tenant_id: str = Query(default="default"),
+    limit: int = Query(default=20, le=100),
+):
+    """Return recent agent anomaly events (zombie spikes, prompt injection patterns, tool abuse)."""
+    anomalies: list = []
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                # Zombie spike: agents stuck > 30 min
+                if await _table_exists(cur, "tasks"):
+                    await cur.execute(
+                        """
+                        SELECT 'zombie_spike' AS type, agent_name AS target,
+                               COUNT(*) AS count,
+                               MAX(updated_at) AS ts,
+                               'Agent stuck > 30 minutes' AS detail
+                          FROM tasks
+                         WHERE tenant_id = %s AND status = 'running'
+                           AND updated_at < NOW() - INTERVAL '30 minutes'
+                         GROUP BY agent_name
+                         HAVING COUNT(*) > 0
+                        """,
+                        (tenant_id,),
+                    )
+                    anomalies.extend(await cur.fetchall())
+
+                    # Token abuse: agent using > 2x average tokens in last hour
+                    await cur.execute(
+                        """
+                        WITH avg_tok AS (
+                          SELECT AVG(tokens_used) AS avg_t FROM tasks WHERE tenant_id = %s
+                        )
+                        SELECT 'token_abuse' AS type, agent_name AS target,
+                               SUM(tokens_used) AS count,
+                               MAX(created_at) AS ts,
+                               'Token usage > 2x average' AS detail
+                          FROM tasks, avg_tok
+                         WHERE tenant_id = %s
+                           AND created_at >= NOW() - INTERVAL '1 hour'
+                           AND tokens_used > avg_t * 2
+                         GROUP BY agent_name
+                         HAVING SUM(tokens_used) > 0
+                        """,
+                        (tenant_id, tenant_id),
+                    )
+                    anomalies.extend(await cur.fetchall())
+
+                    # Failure spike: agent with > 50% failure rate in last hour
+                    await cur.execute(
+                        """
+                        SELECT 'failure_spike' AS type, agent_name AS target,
+                               COUNT(*) AS count,
+                               MAX(updated_at) AS ts,
+                               'Failure rate > 50% in last hour' AS detail
+                          FROM tasks
+                         WHERE tenant_id = %s
+                           AND created_at >= NOW() - INTERVAL '1 hour'
+                         GROUP BY agent_name
+                         HAVING COUNT(*) FILTER (WHERE status = 'failed')::float / NULLIF(COUNT(*), 0) > 0.5
+                        """,
+                        (tenant_id,),
+                    )
+                    anomalies.extend(await cur.fetchall())
+    except Exception as exc:
+        log.debug("anomalies_error error=%s", exc)
+
+    # Sort by ts desc
+    def _ts(a):
+        t = a.get("ts")
+        return str(t) if t else ""
+    anomalies.sort(key=_ts, reverse=True)
+    return {"anomalies": anomalies[:limit], "count": len(anomalies)}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# L9 — EVENT ALERTS: thresholds, webhook config
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/alerts/config")
+async def get_alerts_config(tenant_id: str = Query(default="default")):
+    """Get alert threshold configuration."""
+    cpu_thresh    = await _get_runtime_config(tenant_id, "alert:cpu_pct",        default="85")
+    ram_thresh    = await _get_runtime_config(tenant_id, "alert:ram_pct",        default="88")
+    zombie_thresh = await _get_runtime_config(tenant_id, "alert:zombie_count",   default="3")
+    fail_thresh   = await _get_runtime_config(tenant_id, "alert:fail_rate_pct",  default="30")
+    webhook_url   = await _get_runtime_config(tenant_id, "alert:webhook_url",    default="")
+    webhook_type  = await _get_runtime_config(tenant_id, "alert:webhook_type",   default="slack")
+    alerts_on     = await _get_runtime_config(tenant_id, "alert:enabled",        default="true")
+    return {
+        "cpu_pct":       int(cpu_thresh),
+        "ram_pct":       int(ram_thresh),
+        "zombie_count":  int(zombie_thresh),
+        "fail_rate_pct": int(fail_thresh),
+        "webhook_url":   str(webhook_url),
+        "webhook_type":  str(webhook_type),
+        "enabled":       str(alerts_on).lower() == "true",
+    }
+
+
+@router.post("/alerts/config")
+async def save_alerts_config(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Save alert threshold + webhook configuration."""
+    mapping = {
+        "cpu_pct":       "alert:cpu_pct",
+        "ram_pct":       "alert:ram_pct",
+        "zombie_count":  "alert:zombie_count",
+        "fail_rate_pct": "alert:fail_rate_pct",
+        "webhook_url":   "alert:webhook_url",
+        "webhook_type":  "alert:webhook_type",
+        "enabled":       "alert:enabled",
+    }
+    saved = {}
+    for field, config_key in mapping.items():
+        if field in body:
+            val = body[field]
+            await _set_runtime_config(tenant_id, config_key, val)
+            saved[field] = val
+    await _write_audit_log(tenant_id, "alerts_config_update", "global", str(saved))
+    return {"ok": True, "saved": saved}
+
+
+@router.post("/alerts/test-webhook")
+async def test_webhook(
+    tenant_id: str = Query(default="default"),
+):
+    """Send a test alert to the configured webhook."""
+    import aiohttp
+    url  = str(await _get_runtime_config(tenant_id, "alert:webhook_url", default="") or "")
+    wtype = str(await _get_runtime_config(tenant_id, "alert:webhook_type", default="slack") or "slack")
+    if not url:
+        return {"ok": False, "error": "No webhook URL configured"}
+    payload = {"text": "[SINC NOC] Test alert — webhook configured correctly ✓"} if wtype == "slack" \
+        else {"content": "[SINC NOC] Test alert — webhook configured correctly ✓"}
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                return {"ok": resp.status < 300, "status": resp.status}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# L10 — META CONTROL: dry-run simulation, cost prediction
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/simulate/dry-run")
+async def simulate_dry_run(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """
+    Predict cost + execution path for a task WITHOUT running it.
+    Uses historical data to estimate: agent selection, token usage, duration.
+    """
+    prompt    = str(body.get("prompt", "")).strip()
+    agent     = str(body.get("agent_name", "")).strip()
+    priority  = int(body.get("priority", 5))
+
+    if not prompt:
+        raise HTTPException(status_code=400, detail="prompt required")
+
+    prediction = {
+        "prompt_chars":      len(prompt),
+        "estimated_tokens":  max(100, len(prompt.split()) * 6),  # rough heuristic
+        "selected_agent":    agent or "auto",
+        "estimated_duration_s": None,
+        "estimated_cost_usd": None,
+        "queue_position":    None,
+        "confidence":        0.0,
+        "similar_tasks":     [],
+    }
+
+    try:
+        async with async_db(tenant_id=tenant_id) as conn:
+            async with conn.cursor() as cur:
+                # Similar past tasks
+                cols = await get_table_columns_cached(cur, "tasks")
+                if "tokens_used" in cols and "prompt" in cols:
+                    await cur.execute(
+                        """
+                        SELECT agent_name,
+                               AVG(tokens_used)                                         AS avg_tokens,
+                               AVG(EXTRACT(EPOCH FROM (updated_at - created_at)))       AS avg_duration_s,
+                               COUNT(*) FILTER (WHERE status IN ('done','completed','success'))::float / NULLIF(COUNT(*),0) AS success_rate
+                          FROM tasks
+                         WHERE tenant_id = %s
+                           AND status IN ('done','completed','success','failed')
+                           AND agent_name = COALESCE(NULLIF(%s,''), agent_name)
+                         GROUP BY agent_name
+                         ORDER BY avg_tokens
+                         LIMIT 5
+                        """,
+                        (tenant_id, agent or None),
+                    )
+                    similar = await cur.fetchall()
+                    if similar:
+                        best = similar[0]
+                        est_tokens   = int(best.get("avg_tokens") or prediction["estimated_tokens"])
+                        est_duration = float(best.get("avg_duration_s") or 30)
+                        success_rate = float(best.get("success_rate") or 0.7)
+                        prediction.update({
+                            "selected_agent":      best.get("agent_name") or agent or "auto",
+                            "estimated_tokens":    est_tokens,
+                            "estimated_duration_s": round(est_duration, 1),
+                            "estimated_cost_usd":  _estimate_cost(est_tokens, ""),
+                            "confidence":          round(success_rate * 100, 1),
+                            "similar_tasks":       [dict(r) for r in similar[:3]],
+                        })
+
+                # Queue position
+                if await _table_exists(cur, "tasks"):
+                    await cur.execute(
+                        "SELECT COUNT(*) AS n FROM tasks WHERE tenant_id = %s AND status IN ('pending','running') AND priority >= %s",
+                        (tenant_id, priority),
+                    )
+                    q_row = await cur.fetchone()
+                    prediction["queue_position"] = int(q_row["n"] or 0) + 1 if q_row else 1
+
+    except Exception as exc:
+        log.debug("dry_run_error error=%s", exc)
+
+    return {"ok": True, "simulation": prediction}
+
+
+# ═══════════════════════════════════════════════════════════════════
+# METRICS TRENDS — time-series for home sparklines
+# ═══════════════════════════════════════════════════════════════════
+
+@router.get("/metrics/trends")
+async def get_metrics_trends(
+    tenant_id: str = Query(default="default"),
+    window_minutes: int = Query(default=60),
+    points: int = Query(default=20),
+):
+    """
+    Returns time-series arrays for home dashboard sparklines.
+    Uses a SINGLE SQL query with bucket arithmetic — O(1) round-trips.
+    """
+    points      = min(max(points, 5), 30)
+    bucket_sec  = max(60, (window_minutes * 60) // points)
+    now_ts      = _time.time()
+    start_ts    = now_ts - window_minutes * 60
+
+    # Pre-fill buckets so gaps stay null (not 0)
+    bucket_map: dict[int, dict] = {}
+    for i in range(points):
+        ts = int(start_ts + i * bucket_sec)
+        bucket_map[ts] = {"done": 0, "total": 0, "queue": 0, "agents": set(), "tokens": 0, "lat_sum": 0.0, "lat_n": 0}
+
+    try:
+        async with async_db() as cur:
+            if not await _table_exists(cur, "tasks"):
+                raise ValueError("no tasks table")
+
+            cols = await get_table_columns_cached(cur, "tasks")
+            has_tokens   = "tokens_used" in cols
+            has_duration = "duration"    in cols
+
+            tok_expr = "COALESCE(tokens_used, 0)"  if has_tokens   else "0"
+            dur_expr = "COALESCE(duration,   0.0)" if has_duration else "0.0"
+
+            await cur.execute(
+                f"""
+                SELECT
+                    (FLOOR(EXTRACT(EPOCH FROM updated_at) / %(bsec)s) * %(bsec)s)::bigint  AS bucket,
+                    COUNT(*)                                              AS total,
+                    COUNT(*) FILTER (WHERE status = 'done')              AS done,
+                    COUNT(*) FILTER (WHERE status IN ('pending','running')) AS queue_n,
+                    COUNT(DISTINCT agent_name) FILTER (WHERE status = 'running') AS agents,
+                    COALESCE(SUM({tok_expr}), 0)                         AS tokens,
+                    COALESCE(AVG({dur_expr}) FILTER (WHERE status = 'done'), 0) AS avg_dur
+                FROM tasks
+                WHERE tenant_id = %(tid)s
+                  AND updated_at >= to_timestamp(%(start)s)
+                GROUP BY bucket
+                ORDER BY bucket
+                """,
+                {"tid": tenant_id, "bsec": bucket_sec, "start": start_ts},
+            )
+            rows = await cur.fetchall()
+
+            for row in rows:
+                bk = int(row["bucket"] or 0)
+                # snap to nearest pre-filled bucket
+                nearest = min(bucket_map, key=lambda k: abs(k - bk))
+                b = bucket_map[nearest]
+                b["done"]    += int(row["done"]    or 0)
+                b["total"]   += int(row["total"]   or 0)
+                b["queue"]   += int(row["queue_n"] or 0)
+                b["agents"]  = max(b["agents"] if isinstance(b["agents"], int) else 0,
+                                   int(row["agents"] or 0))
+                b["tokens"]  += int(row["tokens"]  or 0)
+                avg_d = float(row["avg_dur"] or 0)
+                if avg_d > 0:
+                    b["lat_sum"] += avg_d * 1000
+                    b["lat_n"]   += 1
+
+    except Exception as exc:
+        log.debug("metrics_trends error=%s", exc)
+
+    # Serialise
+    series: dict[str, list] = {
+        "timestamps": [], "success_rate": [], "queue_depth": [],
+        "active_agents": [], "tokens_per_min": [], "avg_latency_ms": [],
+    }
+    for ts in sorted(bucket_map):
+        b = bucket_map[ts]
+        total = b["total"]
+        series["timestamps"].append(ts)
+        series["success_rate"].append(round(b["done"] / total, 3) if total else None)
+        series["queue_depth"].append(b["queue"] or None)
+        series["active_agents"].append(b["agents"] if isinstance(b["agents"], int) and b["agents"] > 0 else None)
+        series["tokens_per_min"].append(round(b["tokens"] / max(1, bucket_sec / 60), 1) if b["tokens"] else None)
+        series["avg_latency_ms"].append(round(b["lat_sum"] / b["lat_n"], 0) if b["lat_n"] else None)
+
+    return {"ok": True, "window_minutes": window_minutes, "points": points,
+            "bucket_seconds": bucket_sec, "series": series}
+
+
+# ═══════════════════════════════════════════════════════════════════
+# WORKERS — list active worker processes
+# ═══════════════════════════════════════════════════════════════════
+
+@router.get("/workers")
+async def list_workers(
+    tenant_id: str = Query(default="default"),
+):
+    """List worker agents — from Redis heartbeats + DB running tasks."""
+    workers = []
+    try:
+        redis = await get_async_redis()
+        if redis:
+            # scan for worker heartbeat keys
+            pattern = "sinc:worker:*"
+            cursor = 0
+            keys = []
+            while True:
+                cursor, batch = await redis.scan(cursor, match=pattern, count=100)
+                keys.extend(batch)
+                if cursor == 0:
+                    break
+            for key in keys[:50]:
+                try:
+                    raw = await redis.get(key)
+                    if raw:
+                        w = json.loads(raw) if isinstance(raw, str) else json.loads(raw.decode())
+                        workers.append(w)
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    # Supplement from DB: running tasks with agent_name
+    try:
+        async with async_db() as cur:
+            if await _table_exists(cur, "tasks"):
+                await cur.execute(
+                    """SELECT agent_name,
+                        COUNT(*) AS running_tasks,
+                        MIN(created_at) AS oldest_task,
+                        MAX(updated_at) AS last_update,
+                        AVG(EXTRACT(EPOCH FROM (NOW() - created_at))) AS avg_run_secs
+                    FROM tasks
+                    WHERE tenant_id = %s AND status = 'running'
+                    GROUP BY agent_name
+                    ORDER BY running_tasks DESC
+                    LIMIT 30
+                    """,
+                    (tenant_id,),
+                )
+                rows = await cur.fetchall()
+                db_agents = {w.get("name") or w.get("agent_name"): w for w in workers}
+                for row in rows:
+                    name = row["agent_name"] or "unknown"
+                    if name not in db_agents:
+                        workers.append({
+                            "name": name,
+                            "status": "running",
+                            "running_tasks": int(row["running_tasks"] or 0),
+                            "avg_run_secs": round(float(row["avg_run_secs"] or 0), 1),
+                            "last_update": str(row["last_update"]) if row.get("last_update") else None,
+                            "source": "db",
+                        })
+                    else:
+                        db_agents[name]["running_tasks"] = int(row["running_tasks"] or 0)
+    except Exception as exc:
+        log.debug("list_workers db error=%s", exc)
+
+    # If nothing found, return a synthetic default worker entry
+    if not workers:
+        workers = [{"name": "sinc-worker-default", "status": "idle", "running_tasks": 0, "source": "fallback"}]
+
+    return {"ok": True, "count": len(workers), "workers": workers}
+
+
+# ═══════════════════════════════════════════════════════════════════
+# GOALS — read/write active orchestrator goals
+# ═══════════════════════════════════════════════════════════════════
+
+@router.get("/goals")
+async def get_goals(
+    tenant_id: str = Query(default="default"),
+    status: str = Query(default=""),
+):
+    """List orchestrator goals from tasks with type='goal' or a dedicated goals table."""
+    goals = []
+    try:
+        async with async_db() as cur:
+            # Try dedicated goals table first
+            if await _table_exists(cur, "goals"):
+                q = "SELECT * FROM goals WHERE tenant_id = %s"
+                params = [tenant_id]
+                if status:
+                    q += " AND status = %s"
+                    params.append(status)
+                q += " ORDER BY created_at DESC LIMIT 50"
+                await cur.execute(q, params)
+                rows = await cur.fetchall()
+                goals = [dict(r) for r in rows]
+            elif await _table_exists(cur, "tasks"):
+                # Synthesize goals from high-priority pending/running tasks
+                await cur.execute(
+                    """SELECT id, description, status, priority, agent_name,
+                        created_at, updated_at,
+                        EXTRACT(EPOCH FROM (NOW() - created_at)) AS age_secs
+                    FROM tasks
+                    WHERE tenant_id = %s
+                      AND priority >= 8
+                      AND status IN ('pending', 'running', 'done')
+                    ORDER BY priority DESC, created_at DESC
+                    LIMIT 20
+                    """,
+                    (tenant_id,),
+                )
+                rows = await cur.fetchall()
+                for r in rows:
+                    goals.append({
+                        "id": str(r["id"]),
+                        "title": (str(r.get("description") or "")[:80]) or "Task #" + str(r["id"]),
+                        "status": r["status"],
+                        "priority": r["priority"],
+                        "agent": r.get("agent_name") or "unassigned",
+                        "age_secs": round(float(r["age_secs"] or 0), 0),
+                        "source": "tasks",
+                    })
+    except Exception as exc:
+        log.debug("get_goals error=%s", exc)
+
+    return {"ok": True, "count": len(goals), "goals": goals}
+
+
+@router.post("/goals")
+async def create_goal(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Create a new goal (injected as high-priority task)."""
+    title = body.get("title", "").strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="title required")
+
+    goal_id = None
+    try:
+        async with async_db() as cur:
+            if await _table_exists(cur, "goals"):
+                await cur.execute(
+                    "INSERT INTO goals (tenant_id, title, status, priority) VALUES (%s, %s, 'pending', %s) RETURNING id",
+                    (tenant_id, title, body.get("priority", 8)),
+                )
+                row = await cur.fetchone()
+                goal_id = str(row["id"]) if row else None
+            elif await _table_exists(cur, "tasks"):
+                await cur.execute(
+                    "INSERT INTO tasks (tenant_id, description, status, priority) VALUES (%s, %s, 'pending', %s) RETURNING id",
+                    (tenant_id, title, body.get("priority", 9)),
+                )
+                row = await cur.fetchone()
+                goal_id = str(row["id"]) if row else None
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    await _write_audit_log(tenant_id, "goal_create", title, f"priority={body.get('priority',8)}")
+    return {"ok": True, "id": goal_id, "title": title}
+
+
+@router.patch("/goals/{goal_id}")
+async def update_goal(
+    goal_id: str,
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Update goal status or priority."""
+    try:
+        async with async_db() as cur:
+            table = "goals" if await _table_exists(cur, "goals") else "tasks"
+            pk = "id"
+            updates = []
+            params = []
+            if "status" in body:
+                updates.append("status = %s"); params.append(body["status"])
+            if "priority" in body:
+                updates.append("priority = %s"); params.append(body["priority"])
+            if not updates:
+                return {"ok": True, "message": "nothing to update"}
+            params.extend([tenant_id, goal_id])
+            await cur.execute(
+                f"UPDATE {table} SET {', '.join(updates)} WHERE tenant_id = %s AND {pk} = %s",
+                params,
+            )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    await _write_audit_log(tenant_id, "goal_update", goal_id, str(body))
+    return {"ok": True}
+
+
+# ═══════════════════════════════════════════════════════════════════
+# TASK STEPS — full execution trace for Deep Trace modal
+# ═══════════════════════════════════════════════════════════════════
+
+@router.get("/tasks/{task_id}/steps")
+async def get_task_steps(
+    task_id: str,
+    tenant_id: str = Query(default="default"),
+):
+    """
+    Returns detailed step-by-step execution log for a task.
+    Combines: task_steps table → llm_calls table → audit_log entries.
+    """
+    steps = []
+    task_info = {}
+
+    try:
+        async with async_db() as cur:
+            # Basic task info
+            if await _table_exists(cur, "tasks"):
+                pk = await get_task_pk_column(cur)
+                await cur.execute(
+                    f"SELECT * FROM tasks WHERE {pk} = %s AND tenant_id = %s LIMIT 1",
+                    (task_id, tenant_id),
+                )
+                row = await cur.fetchone()
+                if row:
+                    task_info = dict(row)
+                    for k, v in task_info.items():
+                        if hasattr(v, "isoformat"):
+                            task_info[k] = v.isoformat()
+
+            # Try task_steps table
+            if await _table_exists(cur, "task_steps"):
+                await cur.execute(
+                    "SELECT * FROM task_steps WHERE task_id = %s ORDER BY step_number, created_at LIMIT 200",
+                    (task_id,),
+                )
+                rows = await cur.fetchall()
+                for r in rows:
+                    s = dict(r)
+                    for k, v in s.items():
+                        if hasattr(v, "isoformat"):
+                            s[k] = v.isoformat()
+                    s["_source"] = "task_steps"
+                    steps.append(s)
+
+            # Try llm_calls / llm_lineage
+            for tbl in ("mv_llm_lineage", "llm_calls"):
+                if await _table_exists(cur, tbl):
+                    await cur.execute(
+                        f"SELECT * FROM {tbl} WHERE task_id = %s ORDER BY created_at LIMIT 100",
+                        (task_id,),
+                    )
+                    rows = await cur.fetchall()
+                    for r in rows:
+                        s = dict(r)
+                        for k, v in s.items():
+                            if hasattr(v, "isoformat"):
+                                s[k] = v.isoformat()
+                        s["_source"] = tbl
+                        steps.append(s)
+                    if rows:
+                        break
+
+            # Try tool_calls
+            if await _table_exists(cur, "tool_calls"):
+                await cur.execute(
+                    "SELECT * FROM tool_calls WHERE task_id = %s ORDER BY created_at LIMIT 100",
+                    (task_id,),
+                )
+                rows = await cur.fetchall()
+                for r in rows:
+                    s = dict(r)
+                    for k, v in s.items():
+                        if hasattr(v, "isoformat"):
+                            s[k] = v.isoformat()
+                    s["_source"] = "tool_calls"
+                    s["step_type"] = "tool_call"
+                    steps.append(s)
+
+    except Exception as exc:
+        log.debug("get_task_steps error=%s", exc)
+
+    # sort by created_at if present
+    steps.sort(key=lambda s: s.get("created_at") or s.get("step_number") or 0)
+
+    return {"ok": True, "task": task_info, "step_count": len(steps), "steps": steps}
+
+
+# ═══════════════════════════════════════════════════════════════════
+# QUEUE STATS — real-time queue depth breakdown
+# ═══════════════════════════════════════════════════════════════════
+
+@router.get("/queue/stats")
+async def get_queue_stats(
+    tenant_id: str = Query(default="default"),
+):
+    """Queue depth breakdown by status, priority, and agent."""
+    stats = {
+        "by_status": {},
+        "by_priority": {},
+        "by_agent": {},
+        "total": 0,
+        "stale_running": 0,
+    }
+    try:
+        async with async_db() as cur:
+            if not await _table_exists(cur, "tasks"):
+                return {"ok": True, **stats}
+
+            # By status
+            await cur.execute(
+                "SELECT status, COUNT(*) AS n FROM tasks WHERE tenant_id = %s AND status IN ('pending','running','review') GROUP BY status",
+                (tenant_id,),
+            )
+            for r in await cur.fetchall():
+                stats["by_status"][r["status"]] = int(r["n"])
+                stats["total"] += int(r["n"])
+
+            # By priority (pending only)
+            await cur.execute(
+                "SELECT priority, COUNT(*) AS n FROM tasks WHERE tenant_id = %s AND status = 'pending' GROUP BY priority ORDER BY priority DESC LIMIT 10",
+                (tenant_id,),
+            )
+            for r in await cur.fetchall():
+                stats["by_priority"][str(r["priority"])] = int(r["n"])
+
+            # By agent (running)
+            await cur.execute(
+                "SELECT agent_name, COUNT(*) AS n FROM tasks WHERE tenant_id = %s AND status = 'running' GROUP BY agent_name ORDER BY n DESC LIMIT 15",
+                (tenant_id,),
+            )
+            for r in await cur.fetchall():
+                stats["by_agent"][r["agent_name"] or "unknown"] = int(r["n"])
+
+            # Stale running (zombie candidates)
+            stale_m = int(await _get_runtime_config(tenant_id, "zombie_timeout_minutes") or 10)
+            await cur.execute(
+                "SELECT COUNT(*) AS n FROM tasks WHERE tenant_id = %s AND status = 'running' AND updated_at < NOW() - INTERVAL '%s minutes'",
+                (tenant_id, stale_m),
+            )
+            sr = await cur.fetchone()
+            stats["stale_running"] = int(sr["n"] or 0) if sr else 0
+
+    except Exception as exc:
+        log.debug("queue_stats error=%s", exc)
+
+    return {"ok": True, **stats}
+
+
+# ─── N5 NEURAL STEERING ────────────────────────────────────────────────────────
+
+@router.post("/neural/steer")
+async def neural_steer(
+    body: dict,
+    tenant_id: str = Query(default="default"),
+):
+    """Inject a correction vector into a running agent's context.
+
+    The vector is stored in Redis under key ``sinc:neural_steer:{task_id}`` with
+    a 10-minute TTL.  The agent reads this key on its next reasoning iteration and
+    prepends it as a high-priority system message.
+    """
+    task_id  = body.get("task_id")
+    steer_type = body.get("steer_type", "context_inject")
+    intensity  = min(max(int(body.get("intensity", 5)), 1), 10)
+    payload    = (body.get("payload") or "").strip()
+    agent      = body.get("agent", "")
+
+    if not task_id or not payload:
+        raise HTTPException(400, detail="task_id and payload required")
+
+    entry = {
+        "task_id":   task_id,
+        "agent":     agent,
+        "type":      steer_type,
+        "intensity": intensity,
+        "payload":   payload,
+        "ts":        _time.time(),
+        "tenant_id": tenant_id,
+    }
+
+    # Store in Redis for the agent to pick up
+    try:
+        redis = await get_async_redis()
+        key = f"sinc:neural_steer:{task_id}"
+        await redis.set(key, json.dumps(entry), ex=600)  # 10 min TTL
+        # Also push to the agent's pending-steer list (LPUSH)
+        list_key = f"sinc:agent_steers:{tenant_id}"
+        await redis.lpush(list_key, json.dumps(entry))
+        await redis.expire(list_key, 3600)
+    except Exception as exc:
+        log.warning("neural_steer redis error=%s", exc)
+
+    # Audit log
+    await _write_audit_log(tenant_id, f"neural_steer:{steer_type}", agent or f"task#{task_id}", payload[:120])
+
+    return {"ok": True, "task_id": task_id, "steer_type": steer_type, "queued_at": _time.time()}
+
+
+# ─── COGNITIVE TOPOLOGY ────────────────────────────────────────────────────────
+
+@router.get("/topology")
+async def get_topology(
+    tenant_id: str = Query(default="default"),
+    limit: int = Query(default=40, le=200),
+):
+    """Return a graph of nodes/edges representing the cognitive topology:
+    agents → tasks → outcomes, plus lessons as knowledge nodes.
+    Falls back to a DB-derived graph if Neo4j is unavailable.
+    """
+    nodes: list[dict] = []
+    edges: list[dict] = []
+
+    try:
+        async with async_db() as conn:
+            async with conn.cursor() as cur:
+                # Agent nodes from recent task agents
+                await cur.execute(
+                    """SELECT agent_name, COUNT(*) AS cnt,
+                              SUM(CASE WHEN status='done' THEN 1 ELSE 0 END) AS done,
+                              SUM(CASE WHEN status='error' THEN 1 ELSE 0 END) AS errs
+                       FROM tasks WHERE tenant_id=%s AND updated_at > NOW()-INTERVAL '7 days'
+                       GROUP BY agent_name ORDER BY cnt DESC LIMIT 20""",
+                    (tenant_id,),
+                )
+                agents = await cur.fetchall()
+                agent_names = set()
+                for a in agents:
+                    name = a["agent_name"] or "unknown"
+                    agent_names.add(name)
+                    nodes.append({
+                        "id":    f"agent:{name}",
+                        "label": name[:20],
+                        "group": "agent",
+                        "value": int(a["cnt"]) + 5,
+                        "title": f"{name} · {a['cnt']} tasks · {a['done']} ok · {a['errs']} err",
+                    })
+                # Orchestrator hub
+                nodes.insert(0, {"id": "orch", "label": "Orchestrator", "group": "agent", "value": 25, "title": "Central Orchestrator"})
+                for name in list(agent_names)[:12]:
+                    edges.append({"from": "orch", "to": f"agent:{name}"})
+
+                # Recent task nodes
+                await cur.execute(
+                    "SELECT id, agent_name, status, description FROM tasks"
+                    " WHERE tenant_id=%s ORDER BY updated_at DESC LIMIT %s",
+                    (tenant_id, limit),
+                )
+                tasks = await cur.fetchall()
+                for t in tasks:
+                    an = t["agent_name"] or "unknown"
+                    gp = "success" if t["status"] == "done" else ("failure" if t["status"] == "error" else "task")
+                    nodes.append({
+                        "id":    f"task:{t['id']}",
+                        "label": f"#{t['id']}",
+                        "group": gp,
+                        "value": 4,
+                        "title": (t["description"] or "")[:80],
+                    })
+                    if an in agent_names:
+                        edges.append({"from": f"agent:{an}", "to": f"task:{t['id']}"})
+
+                # Lesson nodes
+                await cur.execute(
+                    "SELECT id, title, tags FROM lessons WHERE tenant_id=%s ORDER BY created_at DESC LIMIT 15",
+                    (tenant_id,),
+                )
+                for l in await cur.fetchall():
+                    nodes.append({"id": f"lesson:{l['id']}", "label": (l["title"] or "lição")[:20], "group": "lesson", "value": 8,
+                                  "title": f"Lição #{l['id']}: {l['title']}"})
+
+    except Exception as exc:
+        log.debug("topology db error=%s", exc)
+
+    return {"nodes": nodes, "edges": edges, "node_count": len(nodes), "edge_count": len(edges)}
+
+
+# ─── KNOWLEDGE-ROI endpoint ────────────────────────────────────────────────────
+
+@router.get("/cost/roi")
+async def get_cost_roi(tenant_id: str = Query(default="default")):
+    """Return per-agent ROI: tasks completed per dollar spent."""
+    agents: list[dict] = []
+    try:
+        async with async_db() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    """SELECT agent_name,
+                              COUNT(*) FILTER (WHERE status='done') AS tasks_done,
+                              COUNT(*) FILTER (WHERE status='error') AS tasks_err,
+                              COALESCE(SUM(tokens_used),0) AS tokens,
+                              ROUND(COALESCE(SUM(tokens_used),0)::numeric * 0.000002, 6) AS cost_usd
+                       FROM tasks
+                       WHERE tenant_id=%s AND updated_at > NOW()-INTERVAL '30 days'
+                       GROUP BY agent_name ORDER BY tasks_done DESC LIMIT 20""",
+                    (tenant_id,),
+                )
+                for r in await cur.fetchall():
+                    cost = float(r["cost_usd"] or 0)
+                    done = int(r["tasks_done"] or 0)
+                    roi  = round(done / cost, 2) if cost > 0 else None
+                    agents.append({
+                        "agent":      r["agent_name"] or "unknown",
+                        "tasks_done": done,
+                        "tasks_err":  int(r["tasks_err"] or 0),
+                        "tokens":     int(r["tokens"] or 0),
+                        "cost_usd":   cost,
+                        "roi":        roi,
+                    })
+    except Exception as exc:
+        log.debug("cost_roi error=%s", exc)
+    return {"agents": agents}

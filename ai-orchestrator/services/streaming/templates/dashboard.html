@@ -97,7 +97,21 @@
   </div>
   <div class="ni" onclick="showPage('metrics')">
     <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="1,10 4,5.5 8,7 13,2.5"/></svg>
-    <span class="ni-label">Métricas RED</span></div><div class="ni" onclick="showPage('engine-room')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5.5"/></svg><span class="ni-label">Engine Room</span>
+    <span class="ni-label">Métricas RED</span>
+  </div>
+  <div class="ni" onclick="showPage('agents')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="5" r="2.5"/><path d="M1.5 12.5a5.5 5.5 0 0 1 11 0"/><circle cx="11" cy="10" r="1.2" fill="currentColor" stroke="none"/></svg>
+    <span class="ni-label">Agent Control</span>
+    <span class="nbadge" id="sb-agents-badge" style="background:var(--pud);color:var(--pu);border-color:var(--pu)">L1</span>
+  </div>
+  <div class="ni" onclick="showPage('engine-room')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5.5"/></svg>
+    <span class="ni-label">Engine Room</span>
+  </div>
+  <div class="ni" onclick="showPage('neural')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="4" r="1.5"/><circle cx="3" cy="10" r="1.5"/><circle cx="11" cy="10" r="1.5"/><line x1="7" y1="5.5" x2="3" y2="8.5"/><line x1="7" y1="5.5" x2="11" y2="8.5"/><line x1="3" y1="8.5" x2="11" y2="8.5"/></svg>
+    <span class="ni-label">Neural Steering</span>
+    <span class="nbadge" style="background:rgba(255,80,80,0.15);color:var(--rd);border-color:var(--rd);animation:pulse 2s infinite">N5</span>
   </div>
   <div class="ng" style="margin-top:6px">Inteligência</div>
   <div class="ni" onclick="showPage('rep')">
@@ -118,6 +132,24 @@
     <span class="ni-label">Base de Lições</span><span class="nbadge new" id="sb-lessons-badge">53</span>
   </div>
   <div class="ng" style="margin-top:6px">Governança</div>
+  <div class="ni" onclick="showPage('cost')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5.5"/><line x1="7" y1="4" x2="7" y2="10"/><line x1="5" y1="5.5" x2="9" y2="5.5"/><line x1="5" y1="8.5" x2="9" y2="8.5"/></svg>
+    <span class="ni-label">Custos</span>
+    <span class="nbadge" style="background:rgba(100,220,100,0.15);color:var(--gr);border-color:var(--gr)">L6</span>
+  </div>
+  <div class="ni" onclick="showPage('audit')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="1" width="10" height="12" rx="1"/><line x1="4.5" y1="4" x2="9.5" y2="4"/><line x1="4.5" y1="7" x2="9.5" y2="7"/><line x1="4.5" y1="10" x2="7" y2="10"/></svg>
+    <span class="ni-label">Audit Log</span>
+  </div>
+  <div class="ni" onclick="showPage('security')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 1.5L11.5 3v4c0 3-3 5-4.5 5.5C5.5 12 2.5 10 2.5 7V3z"/><polyline points="4.5,7 6.5,9 10,5"/></svg>
+    <span class="ni-label">Segurança</span>
+    <span class="nbadge" style="background:rgba(255,80,80,0.12);color:var(--rd);border-color:var(--rd)">L8</span>
+  </div>
+  <div class="ni" onclick="showPage('alerts')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 2a4 4 0 0 0-4 4c0 4-1.5 5-1.5 5h11S11 10 11 6a4 4 0 0 0-4-4z"/><line x1="5.5" y1="12" x2="8.5" y2="12"/></svg>
+    <span class="ni-label">Alertas</span>
+  </div>
   <div class="ni" onclick="showPage('tenants')">
     <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 1a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/><path d="M1 13a6.5 6.5 0 0 1 12 0"/></svg>
     <span class="ni-label">Tenants</span>
@@ -125,6 +157,15 @@
   <div class="ni" onclick="showPage('memory')">
     <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="3.5" width="12" height="8" rx="1.5"/><circle cx="4.5" cy="7.5" r="0.8" fill="currentColor"/><circle cx="7" cy="7.5" r="0.8" fill="currentColor"/><circle cx="9.5" cy="7.5" r="0.8" fill="currentColor"/></svg>
     <span class="ni-label">Quotas</span>
+  </div>
+  <div class="ni" onclick="showPage('simulate')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 1.5L12 4v6L7 12.5 2 10V4z"/><circle cx="7" cy="7" r="1.5"/></svg>
+    <span class="ni-label">Simulação</span>
+    <span class="nbadge" style="background:rgba(150,100,255,0.15);color:var(--pu);border-color:var(--pu)">L10</span>
+  </div>
+  <div class="ni" onclick="showPage('topology')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="1.5" fill="currentColor" stroke="none"/><circle cx="2" cy="3" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="3" r="1" fill="currentColor" stroke="none"/><circle cx="2" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="11" r="1" fill="currentColor" stroke="none"/><line x1="7" y1="7" x2="2" y2="3"/><line x1="7" y1="7" x2="12" y2="3"/><line x1="7" y1="7" x2="2" y2="11"/><line x1="7" y1="7" x2="12" y2="11"/></svg>
+    <span class="ni-label">Topologia Cognitiva</span>
   </div>
   <div class="ng" style="margin-top:6px">Deep Trace</div>
   <div class="ni" onclick="showPage('prompt-inspector')">
@@ -151,34 +192,128 @@
 <!-- MAIN -->
 <main class="main">
 
-<!-- ENGINE ROOM SPA -->
-<div id="engine-room-spa" style="display:none; padding:14px 16px; background:var(--bg1);">
-    <div class="ph">
-        <div class="ptitle">Engine Room · Configurações Globais</div>
-        <div class="psub">MCT Router, Circuit Breakers e Multitenancy Keys</div>
-        <button class="btn p" onclick="showPage('home')">← Voltar ao NOC</button>
+<!-- ENGINE ROOM SPA — L0 INFRA CONTROL -->
+<div id="engine-room-spa" style="display:none; padding:14px 16px; background:var(--bg1); flex-direction:column; gap:14px;">
+  <div class="ph" style="flex-shrink:0">
+    <div>
+      <div class="ptitle">Engine Room · L0 Infra Control</div>
+      <div class="psub">Circuit Breakers · Worker Scaling · Operating Mode · Rate Limiting</div>
     </div>
-    
-    <div class="gmain" style="margin-top: 14px;">
-        <div class="card">
-            <div class="chd"><div class="ct">Global Kill-Switches</div></div>
-            <div class="cbd">
-                <button id="btn-kill-switch" class="btn danger" style="padding: 14px 24px; font-size: 14px; display: block; width: 100%; border-radius: 8px;">
-                    ☠ HALT ALL OPERATIONS (CIRCUIT BREAKER)
-                </button>
-            </div>
-        </div>
-        <div class="card">
-            <div class="chd"><div class="ct">Model Router Configuration</div></div>
-            <div class="cbd">
-                <select id="model-router-select" style="width:100%; background:var(--bg3); color:var(--t1); border:1px solid var(--b); padding: 10px; border-radius: 6px; font-family:var(--m);">
-                    <option value="claude-3-opus">Claude 3 Opus (Complex Logic)</option>
-                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                    <option value="llama-3">Llama 3 70B (Fast Lane)</option>
-                </select>
-            </div>
-        </div>
+    <div class="pacts">
+      <div class="chip" id="er-status-chip" style="font-family:var(--m);color:var(--t3)">Carregando…</div>
+      <div class="chip" onclick="loadEngineRoomStatus()" style="cursor:pointer">↻ Refresh</div>
+      <button class="btn p" onclick="showPage('home')">← Voltar ao NOC</button>
     </div>
+  </div>
+
+  <div class="er-grid">
+    <!-- CIRCUIT BREAKER -->
+    <div class="card er-card">
+      <div class="chd"><div class="ct">⚡ Circuit Breaker Global</div><div class="cacts"><div class="chip" id="cb-state-chip" style="color:var(--gr)">OFF · Safe</div></div></div>
+      <div class="cbd" style="gap:12px">
+        <div style="font-size:10px;color:var(--t3);font-family:var(--m);line-height:1.6">Quando ATIVO, bloqueia TODAS as chamadas LLM e Tools. Use apenas em emergência.</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn danger" id="cb-on-btn" onclick="setCircuitBreaker(true)" style="flex:1;padding:10px">☠ ATIVAR CIRCUIT BREAKER</button>
+          <button class="btn" id="cb-off-btn" onclick="setCircuitBreaker(false)" style="flex:1;padding:10px">✓ Desativar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPERATING MODE -->
+    <div class="card er-card">
+      <div class="chd"><div class="ct">🎛 Operating Mode</div><div class="cacts"><div class="chip" id="er-mode-chip">balanced</div></div></div>
+      <div class="cbd" style="gap:10px">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label class="er-radio-row" onclick="setOperatingMode('low_cost')">
+            <input type="radio" name="er-mode" value="low_cost" id="mode-low-cost"/>
+            <div><div style="color:var(--gr);font-weight:600;font-size:11px">🟢 Low Cost</div><div style="color:var(--t3);font-size:9px;font-family:var(--m)">Confiança auto 85% · Menos LLM calls</div></div>
+          </label>
+          <label class="er-radio-row" onclick="setOperatingMode('balanced')">
+            <input type="radio" name="er-mode" value="balanced" id="mode-balanced" checked/>
+            <div><div style="color:var(--am);font-weight:600;font-size:11px">🟡 Balanced</div><div style="color:var(--t3);font-size:9px;font-family:var(--m)">Confiança auto 72% · Equilíbrio custo/perf</div></div>
+          </label>
+          <label class="er-radio-row" onclick="setOperatingMode('high_performance')">
+            <input type="radio" name="er-mode" value="high_performance" id="mode-high-perf"/>
+            <div><div style="color:var(--cy);font-weight:600;font-size:11px">🔵 High Performance</div><div style="color:var(--t3);font-size:9px;font-family:var(--m)">Confiança auto 55% · Máxima qualidade</div></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- WORKER SCALING -->
+    <div class="card er-card">
+      <div class="chd"><div class="ct">⚙ Worker Scaling</div><div class="cacts"><div class="chip" id="er-workers-chip">2 réplicas</div></div></div>
+      <div class="cbd" style="gap:12px">
+        <div style="font-size:10px;color:var(--t3);font-family:var(--m)">Número de réplicas de agentes workers</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="range" min="1" max="16" value="2" id="er-workers-slider" oninput="document.getElementById('er-workers-val').textContent=this.value" style="flex:1;accent-color:var(--cy)"/>
+          <span id="er-workers-val" style="font-family:var(--m);font-size:14px;font-weight:700;color:var(--cy);min-width:24px">2</span>
+        </div>
+        <button class="btn p" onclick="scaleWorkers()" style="width:100%;padding:9px">⚙ Aplicar Scaling</button>
+      </div>
+    </div>
+
+    <!-- RATE LIMITER -->
+    <div class="card er-card">
+      <div class="chd"><div class="ct">🚦 Rate Limiter Global</div><div class="cacts"><div class="chip" id="er-rpm-chip">60 rpm</div></div></div>
+      <div class="cbd" style="gap:12px">
+        <div style="font-size:10px;color:var(--t3);font-family:var(--m)">Requests por minuto (global, todos os tenants)</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="range" min="10" max="1000" value="60" step="10" id="er-rpm-slider" oninput="document.getElementById('er-rpm-val').textContent=this.value+' rpm'" style="flex:1;accent-color:var(--am)"/>
+          <span id="er-rpm-val" style="font-family:var(--m);font-size:11px;color:var(--am);min-width:52px">60 rpm</span>
+        </div>
+        <button class="btn" onclick="setRateLimiter()" style="width:100%;padding:9px">🚦 Aplicar Limite</button>
+      </div>
+    </div>
+
+    <!-- FAILOVER -->
+    <div class="card er-card">
+      <div class="chd"><div class="ct">🔄 Failover Mode</div><div class="cacts"><div class="chip" id="er-failover-chip">local</div></div></div>
+      <div class="cbd" style="gap:10px">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label class="er-radio-row" onclick="setFailover('local')">
+            <input type="radio" name="er-failover" value="local" id="fo-local" checked/>
+            <div><div style="font-weight:600;font-size:11px">🏠 Local Only</div><div style="color:var(--t3);font-size:9px;font-family:var(--m)">Sem fallback cloud · mais privado</div></div>
+          </label>
+          <label class="er-radio-row" onclick="setFailover('hybrid')">
+            <input type="radio" name="er-failover" value="hybrid" id="fo-hybrid"/>
+            <div><div style="color:var(--am);font-weight:600;font-size:11px">⚡ Hybrid</div><div style="color:var(--t3);font-size:9px;font-family:var(--m)">Local primeiro, cloud se falhar</div></div>
+          </label>
+          <label class="er-radio-row" onclick="setFailover('cloud')">
+            <input type="radio" name="er-failover" value="cloud" id="fo-cloud"/>
+            <div><div style="color:var(--cy);font-weight:600;font-size:11px">☁ Cloud First</div><div style="color:var(--t3);font-size:9px;font-family:var(--m)">Sempre tenta cloud primeiro</div></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ZOMBIE TIMEOUT CONFIG -->
+    <div class="card er-card">
+      <div class="chd"><div class="ct">🧟 Zombie Timeout</div><div class="cacts"><div class="chip" id="er-zombie-chip">10 min</div></div></div>
+      <div class="cbd" style="gap:12px">
+        <div style="font-size:10px;color:var(--t3);font-family:var(--m)">Tempo máximo em running antes de detectar como zombie</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="range" min="1" max="120" value="10" id="er-zombie-slider" oninput="document.getElementById('er-zombie-val').textContent=this.value+'min'" style="flex:1;accent-color:var(--rd)"/>
+          <span id="er-zombie-val" style="font-family:var(--m);font-size:11px;color:var(--rd);min-width:40px">10min</span>
+        </div>
+        <button class="btn" onclick="setZombieTimeout()" style="width:100%;padding:9px">🧟 Aplicar Timeout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKERS LIVE LIST (within Engine Room SPA) -->
+  <div class="card" style="flex-shrink:0">
+    <div class="chd">
+      <div class="ct">Workers · Processos Ativos</div>
+      <div class="cacts">
+        <div class="chip" id="er-workers-count-chip" style="color:var(--cy)">—</div>
+        <div class="chip" onclick="loadWorkers()" style="cursor:pointer">↻ Refresh</div>
+      </div>
+    </div>
+    <div class="cbd" id="workers-list" style="padding:4px 0;min-height:60px">
+      <div style="padding:20px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Carregando workers…</div>
+    </div>
+  </div>
 </div>
 
 <!-- ASK N5 · LLM CHAT SPA -->
@@ -314,51 +449,65 @@
 
   <div class="ph" data-home-only="1">
     <div>
-      <div class="ptitle">Centro de Operações — N5</div>
+      <div class="ptitle">ORCHESTRATOR COMMAND CENTER — N5</div>
       <div class="psub" id="pdate">—</div>
     </div>
     <div class="pacts">
-      <button class="btn" onclick="exportDashboard()">↓ Exportar</button>
+      <div class="chip" id="selfheal-status-chip" style="background:rgba(46,212,122,0.15);color:var(--gr);border-color:var(--gr);font-family:var(--m);cursor:pointer" onclick="showPage('neural')">⬡ AUTO-HEAL ONLINE</div>
       <button class="btn" onclick="openCmd()">⌘ Ctrl+K</button>
-      <button class="btn danger" onclick="killAllTasks()">☠ Kill Mode</button>
-      <button class="btn p" onclick="confirmSnapshot(this)">+ Snapshot</button>
+      <button class="btn danger" onclick="killAllTasks()">☠ Kill All</button>
+      <button class="btn p" onclick="showPage('neural')">⬡ Neural Steer</button>
+      <button class="btn" onclick="confirmSnapshot(this)">+ Snapshot</button>
     </div>
   </div>
 
-  <!-- KPI ROW -->
+  <!-- SELF-HEALING ENGINE STATUS STRIP (home-only) -->
+  <div id="selfheal-strip" data-home-only="1" style="display:flex;gap:8px;flex-wrap:wrap">
+    <!-- populated by loadSelfHealingStatus() -->
+  </div>
+
+  <!-- KPI ROW — Mission-Critical -->
   <div class="krow" data-home-only="1">
     <div class="kpi" data-c="gr" id="k0" onclick="onKpiClick(event,this)">
       <div class="kpi-bar gr"></div><div class="kpi-glow"></div>
-      <div class="klbl">Containers Ativos</div>
-      <div class="knum" id="metric-success-rate">0<span class="ksub">/0</span></div>
+      <div class="klbl">Tasks Ativas</div>
+      <div class="knum" id="metric-success-rate">0<span class="ksub"> live</span></div>
       <div class="ksp"><canvas id="sp0"></canvas></div>
-      <div class="kft"><span class="delta up">✓ 100% uptime</span><span class="kper">stack N5</span></div>
+      <div class="kft"><span class="delta up" id="kpi-running-delta">● online</span><span class="kper">pending+running</span></div>
     </div>
     <div class="kpi" data-c="bl" id="k1" onclick="onKpiClick(event,this)">
       <div class="kpi-bar bl"></div><div class="kpi-glow"></div>
-      <div class="klbl">Tarefas / hora</div>
-      <div class="knum" id="metric-autonomy-score">0<span class="ksub"> tasks</span></div>
+      <div class="klbl">Throughput</div>
+      <div class="knum" id="metric-autonomy-score">0<span class="ksub"> /h</span></div>
       <div class="ksp"><canvas id="sp1"></canvas></div>
-      <div class="kft"><span class="delta up">↑ +12.4%</span><span class="kper">fast + deep path</span></div>
+      <div class="kft"><span class="delta up" id="kpi-tph-delta">↑ crescente</span><span class="kper">tasks · hora</span></div>
     </div>
-    <div class="kpi" data-c="am" id="k2" onclick="onKpiClick(event,this)">
+    <div class="kpi" data-c="am" id="k2" onclick="onKpiClick(event,this)" title="Clique → ROI térmico">
       <div class="kpi-bar am"></div><div class="kpi-glow"></div>
-      <div class="klbl">Tokens / dia</div>
+      <div class="klbl">Tokens · Burn</div>
       <div class="knum" id="metric-active-agents">0<span class="ksub">k</span></div>
       <div class="ksp"><canvas id="sp2"></canvas></div>
-      <div class="kft"><span class="delta fl">→ Quota 82%</span><span class="kper">3 tenants</span></div>
+      <div class="kft"><span class="delta fl" id="kpi-burn-delta">→ ROI calc</span><span class="kper">custo combustível</span></div>
     </div>
-    <div class="kpi" data-c="rd" id="k3" onclick="onKpiClick(event,this)">
+    <div class="kpi" data-c="rd" id="k3" onclick="killAllTasks()">
       <div class="kpi-bar rd"></div><div class="kpi-glow"></div>
-      <div class="klbl">Agentes Zombie</div>
+      <div class="klbl">Zombies · Kill</div>
       <div class="knum" id="metric-latency">0<span class="ksub"></span></div>
       <div class="ksp"><canvas id="sp3"></canvas></div>
-      <div class="kft"><span class="delta dn">! HB +4min</span></div>
+      <div class="kft"><span class="delta dn" id="kpi-zombie-delta">click=kill all</span></div>
+    </div>
+    <!-- 5th KPI: ROI Index -->
+    <div class="kpi" data-c="cy" id="k4" onclick="showPage('topology')" title="Clique → Topologia Cognitiva">
+      <div class="kpi-bar cy"></div><div class="kpi-glow"></div>
+      <div class="klbl">ROI Cognitivo</div>
+      <div class="knum" id="metric-roi-index">—<span class="ksub">x</span></div>
+      <div class="ksp"><canvas id="sp4"></canvas></div>
+      <div class="kft"><span class="delta fl" id="kpi-roi-delta">≡ calc…</span><span class="kper">valor/custo</span></div>
     </div>
   </div>
 
   <!-- SERVICE HEALTH GRID -->
-  <div class="card" id="section-health" data-section="health">
+  <div class="card" id="section-health" data-home-only="1">
     <div class="chd">
       <div class="ct">Saúde dos Serviços</div>
       <div class="cacts">
@@ -369,6 +518,60 @@
     </div>
     <div class="health-svc-grid" id="health-grid">
       <!-- populated by JS on boot -->
+    </div>
+  </div>
+
+  <!-- TRENDS SPARKLINES (home-only) -->
+  <div class="card" data-home-only="1" style="flex-direction:column">
+    <div class="chd">
+      <div class="ct">Tendências · 60 min</div>
+      <div class="cacts">
+        <div class="chip" onclick="loadMetricsTrends()" style="cursor:pointer">↻</div>
+      </div>
+    </div>
+    <div class="cbd">
+      <div class="spark-grid">
+        <div class="spark-item">
+          <canvas id="spark-success" width="110" height="36"></canvas>
+          <div class="spark-label">Taxa Sucesso</div>
+        </div>
+        <div class="spark-item">
+          <canvas id="spark-queue" width="110" height="36"></canvas>
+          <div class="spark-label">Fila</div>
+        </div>
+        <div class="spark-item">
+          <canvas id="spark-agents" width="110" height="36"></canvas>
+          <div class="spark-label">Agentes Ativos</div>
+        </div>
+        <div class="spark-item">
+          <canvas id="spark-tokens" width="110" height="36"></canvas>
+          <div class="spark-label">Tokens/min</div>
+        </div>
+        <div class="spark-item">
+          <canvas id="spark-latency" width="110" height="36"></canvas>
+          <div class="spark-label">Latência avg</div>
+        </div>
+        <!-- Queue Stats inline -->
+        <div class="spark-item spark-item-queue-stats">
+          <div class="qs-row"><span class="qs-label">Pending</span><span class="qs-val" id="qs-pending">—</span></div>
+          <div class="qs-row"><span class="qs-label">Running</span><span class="qs-val" id="qs-running">—</span></div>
+          <div class="qs-row"><span class="qs-label">Zombies</span><span class="qs-val" id="qs-zombies">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOC INSIGHTS (LLM Summary widget) -->
+  <div class="card" data-home-only="1" id="noc-insights-card" style="flex-direction:column">
+    <div class="chd">
+      <div class="ct">NOC Insights · Resumo Cognitivo</div>
+      <div class="cacts">
+        <div class="chip" id="insights-status" style="color:var(--t3);font-family:var(--m)">—</div>
+        <div class="chip" onclick="refreshInsights()" style="cursor:pointer" title="Gerar novo resumo">↻ Refresh</div>
+      </div>
+    </div>
+    <div class="cbd" id="noc-insights-body" style="color:var(--t2);font-size:11px;line-height:1.8;min-height:36px;padding:6px 0">
+      <span style="color:var(--t3);font-style:italic">Carregando resumo do sistema…</span>
     </div>
   </div>
 
@@ -433,7 +636,7 @@
       </div>
 
       <!-- Tenants -->
-      <div class="card" id="section-tenants">
+      <div class="card" id="section-tenants" data-section="tenants">
         <div class="chd">
           <div class="ct">Tenants Ativos</div>
           <div class="cacts"><div class="chip" onclick="openTenantModal()">+ Novo</div></div>
@@ -512,17 +715,32 @@
   </div>
 
   <!-- REPUTATION PAGE — direct child, navigable -->
-  <div class="card" id="section-rep" data-section="rep">
+  <div class="card" id="section-rep" data-section="rep" style="display:none;flex-direction:column">
     <div class="chd">
-      <div class="ct">Reputação de Agentes</div>
-      <div class="cacts"><div class="chip on">Live</div></div>
+      <div class="ct">Reputação de Agentes · L2</div>
+      <div class="cacts">
+        <div class="chip" id="rep-autolearn-chip" onclick="toggleAutoLearning()" style="cursor:pointer;color:var(--gr)">⟳ Auto-Learning: ON</div>
+        <div class="chip" onclick="loadReputation()" style="cursor:pointer">↻</div>
+      </div>
     </div>
-    <div class="cbd" style="padding-top:7px;padding-bottom:7px">
-      <div class="rep-row"><div class="rep-rank gold" style="--delay:0s">①</div><div class="rep-agent">orchestrator</div><div class="rep-bar-wrap"><div class="rep-bar" style="width:0%;background:linear-gradient(90deg,var(--gr),var(--cy))" data-w="97"></div></div><div class="rep-score">97%</div><div class="rep-badge" style="color:var(--gr);background:var(--grd)">A+</div></div>
-      <div class="rep-row"><div class="rep-rank">②</div><div class="rep-agent">qa_agent</div><div class="rep-bar-wrap"><div class="rep-bar" style="width:0%;background:linear-gradient(90deg,var(--bl),var(--pu))" data-w="88"></div></div><div class="rep-score">88%</div><div class="rep-badge" style="color:var(--bl);background:var(--bld)">A</div></div>
-      <div class="rep-row"><div class="rep-rank">③</div><div class="rep-agent">refactor</div><div class="rep-bar-wrap"><div class="rep-bar" style="width:0%;background:linear-gradient(90deg,var(--bl),var(--cy))" data-w="84"></div></div><div class="rep-score">84%</div><div class="rep-badge" style="color:var(--bl);background:var(--bld)">A</div></div>
-      <div class="rep-row"><div class="rep-rank">④</div><div class="rep-agent">ingest_w</div><div class="rep-bar-wrap"><div class="rep-bar" style="width:0%;background:linear-gradient(90deg,var(--am),var(--gr))" data-w="71"></div></div><div class="rep-score">71%</div><div class="rep-badge" style="color:var(--am);background:var(--amd)">B+</div></div>
-      <div class="rep-row"><div class="rep-rank">⑤</div><div class="rep-agent">ctx_retriev</div><div class="rep-bar-wrap"><div class="rep-bar" style="width:0%;background:linear-gradient(90deg,var(--rd),var(--am))" data-w="63"></div></div><div class="rep-score">63%</div><div class="rep-badge" style="color:var(--rd);background:var(--rdd)">C+</div></div>
+    <div class="cbd" id="rep-list" style="padding-top:4px;min-height:80px">
+      <div style="padding:20px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Carregando reputação…</div>
+    </div>
+    <!-- Manual adjustment panel -->
+    <div style="border-top:1px solid var(--b);padding:12px;display:flex;flex-direction:column;gap:10px;flex-shrink:0">
+      <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:0.06em">Ajuste Manual de Reputação</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="rep-agent-select" style="flex:1;min-width:120px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px 8px;outline:none">
+          <option value="">— Selecionar agente —</option>
+        </select>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:10px;color:var(--t3)">Delta:</span>
+          <input id="rep-delta" type="number" value="10" min="-100" max="100" style="width:60px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:6px 8px;outline:none"/>
+          <span style="font-size:10px;color:var(--t3)">pts</span>
+        </div>
+        <button class="btn p" onclick="adjustReputation(1)" style="padding:7px 12px;font-size:10px">⬆ Boost</button>
+        <button class="btn danger" onclick="adjustReputation(-1)" style="padding:7px 12px;font-size:10px">⬇ Penalizar</button>
+      </div>
     </div>
   </div>
 
@@ -571,22 +789,64 @@
         <div class="chip" onclick="loadActiveGoals()" style="cursor:pointer;user-select:none">↻</div>
       </div>
     </div>
-    <div class="cbd" id="goals-container" style="padding-top:8px;">
+    <div class="cbd" id="goals-container" style="padding-top:8px;flex:1;overflow-y:auto">
       <div style="padding:20px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Aguardando objetivos do orquestrador...</div>
+    </div>
+    <div style="border-top:1px solid var(--b);padding:10px;display:flex;gap:8px;flex-shrink:0">
+      <input id="new-goal-input" type="text" placeholder="Descreva o novo objetivo e pressione Enter…"
+        style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px 10px;outline:none"
+        onkeydown="if(event.key==='Enter')createGoal()"/>
+      <button class="btn p" onclick="createGoal()" style="padding:7px 14px;font-size:10px">+ Criar</button>
     </div>
   </div>
 
-  <!-- KNOWLEDGE BASE STATS -->
-  <div class="card" id="section-memory" data-section="memory">
+  <!-- L4 MEMORY CONTROL -->
+  <div class="card" id="section-memory" data-section="memory" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
     <div class="chd">
-      <div class="ct">Base de Conhecimento N5</div>
+      <div class="ct">Memory Control · L4</div>
       <div class="cacts">
+        <div class="ctabs" id="mem-tab-row">
+          <div class="ctab on" onclick="switchMemTab('stats',this)">Stats</div>
+          <div class="ctab" onclick="switchMemTab('search',this)">Vector Search</div>
+          <div class="ctab" onclick="switchMemTab('prune',this)">Pruning</div>
+        </div>
         <div class="chip" style="background:var(--pud);color:var(--pu);border-color:var(--pu)">L3 Qdrant</div>
-        <div class="chip" onclick="loadMemoryStats()" style="cursor:pointer;user-select:none">↻</div>
       </div>
     </div>
-    <div class="cbd" id="memory-stats-container" style="padding-top:8px;">
-      <div style="padding:20px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Carregando estatísticas...</div>
+    <!-- Stats tab -->
+    <div id="mem-tab-stats" class="cbd" style="padding-top:8px">
+      <div id="memory-stats-container">
+        <div style="padding:20px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Carregando estatísticas...</div>
+      </div>
+    </div>
+    <!-- Vector Search tab -->
+    <div id="mem-tab-search" style="display:none;flex-direction:column;gap:10px;padding:12px 0">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="vsearch-query" type="text" placeholder="Query semântica…" style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:8px 10px;outline:none"/>
+        <input id="vsearch-project" type="text" placeholder="project_id" value="project0" style="width:100px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:8px;outline:none"/>
+        <select id="vsearch-topk" style="background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:8px">
+          <option value="5">Top 5</option><option value="10">Top 10</option><option value="20">Top 20</option>
+        </select>
+        <button class="btn p" onclick="runVectorSearch()" style="padding:8px 14px">🔍 Buscar</button>
+      </div>
+      <div id="vsearch-results" style="font-size:10px;color:var(--t3);font-family:var(--m)">Aguardando query…</div>
+    </div>
+    <!-- Pruning tab -->
+    <div id="mem-tab-prune" style="display:none;flex-direction:column;gap:10px;padding:12px 0">
+      <div style="font-size:10px;color:var(--am);font-family:var(--m);padding:6px 8px;background:rgba(255,160,0,0.08);border-radius:6px;border:1px solid rgba(255,160,0,0.2)">⚠ Ações de pruning são IRREVERSÍVEIS. Confirme antes de deletar.</div>
+      <div style="display:flex;gap:8px">
+        <input id="prune-lesson-id" type="text" placeholder="ID da lição a deletar" style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:8px 10px;outline:none"/>
+        <button class="btn danger" onclick="pruneLesson()" style="padding:8px 14px">🗑 Deletar Lição</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <input id="prune-vector-id" type="text" placeholder="Vector ID (Qdrant)" style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:8px 10px;outline:none"/>
+        <input id="prune-collection" type="text" placeholder="collection" value="sinc_memory" style="width:130px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:8px;outline:none"/>
+        <button class="btn danger" onclick="pruneVector()" style="padding:8px 14px">🗑 Deletar Vector</button>
+      </div>
+      <div style="margin-top:8px">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);margin-bottom:8px">LIÇÕES RECENTES (clique para selecionar ID)</div>
+        <div id="lessons-prune-list" style="font-size:10px;color:var(--t2)">Carregando…</div>
+      </div>
     </div>
   </div>
 
@@ -594,7 +854,11 @@
   <div class="card" id="section-kanban" data-section="kanban" style="min-height: 400px; display: flex; flex-direction: column;">
     <div class="chd">
         <div class="ct">MCTS Live KanBan Board</div>
-        <div class="cacts"><div class="chip grn">Active Sync</div></div>
+        <div class="cacts">
+          <div class="chip grn">Active Sync</div>
+          <div class="chip" onclick="reclaimAllZombies()" style="cursor:pointer;color:var(--am)" title="Mover todos os agentes zombie de volta para Pending">⟳ Reclaim All</div>
+          <div class="chip" onclick="openInjectModal()" style="cursor:pointer;color:var(--cy)" title="Injetar tarefa manualmente na fila">+ Inject Task</div>
+        </div>
     </div>
     <div class="cbd" style="flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; overflow-x: auto; padding: 14px;">
         <div class="kanban-col" id="col-pending" style="background: var(--bg2); border: 1px solid var(--b); border-radius: 8px; padding: 10px; display: flex; flex-direction: column;">
@@ -683,6 +947,396 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════
+       AGENT CONTROL PAGE (L1)
+  ═══════════════════════════════════════════════════ -->
+  <div class="card" id="section-agents" data-section="agents" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">Agent Control · Fleet L1</div>
+      <div class="cacts">
+        <div class="chip grn" id="agents-live-chip">● Live</div>
+        <div class="ctabs" id="agents-filter-tabs">
+          <div class="ctab on" onclick="filterAgents('all',this)">All</div>
+          <div class="ctab" onclick="filterAgents('busy',this)" style="color:var(--cy)">Busy</div>
+          <div class="ctab" onclick="filterAgents('idle',this)">Idle</div>
+          <div class="ctab" onclick="filterAgents('zombie',this)" style="color:var(--rd)">Zombie</div>
+        </div>
+        <div class="chip" onclick="loadAgentRoster()" style="cursor:pointer">↻</div>
+        <div class="chip" onclick="openInjectModal()" style="cursor:pointer;color:var(--cy)">+ Spawn</div>
+      </div>
+    </div>
+    <div class="cbd" id="agents-list" style="flex:1;overflow-y:auto;padding:4px 0">
+      <div style="padding:40px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Carregando agentes…</div>
+    </div>
+    <!-- Agent config drawer (right panel) -->
+    <div id="agent-config-drawer" style="display:none;border-top:1px solid var(--b);padding:14px;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:700;color:var(--t1)" id="acd-title">Config: —</div>
+        <div style="flex:1"></div>
+        <button class="btn" onclick="closeAgentConfig()" style="padding:3px 8px">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);margin-bottom:4px">TEMPERATURE</div>
+          <input id="acd-temperature" type="number" step="0.1" min="0" max="2" value="0.7"
+            style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:7px 10px;outline:none;box-sizing:border-box"/>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);margin-bottom:4px">TOP_P</div>
+          <input id="acd-top-p" type="number" step="0.05" min="0" max="1" value="1.0"
+            style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:7px 10px;outline:none;box-sizing:border-box"/>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);margin-bottom:4px">MAX_TOKENS</div>
+          <input id="acd-max-tokens" type="number" step="256" min="256" max="32768" value="4096"
+            style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:7px 10px;outline:none;box-sizing:border-box"/>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);margin-bottom:4px">MODEL OVERRIDE</div>
+          <input id="acd-model" type="text" placeholder="ex: claude-3-opus"
+            style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:7px 10px;outline:none;box-sizing:border-box"/>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn p" id="acd-save-btn" onclick="saveAgentConfig()" style="flex:1;padding:9px">✓ Salvar Config</button>
+        <button class="btn danger" id="acd-kill-btn" onclick="killAgentFromConfig()" style="padding:9px 14px">☠ Kill</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       COST ATTRIBUTION PAGE (L6)
+  ═══════════════════════════════════════════════════ -->
+  <div class="card" id="section-cost" data-section="cost" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">Custos & Atribuição · L6</div>
+      <div class="cacts">
+        <div class="ctabs" id="cost-period-tabs">
+          <div class="ctab on" onclick="loadCostAttribution('1d',this)">1d</div>
+          <div class="ctab" onclick="loadCostAttribution('7d',this)">7d</div>
+          <div class="ctab" onclick="loadCostAttribution('30d',this)">30d</div>
+        </div>
+        <div class="ctabs" id="cost-group-tabs">
+          <div class="ctab on" onclick="setCostGroupBy('agent',this)">Agente</div>
+          <div class="ctab" onclick="setCostGroupBy('model',this)">Modelo</div>
+        </div>
+        <div class="chip" onclick="loadCostAttribution()" style="cursor:pointer">↻</div>
+      </div>
+    </div>
+    <div class="cbd" style="flex:1;overflow-y:auto;padding:8px 0">
+      <!-- Budget bar -->
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t3);font-family:var(--m);margin-bottom:4px">
+          <span>Orçamento Diário de Tokens</span>
+          <span id="cost-budget-label">—</span>
+        </div>
+        <div style="background:var(--bg3);border-radius:4px;height:6px;overflow:hidden">
+          <div id="cost-budget-bar" style="height:100%;background:var(--gr);border-radius:4px;width:0%;transition:width 0.4s"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+          <input id="cost-budget-input" type="number" placeholder="Budget tokens/dia" min="1000"
+            style="width:180px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:5px 8px;outline:none"/>
+          <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2);cursor:pointer">
+            <input type="checkbox" id="cost-hard-stop" style="accent-color:var(--rd)"/>
+            Hard Stop
+          </label>
+          <button class="btn" onclick="saveBudgetConfig()" style="padding:5px 10px;font-size:10px">Salvar</button>
+        </div>
+      </div>
+      <!-- Summary table -->
+      <div id="cost-summary" style="margin-bottom:16px"></div>
+      <!-- Day breakdown -->
+      <div id="cost-rows" style="font-size:10px;color:var(--t3);font-family:var(--m);padding:8px 0">
+        Carregando dados de custo…
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       AUDIT LOG PAGE
+  ═══════════════════════════════════════════════════ -->
+  <div class="card" id="section-audit" data-section="audit" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">Audit Log · Ações do NOC</div>
+      <div class="cacts">
+        <div class="chip" id="audit-count-chip" style="font-family:var(--m);color:var(--t3)">—</div>
+        <div class="chip" onclick="loadAuditLog()" style="cursor:pointer">↻</div>
+      </div>
+    </div>
+    <div class="cbd" id="audit-list" style="flex:1;overflow-y:auto;padding:4px 0">
+      <div style="padding:40px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Carregando audit log…</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SECURITY PAGE (L8) ═══════════ -->
+  <div class="card" id="section-security" data-section="security" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">Segurança · L8</div>
+      <div class="cacts">
+        <div class="ctabs" id="sec-tab-row">
+          <div class="ctab on" onclick="switchSecTab('keys',this)">API Keys</div>
+          <div class="ctab" onclick="switchSecTab('anomalies',this)" style="color:var(--rd)">Anomalias</div>
+        </div>
+        <div class="chip" onclick="loadSecurityPage()" style="cursor:pointer">↻</div>
+      </div>
+    </div>
+    <!-- API Keys tab -->
+    <div id="sec-tab-keys" style="flex:1;display:flex;flex-direction:column;gap:10px;padding:12px 0">
+      <div style="display:flex;gap:8px">
+        <input id="sec-key-label" type="text" placeholder="Label da nova key (ex: ci-pipeline)" style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:8px 10px;outline:none"/>
+        <button class="btn p" onclick="createApiKey()" style="padding:8px 14px">+ Criar API Key</button>
+      </div>
+      <div id="sec-new-key-display" style="display:none;padding:10px;background:rgba(100,220,100,0.08);border:1px solid var(--gr);border-radius:6px;font-family:var(--m);font-size:11px;word-break:break-all"></div>
+      <div id="sec-keys-list" style="flex:1;overflow-y:auto">
+        <div style="padding:20px;text-align:center;color:var(--t3);font-size:10px">Carregando keys…</div>
+      </div>
+    </div>
+    <!-- Anomalies tab -->
+    <div id="sec-tab-anomalies" style="display:none;flex:1;overflow-y:auto">
+      <div id="sec-anomalies-list" style="padding:4px 0">
+        <div style="padding:20px;text-align:center;color:var(--t3);font-size:10px">Carregando anomalias…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ ALERTS CONFIG PAGE ═══════════ -->
+  <div class="card" id="section-alerts" data-section="alerts" style="display:none;flex-direction:column">
+    <div class="chd">
+      <div class="ct">Configuração de Alertas · L9</div>
+      <div class="cacts">
+        <div class="chip" id="alerts-enabled-chip" onclick="toggleAlertsEnabled()" style="cursor:pointer;color:var(--gr)">● Alertas: ON</div>
+        <div class="chip" onclick="testWebhook()" style="cursor:pointer;color:var(--bl)">Test Webhook</div>
+        <div class="chip" onclick="saveAlertsConfig()" style="cursor:pointer;color:var(--gr)">✓ Salvar</div>
+      </div>
+    </div>
+    <div class="cbd" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:14px 0">
+      <div>
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);margin-bottom:6px;text-transform:uppercase">CPU threshold (%)</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="range" min="50" max="100" value="85" id="alert-cpu" oninput="document.getElementById('alert-cpu-val').textContent=this.value+'%'" style="flex:1;accent-color:var(--rd)"/>
+          <span id="alert-cpu-val" style="font-family:var(--m);font-size:11px;color:var(--rd);min-width:32px">85%</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);margin-bottom:6px;text-transform:uppercase">RAM threshold (%)</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="range" min="50" max="100" value="88" id="alert-ram" oninput="document.getElementById('alert-ram-val').textContent=this.value+'%'" style="flex:1;accent-color:var(--am)"/>
+          <span id="alert-ram-val" style="font-family:var(--m);font-size:11px;color:var(--am);min-width:32px">88%</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);margin-bottom:6px;text-transform:uppercase">Zombies antes de alertar</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="range" min="1" max="20" value="3" id="alert-zombie" oninput="document.getElementById('alert-zombie-val').textContent=this.value" style="flex:1;accent-color:var(--pu)"/>
+          <span id="alert-zombie-val" style="font-family:var(--m);font-size:11px;color:var(--pu);min-width:18px">3</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);margin-bottom:6px;text-transform:uppercase">Fail rate threshold (%)</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="range" min="5" max="100" value="30" id="alert-fail" oninput="document.getElementById('alert-fail-val').textContent=this.value+'%'" style="flex:1;accent-color:var(--am)"/>
+          <span id="alert-fail-val" style="font-family:var(--m);font-size:11px;color:var(--am);min-width:32px">30%</span>
+        </div>
+      </div>
+      <div style="grid-column:span 2">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);margin-bottom:6px;text-transform:uppercase">Webhook URL (Slack / Discord)</div>
+        <div style="display:flex;gap:8px">
+          <select id="alert-webhook-type" style="background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:8px;outline:none">
+            <option value="slack">Slack</option><option value="discord">Discord</option><option value="generic">Generic HTTP</option>
+          </select>
+          <input id="alert-webhook-url" type="text" placeholder="https://hooks.slack.com/…" style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:8px 10px;outline:none"/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SIMULATION / DRY-RUN PAGE (L10) ═══════════ -->
+  <div class="card" id="section-simulate" data-section="simulate" style="display:none;flex-direction:column">
+    <div class="chd">
+      <div class="ct">Simulação · Dry-Run · L10</div>
+      <div class="cacts">
+        <div class="chip" style="background:rgba(150,100,255,0.15);color:var(--pu);border-color:var(--pu)">Meta Control</div>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:14px;padding:12px 0">
+      <div style="font-size:10px;color:var(--t3);font-family:var(--m);line-height:1.7">Simule uma tarefa ANTES de executar. O sistema analisa histórico para prever: agente selecionado, tokens estimados, duração, custo USD e posição na fila.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <textarea id="sim-prompt" rows="4" placeholder="Descreva a tarefa para simular…" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:10px;outline:none;resize:vertical"></textarea>
+        <div style="display:flex;gap:8px">
+          <input id="sim-agent" type="text" placeholder="agent_name (opcional)" style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:8px 10px;outline:none"/>
+          <select id="sim-priority" style="background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:8px;outline:none">
+            <option value="3">Prioridade 3</option><option value="5" selected>Prioridade 5</option><option value="8">Prioridade 8</option><option value="10">Prioridade 10</option>
+          </select>
+          <button class="btn p" onclick="runDryRun()" id="sim-btn" style="padding:8px 18px">▶ Simular</button>
+        </div>
+      </div>
+      <!-- Results -->
+      <div id="sim-results" style="display:none">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;margin-bottom:8px">Resultado da Simulação</div>
+        <div class="sim-grid">
+          <div class="sim-kpi"><div class="sim-kpi-val" id="sim-tokens">—</div><div class="sim-kpi-lbl">Tokens Est.</div></div>
+          <div class="sim-kpi"><div class="sim-kpi-val" id="sim-cost">—</div><div class="sim-kpi-lbl">Custo USD Est.</div></div>
+          <div class="sim-kpi"><div class="sim-kpi-val" id="sim-duration">—</div><div class="sim-kpi-lbl">Duração Est.</div></div>
+          <div class="sim-kpi"><div class="sim-kpi-val" id="sim-confidence">—</div><div class="sim-kpi-lbl">Confiança</div></div>
+          <div class="sim-kpi"><div class="sim-kpi-val" id="sim-agent-sel">—</div><div class="sim-kpi-lbl">Agente</div></div>
+          <div class="sim-kpi"><div class="sim-kpi-val" id="sim-queue">—</div><div class="sim-kpi-lbl">Posição Fila</div></div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn p" onclick="executeSimulatedTask()" style="flex:1;padding:9px">⬆ Executar Esta Tarefa</button>
+          <button class="btn" onclick="document.getElementById('sim-results').style.display='none'" style="padding:9px 14px">✕ Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ NEURAL STEERING N5 ═══ -->
+  <div class="card" id="section-neural" data-section="neural" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">Neural Steering · Pilotagem Ativa de Agentes N5</div>
+      <div class="cacts">
+        <div class="chip" style="background:rgba(255,80,80,0.15);color:var(--rd);border-color:var(--rd)">CONTROLE DIRETO</div>
+        <button class="btn" onclick="loadNeuralTargets()" style="padding:3px 10px;font-size:10px">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:16px;padding:12px 0">
+      <!-- Doctrine Banner -->
+      <div style="background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.25);border-radius:8px;padding:10px 14px;font-family:var(--m);font-size:10px;color:var(--t2);line-height:1.8">
+        <span style="color:var(--rd);font-weight:600">⬡ DOUTRINA N5:</span> Neural Steering injeta um vetor de correção diretamente no contexto interno do agente em execução. O agente <span style="color:var(--gr)">não é pausado</span>. Na próxima iteração de raciocínio, o vetor é assimilado como memória de curto prazo prioritária.
+      </div>
+
+      <!-- Running agents targeting panel -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <!-- Left: Target Selection -->
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px">Agente Alvo · Em Execução</div>
+          <div id="neural-targets-list" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto">
+            <div style="padding:20px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Carregando agentes ativos…</div>
+          </div>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m)">Alvo selecionado: <span id="neural-selected-agent" style="color:var(--bl)">nenhum</span></div>
+        </div>
+
+        <!-- Right: Injection Form -->
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px">Vetor de Correção</div>
+          <select id="neural-steer-type" style="background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:8px;outline:none">
+            <option value="context_inject">💉 Context Inject — adiciona ao contexto</option>
+            <option value="goal_redirect">🎯 Goal Redirect — redireciona objetivo</option>
+            <option value="constraint_add">🔒 Constraint Add — adiciona restrição</option>
+            <option value="priority_boost">⚡ Priority Boost — eleva prioridade</option>
+            <option value="halt_signal">🛑 Halt Signal — sinaliza parada suave</option>
+          </select>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m)">Intensidade do vetor</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input type="range" id="neural-intensity" min="1" max="10" value="5" style="flex:1;accent-color:var(--rd)" oninput="document.getElementById('neural-intensity-val').textContent=this.value"/>
+            <span id="neural-intensity-val" style="font-family:var(--m);font-size:11px;color:var(--rd);min-width:16px">5</span>
+          </div>
+          <textarea id="neural-payload" rows="5" placeholder="Descreva a correção em linguagem natural ou JSON…&#10;&#10;Ex: 'Evite recursão em auth.py. Foque em soluções iterativas. Máximo 3 tentativas.'" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:10px;outline:none;resize:vertical"></textarea>
+          <button class="btn p" onclick="injectNeuralVector()" style="padding:10px;font-size:12px;background:linear-gradient(135deg,rgba(255,80,80,0.3),rgba(150,80,255,0.3));border-color:rgba(255,80,80,0.5)">
+            ⬡ Injetar Vetor Neural
+          </button>
+        </div>
+      </div>
+
+      <!-- Injection History -->
+      <div style="border-top:1px solid var(--b);padding-top:14px">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Histórico de Injeções · Sessão</div>
+        <div id="neural-history-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto">
+          <div style="color:var(--t3);font-size:10px;font-family:var(--m)">Nenhuma injeção nesta sessão.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ COGNITIVE TOPOLOGY ═══ -->
+  <div class="card" id="section-topology" data-section="topology" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">Topologia Cognitiva · Sistema Nervoso do Conhecimento</div>
+      <div class="cacts">
+        <div class="ctabs" id="topo-tab-row">
+          <div class="ctab on" onclick="switchTopoTab('graph',this)">Grafo Vivo</div>
+          <div class="ctab" onclick="switchTopoTab('heat',this)">ROI Térmico</div>
+          <div class="ctab" onclick="switchTopoTab('drift',this)">Drift Probabilístico</div>
+        </div>
+        <button class="btn" onclick="loadTopology()" style="padding:3px 10px;font-size:10px">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="cbd" style="padding:0">
+      <!-- Graph View -->
+      <div id="topo-view-graph" style="display:block">
+        <div style="display:grid;grid-template-columns:1fr 220px;gap:0;height:calc(100vh - 280px);min-height:400px">
+          <div id="topo-graph-container" style="border-right:1px solid var(--b);position:relative">
+            <div id="topo-network" style="width:100%;height:100%"></div>
+            <div style="position:absolute;bottom:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap">
+              <div class="chip" style="font-size:8px;background:rgba(77,128,255,0.15);color:var(--bl);border-color:var(--bl)">● Task</div>
+              <div class="chip" style="font-size:8px;background:rgba(46,212,122,0.15);color:var(--gr);border-color:var(--gr)">● Lição</div>
+              <div class="chip" style="font-size:8px;background:rgba(155,123,255,0.15);color:var(--pu);border-color:var(--pu)">● Agente</div>
+              <div class="chip" style="font-size:8px;background:rgba(30,207,184,0.15);color:var(--cy);border-color:var(--cy)">● Conceito</div>
+              <div class="chip" style="font-size:8px;background:rgba(255,80,80,0.15);color:var(--rd);border-color:var(--rd)">● Falha</div>
+            </div>
+          </div>
+          <div id="topo-side-panel" style="padding:14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto">
+            <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px">Estatísticas do Grafo</div>
+            <div id="topo-stats" style="display:flex;flex-direction:column;gap:6px">
+              <div class="topo-stat-row"><span class="topo-stat-lbl">Nós totais</span><span class="topo-stat-val" id="topo-nodes-count">—</span></div>
+              <div class="topo-stat-row"><span class="topo-stat-lbl">Arestas</span><span class="topo-stat-val" id="topo-edges-count">—</span></div>
+              <div class="topo-stat-row"><span class="topo-stat-lbl">Componentes</span><span class="topo-stat-val" id="topo-components">—</span></div>
+              <div class="topo-stat-row"><span class="topo-stat-lbl">Densidade</span><span class="topo-stat-val" id="topo-density">—</span></div>
+              <div class="topo-stat-row"><span class="topo-stat-lbl">Hub central</span><span class="topo-stat-val" id="topo-hub">—</span></div>
+            </div>
+            <div style="border-top:1px solid var(--b);padding-top:10px;font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px">Nó Selecionado</div>
+            <div id="topo-node-detail" style="font-size:10px;color:var(--t2);font-family:var(--m);line-height:1.7">Clique em um nó para ver detalhes.</div>
+            <div style="border-top:1px solid var(--b);padding-top:10px">
+              <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Filtros</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="topo-show-tasks" checked onchange="applyTopoFilters()"> Tasks</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="topo-show-lessons" checked onchange="applyTopoFilters()"> Lições</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="topo-show-agents" checked onchange="applyTopoFilters()"> Agentes</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="topo-show-failures" checked onchange="applyTopoFilters()"> Falhas</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ROI Heat View -->
+      <div id="topo-view-heat" style="display:none;padding:14px">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Knowledge-ROI · Custo por Lição Aprendida / Objetivo Alcançado</div>
+        <div id="topo-roi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">
+          <div style="color:var(--t3);font-size:10px;font-family:var(--m)">Carregando dados ROI…</div>
+        </div>
+        <div style="margin-top:16px;border-top:1px solid var(--b);padding-top:12px">
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Análise de Eficiência por Agente</div>
+          <div id="topo-agent-roi" style="display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+      </div>
+      <!-- Drift View -->
+      <div id="topo-view-drift" style="display:none;padding:14px">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Drift Probabilístico · Divergência de Comportamento em Relação à Baseline</div>
+        <div id="topo-drift-list" style="display:flex;flex-direction:column;gap:8px">
+          <div style="color:var(--t3);font-size:10px;font-family:var(--m)">Calculando vetores de drift…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TASK INJECT MODAL -->
+<div class="wmodal-overlay" id="inject-modal-overlay" onclick="closeInjectModal()" style="display:none"></div>
+<div class="wmodal" id="inject-modal" style="width:420px;max-width:95vw">
+  <div class="wmodal-hd">
+    <div class="wmodal-title">⬡ Injetar Tarefa Manualmente</div>
+    <button class="btn" onclick="closeInjectModal()" style="padding:4px 10px">✕</button>
+  </div>
+  <div class="wmodal-body" style="display:flex;flex-direction:column;gap:10px;padding:14px">
+    <label style="font-size:10px;color:var(--t3);font-family:var(--m)">Agent Name</label>
+    <input id="inj-agent" type="text" placeholder="ex: CodeAnalyzer" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:8px 10px;outline:none"/>
+    <label style="font-size:10px;color:var(--t3);font-family:var(--m)">Prompt / Description</label>
+    <textarea id="inj-prompt" rows="4" placeholder="Descreva a tarefa..." style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:8px 10px;outline:none;resize:vertical"></textarea>
+    <label style="font-size:10px;color:var(--t3);font-family:var(--m)">Priority (1=lowest, 10=highest)</label>
+    <input id="inj-priority" type="number" value="5" min="1" max="10" style="width:80px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:8px 10px;outline:none"/>
+    <div id="inj-result" style="display:none;margin-top:4px"></div>
+    <button id="inj-submit" class="btn p" onclick="submitInjectTask()" style="width:100%;padding:10px;font-size:13px">⬆ Injetar na Fila</button>
+  </div>
 </div>
 
 <!-- TENANT CREATE MODAL -->
@@ -851,6 +1505,7 @@ function buildSparks(){
     {data:[88,92,94,96,102,110,118,120,124,128,130,134],c:'#4D80FF'},
     {data:[280,310,295,340,380,390,420,440,410,450,470,480],c:'#F0A020'},
     {data:[3,3,2,2,2,2,2,2,1,2,2,2],c:'#E04848'},
+    {data:[8,9,10,10,11,12,11,13,14,13,15,16],c:'#1ECFB8'},
   ];
   datasets.forEach(({data,c},i)=>{
     const ctx=document.getElementById('sp'+i);if(!ctx)return;
@@ -1070,9 +1725,7 @@ for(let i=0;i<6;i++){const m=_DEMO_LOG_MSGS[i%_DEMO_LOG_MSGS.length];_addLogLine
 
 let _lastLogFetch=0;
 async function refreshLiveLogs(){
-  const now=Date.now();
-  if(now-_lastLogFetch<4000)return; // throttle
-  _lastLogFetch=now;
+  _lastLogFetch=Date.now();
   try{
     const tid=(typeof APP_STATE!=='undefined'?APP_STATE.tenant_id:null)||'default';
     const r=await fetch(`/api/v5/dashboard/diagnostics/logs?since_minutes=2&limit=8&tenant_id=${tid}`);
@@ -1092,7 +1745,16 @@ async function refreshLiveLogs(){
   const m=_DEMO_LOG_MSGS[_logDemoIdx%_DEMO_LOG_MSGS.length];_logDemoIdx++;
   _addLogLine(m.lvl,m.msg);
 }
-setInterval(refreshLiveLogs,4000);
+// Poll logs only when the logs page is visible, and not more than once every 8s
+let _logInFlight=false;
+function _maybeRefreshLogs(){
+  const sec=document.getElementById('section-logs');
+  if(!sec||sec.style.display==='none')return;
+  if(_logInFlight)return;
+  _logInFlight=true;
+  refreshLiveLogs().finally(()=>{_logInFlight=false;});
+}
+setInterval(_maybeRefreshLogs,8000);
 
 // ══ CONFIDENCE SLIDER ══
 let _confSaveTimer=null;
@@ -1149,7 +1811,13 @@ async function refreshSystemMetrics(){
     if(el3)el3.innerHTML=(c.zombie||0)+'<span class="ksub"> zombie</span>';
   }catch(_){}
 }
-setTimeout(()=>{refreshSystemMetrics();setInterval(refreshSystemMetrics,8000);},2000);
+let _sysMetricsInFlight = false;
+async function _maybeRefreshSysMetrics() {
+  if (_sysMetricsInFlight) return;
+  _sysMetricsInFlight = true;
+  try { await refreshSystemMetrics(); } finally { _sysMetricsInFlight = false; }
+}
+setTimeout(()=>{ _maybeRefreshSysMetrics(); setInterval(_maybeRefreshSysMetrics, 20000); }, 2000);
 
 // ══ LESSON COUNT — sync real count from API ══
 async function syncLessonCount(){
@@ -1204,6 +1872,10 @@ const commands=[
   {cmd:'/tenant quota {name} {tokens}',desc:'Ajustar quota diária de tokens',key:'Q'},
   {cmd:'/logs tail {worker}',desc:'Seguir logs de um worker',key:'L'},
   {cmd:'/reset confidence',desc:'Restaurar threshold padrão 72%',key:''},
+  {cmd:'/steer agent {name}',desc:'Abrir Neural Steering para agente',key:'N'},
+  {cmd:'/topology',desc:'Ver Topologia Cognitiva · sistema nervoso',key:'T'},
+  {cmd:'/roi',desc:'Ver Knowledge-ROI · eficiência cognitiva',key:''},
+  {cmd:'/kill all',desc:'☠ Kill All — cancelar todas as tasks',key:''},
 ];
 let cmdIdx=0;
 function openCmd(){
@@ -1302,6 +1974,13 @@ async function execCmd(cmd){
     }catch(e){showToast('var(--rd)',`Erro: ${e.message}`);}
     return;
   }
+  // /steer agent {name}
+  const steerM=c.match(/^\/steer\s+agent\s*(.+)?/i);
+  if(steerM){ navTo('neural'); showToast('var(--rd)','⬡ Neural Steering → selecione o agente'); return; }
+  // /topology
+  if(/^\/topology$/i.test(c)){ navTo('topology'); return; }
+  // /roi
+  if(/^\/roi$/i.test(c)){ navTo('topology'); setTimeout(()=>{ if(typeof switchTopoTab==='function') switchTopoTab('heat',null); },200); return; }
   // Default: show as info
   showToast('var(--bl)','⌘ '+c.substring(0,60));
 }
@@ -1318,12 +1997,70 @@ const tipData={
   k2:'480k tokens/dia · 3 tenants · Anthropic + OpenAI combined',
   k3:'2 agentes stale · task-8819 e task-8807 · HB >4min'
 };
-Object.keys(tipData).forEach(id=>{
-  const el=document.getElementById(id);if(!el)return;
-  el.addEventListener('mouseenter',()=>{tipEl.textContent=tipData[id];tipEl.classList.add('show');});
-  el.addEventListener('mousemove',e=>{tipEl.style.left=(e.clientX+16)+'px';tipEl.style.top=(e.clientY-34)+'px';});
-  el.addEventListener('mouseleave',()=>tipEl.classList.remove('show'));
-});
+if(tipEl){
+  Object.keys(tipData).forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    el.addEventListener('mouseenter',()=>{tipEl.textContent=tipData[id];tipEl.classList.add('show');});
+    el.addEventListener('mousemove',e=>{tipEl.style.left=(e.clientX+16)+'px';tipEl.style.top=(e.clientY-34)+'px';});
+    el.addEventListener('mouseleave',()=>tipEl.classList.remove('show'));
+  });
+}
+
+// ══ SPA NAVIGATION ══
+const PAGE_LABELS={
+  home:'NOC Home',logs:'Live Logs',kanban:'Zombie Killer · Kanban',
+  metrics:'Métricas RED','engine-room':'Engine Room',agents:'Agent Control · L1',
+  rep:'Reputação de Agentes',explorer:'Exploração N5 · Grafo',ask:'Ask N5 · LLM Chat',
+  lessons:'Base de Lições',tenants:'Tenants & Quotas',memory:'Memória & Quotas',
+  cost:'Custos & Atribuição · L6',audit:'Audit Log · NOC',
+  'prompt-inspector':'Prompt Inspector',timeline:'Tool Timeline',events:'Pulso do Sistema',
+  neural:'Neural Steering · Pilotagem Ativa N5',topology:'Topologia Cognitiva · Sistema Nervoso'
+};
+// Pages that replace the entire main view with a dedicated SPA div
+const SPA_PAGES={'engine-room':'engine-room-spa','ask':'ask-spa','explorer':'explorer-spa'};
+
+function showPage(pid){
+  // Sidebar active state
+  document.querySelectorAll('.ni').forEach(el=>{
+    const oc=el.getAttribute('onclick')||'';
+    el.classList.toggle('on',oc.includes(`'${pid}'`));
+  });
+
+  const mainView=document.getElementById('view-main-dashboard');
+  const bc=document.getElementById('noc-breadcrumb'),bt=document.getElementById('noc-bc-title');
+
+  // Always hide all SPA containers first
+  Object.values(SPA_PAGES).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+
+  if(pid==='home'){
+    if(mainView)mainView.style.display='flex';
+    if(bc)bc.style.display='none';
+    document.querySelectorAll('[data-home-only="1"]').forEach(el=>el.style.display='flex');
+    document.querySelectorAll('[data-section]').forEach(el=>el.style.display='none');
+  } else if(SPA_PAGES[pid]){
+    // Full-screen SPA — hide main dashboard, show dedicated SPA div
+    if(mainView)mainView.style.display='none';
+    const spaEl=document.getElementById(SPA_PAGES[pid]);
+    if(spaEl)spaEl.style.display=pid==='ask'?'flex':'block';
+    if(bc)bc.style.display='none'; // SPAs have their own ← Voltar button
+  } else {
+    // Section inside main dashboard
+    if(mainView)mainView.style.display='flex';
+    if(bc){bc.style.display='flex';if(bt)bt.textContent=PAGE_LABELS[pid]||pid;}
+    document.querySelectorAll('[data-home-only="1"]').forEach(el=>el.style.display='none');
+    document.querySelectorAll('[data-section]').forEach(el=>{
+      el.style.display=el.dataset.section===pid?'flex':'none';
+    });
+  }
+
+  closeSidebar();
+  if(typeof window._onPageEnter==='function')window._onPageEnter(pid);
+}
+window.navTo=showPage;
+
+// Called once at boot to set correct initial state
+document.addEventListener('DOMContentLoaded',()=>showPage('home'));
+
 </script>
 
 
