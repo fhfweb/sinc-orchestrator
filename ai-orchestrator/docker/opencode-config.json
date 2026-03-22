@@ -1,0 +1,62 @@
+{
+  "$schema": "https://opencode.ai/config.schema.json",
+
+  "providers": {
+    "anthropic": {
+      "apiKey": "${ANTHROPIC_API_KEY}",
+      "models": ["claude-sonnet-4-6", "claude-opus-4-6", "claude-haiku-4-5-20251001"]
+    },
+    "ollama": {
+      "baseURL": "${OLLAMA_HOST:-http://ollama:11434}",
+      "models": ["qwen2.5-coder:14b-instruct-q4_K_M", "qwen2.5:7b-instruct-q4_K_M"]
+    }
+  },
+
+  "model": "anthropic/claude-sonnet-4-6",
+
+  "mcp": {
+    "sinc-orchestrator": {
+      "type": "http",
+      "url": "$SINC_MCP_URL",
+      "description": "SINC Cognitive Orchestrator — 21 tools for memory, code graph, tasks, agents, Redis, sandbox",
+      "tools": [
+        "query_graph",
+        "impact_analysis",
+        "get_memory_graph_summary",
+        "search_past_solutions",
+        "memory_write",
+        "semantic_code_search",
+        "redis_get",
+        "redis_set",
+        "redis_keys",
+        "create_sinc_task",
+        "get_task_status",
+        "list_tasks",
+        "cancel_task",
+        "list_agents",
+        "spawn_agent_task",
+        "read_workspace_file",
+        "write_workspace_file",
+        "patch_workspace_file",
+        "list_workspace_files",
+        "bash_in_sandbox",
+        "get_lsp_definition",
+        "analyze_code_file",
+        "get_system_metrics",
+        "get_agent_logs",
+        "get_feature_flags",
+        "toggle_feature_flag",
+        "get_orchestrator_capabilities",
+        "get_opencode_sessions",
+        "opencode_health"
+      ]
+    }
+  },
+
+  "autoshare": false,
+  "autoupdate": false,
+
+  "keybinds": {
+    "leader": "ctrl+x"
+  }
+}

@@ -107,6 +107,25 @@ def detect_ollama() -> bool:
     return bool(OLLAMA_HOST)
 
 
+def detect_opencode() -> bool:
+    """True if the OpenCode sandbox is reachable or the binary exists."""
+    from services.streaming.core.config import env_get as _eg
+    if _eg("OPENCODE_ENABLED", default="1") != "1":
+        return False
+    # 1. Try serve-mode HTTP health endpoint
+    opencode_url = _eg("OPENCODE_URL", default="http://opencode-sandbox:9000")
+    try:
+        import httpx as _hx
+        r = _hx.get(f"{opencode_url}/health", timeout=2)
+        if r.status_code < 400:
+            return True
+    except Exception:
+        pass
+    # 2. Subprocess fallback: binary in PATH
+    import shutil
+    return shutil.which(_eg("OPENCODE_BIN", default="opencode")) is not None
+
+
 def get_available_backends() -> list[str]:
     backends: list[str] = []
     if detect_codex():
@@ -115,6 +134,8 @@ def get_available_backends() -> list[str]:
         backends.append("anthropic")
     if detect_ollama():
         backends.append("ollama")
+    if detect_opencode():
+        backends.append("opencode")
     return backends or ["ollama"]
 
 
@@ -958,6 +979,85 @@ def run_ollama(prompt: str, *, system_prompt: str | None = None, model_override:
         return ExecutionResult(status="failed", summary=f"Ollama call failed: {e}", backend_used="ollama", error=str(e))
 
 
+def run_opencode(
+    prompt: str,
+    *,
+    system_prompt: str | None = None,
+    workspace: Path = WORKSPACE,
+    dispatch: dict[str, Any] | None = None,
+) -> ExecutionResult:
+    """
+    Execute a coding task via the OpenCode assistant.
+
+    Tries serve-mode HTTP first (opencode-sandbox container).
+    Falls back to subprocess `opencode run --prompt ... --format json`.
+
+    The system_prompt is injected as the first user message if serve mode is
+    active; for subprocess mode it is prepended to the prompt.
+    """
+    import asyncio as _asyncio
+
+    task_id   = str((dispatch or {}).get("id") or (dispatch or {}).get("title") or "runner-task")
+    tenant_id = str((dispatch or {}).get("tenant_id") or "local")
+
+    full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
+
+    try:
+        from services.opencode_client import get_opencode_client, OPENCODE_ENABLED
+        if not OPENCODE_ENABLED:
+            return ExecutionResult(
+                status="failed",
+                summary="OpenCode disabled (OPENCODE_ENABLED=0)",
+                backend_used="opencode",
+                error="disabled",
+            )
+
+        client = get_opencode_client()
+
+        async def _run_async() -> ExecutionResult:
+            session = await client.new_session(
+                task_id=task_id,
+                tenant_id=tenant_id,
+                workspace=str(workspace),
+            )
+            chunks: list[str] = []
+            async for chunk in client.send_message(session, full_prompt):
+                chunks.append(chunk)
+            oc = await client.close_session(session)
+            status = "done" if oc.success else "failed"
+            return ExecutionResult(
+                status=status,
+                summary=oc.summary or "".join(chunks)[:2000],
+                error=oc.error,
+                backend_used=oc.backend_used,
+                files_modified=oc.files_modified,
+                raw_output=oc.raw_output,
+            )
+
+        # Run the async coroutine from sync context
+        try:
+            loop = _asyncio.get_event_loop()
+            if loop.is_running():
+                # We're inside an already-running loop (e.g. Ray worker);
+                # use a new thread-based loop
+                import concurrent.futures as _cf
+                with _cf.ThreadPoolExecutor(max_workers=1) as ex:
+                    future = ex.submit(_asyncio.run, _run_async())
+                    return future.result(timeout=360)
+            else:
+                return loop.run_until_complete(_run_async())
+        except Exception:
+            return _asyncio.run(_run_async())
+
+    except Exception as e:
+        return ExecutionResult(
+            status="failed",
+            summary=f"OpenCode execution failed: {e}",
+            backend_used="opencode",
+            error=str(e),
+        )
+
+
 class HybridAgentRunner:
     def __init__(self, available_backends: list[str] | None = None):
         self.available_backends = available_backends or get_available_backends()
@@ -1015,13 +1115,16 @@ class HybridAgentRunner:
         final_prompt = f"{brief}\n\n{prompt}" if brief else prompt
 
         # Override backend if the specifically requested one is not available
-        if preferred_backend not in self.available_backends:
-             preferred_backend = self.available_backends[0] if self.available_backends else "ollama"
+        # Exception: "opencode" is always available via subprocess fallback, so never downgrade it.
+        if preferred_backend != "opencode" and preferred_backend not in self.available_backends:
+            preferred_backend = self.available_backends[0] if self.available_backends else "ollama"
 
         self.iteration_count += 1
-        
+
         result: ExecutionResult
-        if preferred_backend == "codex":
+        if preferred_backend == "opencode":
+            result = run_opencode(final_prompt, system_prompt=system_prompt, workspace=workspace, dispatch=dispatch)
+        elif preferred_backend == "codex":
             result = run_codex(final_prompt, workspace=workspace, dispatch=dispatch)
         elif preferred_backend == "anthropic":
             result = run_anthropic(final_prompt, system_prompt=system_prompt, workspace=workspace, dispatch=dispatch)

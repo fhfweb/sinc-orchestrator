@@ -58,6 +58,7 @@ _OPTIONAL_ROUTERS = (
     "analytics",
     "system_infra",
     "intelligence_v1",
+    "opencode",
 )
 
 

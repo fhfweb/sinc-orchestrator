@@ -24,3 +24,4 @@ ai-orchestrator/trace.txt
 **/__pycache__/
 **/*.pyc
 **/*.pyo
+.codebuddy

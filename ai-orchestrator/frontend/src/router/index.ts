@@ -17,7 +17,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/noc/tasks/batch',    component: () => import('@/pages/TasksPage.vue'),        meta: { label: 'Batch Ops',    group: 'exec' } },
   { path: '/noc/task-templates', component: () => import('@/pages/StubPage.vue'),         meta: { label: 'Templates',    group: 'exec' } },
   { path: '/noc/rollback',       component: () => import('@/pages/StubPage.vue'),         meta: { label: 'Rollback',     group: 'exec' } },
-  { path: '/noc/engine',         component: () => import('@/pages/StubPage.vue'),         meta: { label: 'Engine Room',  group: 'exec' } },
+  { path: '/noc/engine',         component: () => import('@/pages/EnginePage.vue'),       meta: { label: 'Engine Room',  group: 'exec' } },
   { path: '/noc/plans',          component: () => import('@/pages/StubPage.vue'),         meta: { label: 'Planos',       group: 'exec' } },
   { path: '/noc/incidents',      component: () => import('@/pages/StubPage.vue'),         meta: { label: 'Incidents',    group: 'exec' } },
 

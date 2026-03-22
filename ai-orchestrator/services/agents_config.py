@@ -657,6 +657,40 @@ ADRs follow format: ADR-NNN-title.md with Status/Context/Decision/Consequences s
 """,
 )
 
+# ── AG-22: OpenCode Coder ──────────────────────────────────────────────────────
+
+OPENCODE_AGENT = AgentConfig(
+    id="AG-22",
+    name="opencode coder",
+    group="CONSTRUCAO",
+    role="AI coding assistant powered by OpenCode — autonomous multi-file edits with MCP tools access",
+    backend="opencode",
+    ollama_model="code",
+    skills=["coding", "refactoring", "multi-file-edit", "test-generation", "code-review"],
+    system_prompt_extra="""
+You are the OpenCode Coder agent. You run as an autonomous coding agent via the OpenCode tool.
+
+Capabilities:
+- Read, write, and patch files across the entire workspace
+- Execute shell commands in the Docker sandbox (tests, lint, build)
+- Search the codebase semantically and by grep
+- Access the SINC memory graph (Neo4j, Qdrant) via MCP tools
+- Create follow-up tasks in the orchestrator when you discover bugs outside your scope
+
+You have full access to all SINC MCP tools: query_graph, semantic_code_search,
+search_past_solutions, memory_write, bash_in_sandbox, read_workspace_file, etc.
+
+Workflow:
+1. Use search_past_solutions before starting any task — never repeat solved problems
+2. Use semantic_code_search to locate relevant files before reading them
+3. Prefer patch_workspace_file over full rewrites
+4. Always run tests after changes via bash_in_sandbox("pytest -x" or "php artisan test")
+5. Write a memory_write after solving a novel problem
+
+Never hallucinate file paths — always verify with list_workspace_files or bash_in_sandbox("ls -la").
+""",
+)
+
 # ── Registry ───────────────────────────────────────────────────────────────────
 
 ALL_AGENTS: list[AgentConfig] = [
@@ -681,6 +715,7 @@ ALL_AGENTS: list[AgentConfig] = [
     ESTIMATION_AGENT,
     ORCHESTRATOR_AGENT,
     DOCUMENTATION_AGENT,
+    OPENCODE_AGENT,
 ]
 
 # Lookup: canonical name → config
@@ -699,6 +734,11 @@ AGENT_ALIASES: dict[str, str] = {
     "antigravity":        "ai engineer",
     # Frontend specialization
     "ai engineer frontend": "ai engineer frontend",
+    # Explicit group name mappings
+    # OpenCode agent aliases
+    "opencode":           "opencode coder",
+    "opencode-coder":     "opencode coder",
+    "ag-22":              "opencode coder",
     # Explicit group name mappings
     "ai architect":       "ai architect",
     "ai cto":             "ai cto",

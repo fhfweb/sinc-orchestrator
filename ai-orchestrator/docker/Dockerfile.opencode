@@ -1,0 +1,77 @@
+# Dockerfile.opencode
+# ====================
+# OpenCode AI coding assistant sandbox.
+#
+# This container runs `opencode serve` on port 9000 and connects to the
+# SINC MCP server so OpenCode can consume all orchestrator tools:
+#   - query_graph, impact_analysis, semantic_code_search
+#   - bash_in_sandbox, read/write/patch workspace files
+#   - redis_get/set, memory_write, list_agents, spawn_agent_task
+#   - list_tasks, get_system_metrics, feature flags, etc.
+#
+# Runtime requirements:
+#   ANTHROPIC_API_KEY   — Anthropic provider (Claude Sonnet/Opus)
+#   OPENAI_API_KEY      — Optional OpenAI provider
+#   SINC_MCP_URL        — URL of the SINC FastMCP server (default: http://orchestrator-streaming:8765/mcp)
+#
+# Build: docker build -f docker/Dockerfile.opencode -t sinc-opencode:local .
+# Run:   docker run -e ANTHROPIC_API_KEY=... sinc-opencode:local
+
+FROM debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# ── System deps ────────────────────────────────────────────────────────────────
+RUN apt-get update -qq \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        git \
+        python3 \
+        python3-pip \
+        python3-venv \
+        jq \
+        bash \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── Install OpenCode binary from GitHub releases ───────────────────────────────
+# Pin a release tag; update OPENCODE_VERSION to upgrade.
+ARG OPENCODE_VERSION=0.1.122
+ARG TARGETARCH=amd64
+
+RUN set -eux; \
+    ARCHIVE="opencode_Linux_${TARGETARCH}.tar.gz"; \
+    curl -fsSL \
+        "https://github.com/sst/opencode/releases/download/v${OPENCODE_VERSION}/${ARCHIVE}" \
+        -o /tmp/opencode.tar.gz; \
+    tar -xzf /tmp/opencode.tar.gz -C /usr/local/bin opencode; \
+    chmod +x /usr/local/bin/opencode; \
+    rm /tmp/opencode.tar.gz; \
+    opencode --version
+
+# ── Workspace ─────────────────────────────────────────────────────────────────
+RUN mkdir -p /workspace /home/opencode/.config/opencode
+WORKDIR /workspace
+
+# ── OpenCode config (MCP wiring, providers, models) ───────────────────────────
+# The actual config is mounted at runtime or baked via the ARG below.
+# See docker/opencode-config.json for the template.
+COPY docker/opencode-config.json /home/opencode/.config/opencode/config.json
+
+# ── Entrypoint ─────────────────────────────────────────────────────────────────
+# Serve mode: OpenCode exposes an HTTP API on port 9000.
+# The orchestrator's opencode_client.py talks to this API.
+EXPOSE 9000
+
+# Allow overriding SINC_MCP_URL at runtime
+ENV SINC_MCP_URL="http://orchestrator-streaming:8765/mcp" \
+    OPENCODE_PORT="9000" \
+    OPENCODE_WORKSPACE="/workspace"
+
+# Patch the config with runtime env vars and start serve mode.
+# Using shell form so envsubst can substitute variables into the config.
+CMD ["sh", "-c", \
+    "sed -i \"s|\\$SINC_MCP_URL|${SINC_MCP_URL}|g\" /home/opencode/.config/opencode/config.json && \
+     opencode serve --port ${OPENCODE_PORT} --workspace ${OPENCODE_WORKSPACE}"]

@@ -752,6 +752,61 @@ async def _execute_pending_sandboxes(worker: AgentWorker, task_id: str) -> None:
         _log(f"Sandbox error: {exc}")
 
 
+async def _run_opencode_task(worker: AgentWorker, task: dict, context: str):
+    """Dispatch a task to the OpenCode coding assistant and return an ExecutionResult."""
+    from services.local_agent_runner import ExecutionResult as _ExecResult
+    from services.opencode_client import (
+        get_opencode_client, OPENCODE_ENABLED,
+        OPENCODE_PROVIDER_CODING, OPENCODE_MODEL_CODING,
+    )
+
+    if not OPENCODE_ENABLED:
+        return _ExecResult(
+            status="failed",
+            summary="OpenCode is disabled (OPENCODE_ENABLED=0).",
+            error="disabled",
+            backend_used="opencode",
+        )
+
+    client = get_opencode_client()
+    task_id = task.get("id") or task.get("task_id", "unknown")
+    tenant_id = task.get("tenant_id", worker.tenant_id)
+    description = task.get("description") or task.get("title") or ""
+
+    # Build full prompt: task description + injected context
+    prompt = description
+    if context:
+        prompt = f"{description}\n\n---\nContext from memory and prior tasks:\n{context}"
+
+    session = await client.new_session(
+        task_id=task_id,
+        tenant_id=tenant_id,
+        provider=OPENCODE_PROVIDER_CODING,
+        model=OPENCODE_MODEL_CODING,
+        workspace=str(worker.workspace),
+    )
+
+    chunks = []
+    try:
+        async for chunk in client.send_message(session, prompt):
+            chunks.append(chunk)
+            await worker.send_heartbeat(task_id, 50, "opencode-streaming")
+    except Exception as e:
+        _log(f"[{task_id}] OpenCode streaming error: {e}")
+
+    oc_result = await client.close_session(session)
+    status = "done" if oc_result.success else "failed"
+
+    return _ExecResult(
+        status=status,
+        summary=oc_result.summary or "".join(chunks)[:2000],
+        error=oc_result.error,
+        backend_used=oc_result.backend_used,
+        files_modified=oc_result.files_modified,
+        raw_output=oc_result.raw_output,
+    )
+
+
 async def _run_task(worker: AgentWorker, runner, task: dict) -> None:
     task_id = task.get("id") or task.get("task_id", "unknown")
     _log(f"[{task_id}] starting execution")
@@ -764,8 +819,16 @@ async def _run_task(worker: AgentWorker, runner, task: dict) -> None:
         # Ensure project/tenant scope is present for the runner
         if "project_id" not in task: task["project_id"] = worker.project_id
         if "tenant_id" not in task: task["tenant_id"] = worker.tenant_id
-        
-        result = await asyncio.to_thread(runner.run, task_id, task, context)
+
+        # Route to OpenCode if the assigned agent uses opencode backend
+        agent_name = task.get("agent") or task.get("agent_id") or ""
+        from services.agents_config import get_preferred_backend
+        _backend = get_preferred_backend(agent_name) if agent_name else "anthropic"
+        if _backend == "opencode":
+            _log(f"[{task_id}] routing to OpenCode backend (agent={agent_name})")
+            result = await _run_opencode_task(worker, task, context)
+        else:
+            result = await asyncio.to_thread(runner.run, task_id, task, context)
 
         await worker.perform_post_task_actions(runner, task, result)
         completion_status = "done" if result.status in ("done", "partial") else "failed"
