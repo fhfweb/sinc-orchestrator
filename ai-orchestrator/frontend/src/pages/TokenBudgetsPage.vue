@@ -182,7 +182,7 @@ async function loadData() {
   loading.value = true
   try {
     const res = await api<any>('/token-budgets')
-    budgets.value = res.budgets ?? res
+    budgets.value = Array.isArray(res.budgets) ? res.budgets : (Array.isArray(res) ? res : demoBudgets)
   } catch {
     budgets.value = demoBudgets
   } finally {

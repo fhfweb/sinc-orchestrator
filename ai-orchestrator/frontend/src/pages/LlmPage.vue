@@ -130,7 +130,26 @@ async function loadData() {
   loading.value = true
   try {
     const res = await api<any>('/llm/status')
-    providers.value = res.providers ?? res
+    const raw: any[] = Array.isArray(res.providers) ? res.providers : (Array.isArray(res) ? res : [])
+    if (raw.length === 0) {
+      providers.value = demoProviders
+    } else if ('errorRate' in raw[0]) {
+      providers.value = raw
+    } else {
+      // Map backend format: {name, status, latency_ms, requests_1h, errors_1h, model}
+      providers.value = raw.map((p: any) => ({
+        id: p.name,
+        name: p.name,
+        model: p.model || '—',
+        status: p.status === 'ok' ? 'online' : p.status === 'unknown' ? 'offline' : (p.status || 'offline'),
+        enabled: p.status === 'ok',
+        p99Latency: p.latency_ms ?? 0,
+        errorRate: p.requests_1h > 0 ? ((p.errors_1h ?? 0) / p.requests_1h) * 100 : 0,
+        costPer1k: 0,
+        requestsToday: p.requests_1h ?? 0,
+        circuitBreaker: 'closed' as const,
+      }))
+    }
   } catch {
     providers.value = demoProviders
   } finally {

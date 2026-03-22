@@ -208,7 +208,12 @@ async function exportPdf() {
 async function loadData() {
   try {
     const res = await api<any>('/compliance/report')
-    report.value = res
+    report.value = {
+      ...demoReport,
+      ...res,
+      controls: Array.isArray(res.controls) ? res.controls : demoReport.controls,
+      isolationScan: res.isolationScan ?? demoReport.isolationScan,
+    }
   } catch {
     report.value = demoReport
   }

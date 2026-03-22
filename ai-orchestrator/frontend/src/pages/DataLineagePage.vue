@@ -161,7 +161,11 @@ async function loadData() {
   loading.value = true
   try {
     const res = await api<any>('/data-lineage')
-    lineage.value = res
+    lineage.value = {
+      sources: Array.isArray(res.sources) ? res.sources : demoLineage.sources,
+      transforms: Array.isArray(res.transforms) ? res.transforms : demoLineage.transforms,
+      sinks: Array.isArray(res.sinks) ? res.sinks : demoLineage.sinks,
+    }
   } catch {
     lineage.value = demoLineage
   } finally {

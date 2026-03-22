@@ -174,7 +174,7 @@ async function loadData() {
   loading.value = true
   try {
     const res = await api<any>('/context/traces')
-    traces.value = res.traces ?? res
+    traces.value = Array.isArray(res.traces) ? res.traces : (Array.isArray(res) ? res : demoTraces)
   } catch {
     traces.value = demoTraces
   } finally {

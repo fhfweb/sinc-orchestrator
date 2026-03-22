@@ -2158,6 +2158,20 @@ async def dashboard_ask(
     )
 
 
+@router.post("/ask")
+async def dashboard_ask_post(request: Request):
+    """POST variant of /ask — accepts JSON body {question, prompt, project_id, session_id, tenant_id}."""
+    body = await request.json()
+    prompt = body.get("question") or body.get("prompt", "")
+    project_id = body.get("project_id", "project0")
+    session_id = body.get("session_id", "")
+    tenant_id = body.get("tenant_id", "default")
+    return await dashboard_ask(
+        prompt=prompt,
+        project_id=project_id,
+        session_id=session_id,
+        tenant_id=tenant_id,
+    )
 
 
 # ── Agent Reputation (task-history based — no auth) ───────────────────────────

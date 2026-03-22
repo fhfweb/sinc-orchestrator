@@ -73,15 +73,17 @@ const allRoutes = router.getRoutes()
 function routesByGroup(groupId: string) {
   return allRoutes
     .filter(r => r.meta?.group === groupId)
+    .filter(r => !PINNED_PATHS.includes(r.path))  // don't duplicate pinned items
     .filter(r => !query.value || r.meta?.label?.toString().toLowerCase().includes(query.value.toLowerCase()))
 }
 
+const PINNED_PATHS = ['/noc', '/noc/logs', '/noc/kanban', '/noc/agents', '/noc/ask', '/noc/metrics', '/noc/engine']
+
 const pinned = computed(() => {
-  const pinnedPaths = ['/noc', '/noc/logs', '/noc/kanban', '/noc/agents', '/noc/ask', '/noc/metrics']
   return allRoutes
-    .filter(r => pinnedPaths.includes(r.path))
+    .filter(r => PINNED_PATHS.includes(r.path))
     .filter(r => !query.value || r.meta?.label?.toString().toLowerCase().includes(query.value.toLowerCase()))
-    .sort((a, b) => pinnedPaths.indexOf(a.path) - pinnedPaths.indexOf(b.path))
+    .sort((a, b) => PINNED_PATHS.indexOf(a.path) - PINNED_PATHS.indexOf(b.path))
 })
 
 const groupDefs = [
