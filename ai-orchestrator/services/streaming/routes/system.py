@@ -50,7 +50,13 @@ _SDK_DIR = Path(__file__).resolve().parents[3] / "sdk"
 
 # ── API discovery ─────────────────────────────────────────────────────────────
 
-@router.get("/")
+@router.get("/", include_in_schema=False)
+async def root_redirect():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/noc", status_code=302)
+
+
+@router.get("/api", include_in_schema=False)
 async def api_info():
     return {
         "service": "SINC Orchestrator API",

@@ -326,6 +326,10 @@ def create_app() -> FastAPI:
     static_path = os.path.join(os.path.dirname(__file__), "static")
     if os.path.exists(static_path):
         app.mount("/static", StaticFiles(directory=static_path), name="static")
+    # Serve Vue 3 build assets (JS/CSS chunks) at /assets
+    vue_assets = os.path.join(static_path, "dist", "assets")
+    if os.path.exists(vue_assets):
+        app.mount("/assets", StaticFiles(directory=vue_assets), name="vue-assets")
 
     @app.middleware("http")
     async def global_middleware(request, call_next):

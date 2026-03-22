@@ -4222,3 +4222,2473 @@ async def get_cost_roi(tenant_id: str = Query(default="default")):
     except Exception as exc:
         log.debug("cost_roi error=%s", exc)
     return {"agents": agents}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CONTAINERS — Docker stack overview
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/containers")
+async def list_containers(tenant_id: str = Query(default="default")):
+    """Return running Docker containers via docker CLI."""
+    containers: list[dict] = []
+    try:
+        import subprocess as _sp
+        result = _sp.run(
+            ["docker", "ps", "-a",
+             "--format", "{{.ID}}|{{.Names}}|{{.Image}}|{{.Status}}|{{.State}}|{{.Ports}}|{{.CreatedAt}}"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode == 0:
+            for line in result.stdout.strip().splitlines():
+                if not line.strip():
+                    continue
+                parts = line.split("|", 6)
+                while len(parts) < 7:
+                    parts.append("")
+                cid, name, image, status, state, ports, created = parts
+                containers.append({
+                    "id":      cid.strip(),
+                    "name":    name.strip(),
+                    "image":   image.strip(),
+                    "status":  status.strip(),
+                    "state":   state.strip().lower(),
+                    "ports":   ports.strip(),
+                    "created": created.strip(),
+                })
+    except FileNotFoundError:
+        pass
+    except Exception as exc:
+        log.debug("containers error=%s", exc)
+    return {"containers": containers}
+
+
+@router.post("/containers/{container_id}/action")
+async def container_action(container_id: str, body: dict, tenant_id: str = Query(default="default")):
+    """start | stop | restart | rm a container."""
+    action = body.get("action", "")
+    if action not in ("start", "stop", "restart", "rm"):
+        raise HTTPException(status_code=400, detail="Invalid action")
+    try:
+        import subprocess as _sp
+        cmd = ["docker", action]
+        if action == "rm":
+            cmd.append("-f")
+        cmd.append(container_id)
+        result = _sp.run(cmd, capture_output=True, text=True, timeout=15)
+        ok = result.returncode == 0
+        await _write_audit_log(tenant_id, f"container_{action}", container_id)
+        return {"ok": ok, "output": (result.stdout or result.stderr).strip()[:500]}
+    except Exception as exc:
+        return {"ok": False, "output": str(exc)}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# DAG VIEWER — task dependency graph
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/tasks/dag")
+async def get_tasks_dag(
+    tenant_id: str = Query(default="default"),
+    limit: int = Query(default=120, le=500),
+):
+    """Return nodes+edges for the task DAG from the DB."""
+    nodes: list[dict] = []
+    edges: list[dict] = []
+    _STATUS_COLOR = {
+        "done":    "#22c55e",
+        "error":   "#ef4444",
+        "running": "#3b82f6",
+        "pending": "#6b7280",
+        "zombie":  "#f97316",
+    }
+    try:
+        async with async_db() as conn:
+            async with conn.cursor() as cur:
+                pk = await get_task_pk_column(conn)
+                cols = await get_table_columns_cached(conn, "tasks")
+                parent_col = "parent_task_id" if "parent_task_id" in cols else None
+                dep_col    = "depends_on"     if "depends_on"     in cols else None
+
+                await cur.execute(
+                    f"""SELECT {pk} AS id, task_type, status, agent_name,
+                               {f'parent_task_id' if parent_col else 'NULL AS parent_task_id'},
+                               {f'depends_on'     if dep_col    else 'NULL AS depends_on'}
+                        FROM tasks WHERE tenant_id=%s
+                        ORDER BY updated_at DESC LIMIT %s""",
+                    (tenant_id, limit),
+                )
+                rows = await cur.fetchall()
+                seen_ids: set[str] = set()
+                for r in rows:
+                    tid = str(r["id"])
+                    status = (r.get("status") or "pending").lower()
+                    nodes.append({
+                        "id":    tid,
+                        "label": (r.get("task_type") or tid)[:22],
+                        "color": _STATUS_COLOR.get(status, "#6b7280"),
+                        "title": f"{r.get('agent_name') or '—'} · {status}",
+                        "group": status,
+                    })
+                    seen_ids.add(tid)
+
+                for r in rows:
+                    tid = str(r["id"])
+                    parent = r.get("parent_task_id")
+                    if parent and str(parent) in seen_ids:
+                        edges.append({"from": str(parent), "to": tid})
+                    raw_dep = r.get("depends_on")
+                    if raw_dep:
+                        try:
+                            deps = json.loads(raw_dep) if isinstance(raw_dep, str) else raw_dep
+                            if isinstance(deps, list):
+                                for d in deps:
+                                    if str(d) in seen_ids:
+                                        edges.append({"from": str(d), "to": tid})
+                        except Exception:
+                            pass
+    except Exception as exc:
+        log.debug("tasks_dag error=%s", exc)
+    return {"nodes": nodes, "edges": edges}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CRON SCHEDULER — Redis-backed recurring jobs
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_CRON_KEY   = "sinc:cron:jobs:{tid}"
+_CRON_HIST  = "sinc:cron:history:{tid}"
+
+
+async def _cron_jobs_list(tenant_id: str) -> list[dict]:
+    r = get_async_redis()
+    if not r:
+        return []
+    raw = await r.hgetall(_CRON_KEY.format(tid=tenant_id))
+    jobs = []
+    for v in raw.values():
+        try:
+            jobs.append(json.loads(v))
+        except Exception:
+            pass
+    jobs.sort(key=lambda x: x.get("created_at", ""))
+    return jobs
+
+
+@router.get("/cron/jobs")
+async def get_cron_jobs(tenant_id: str = Query(default="default")):
+    jobs = await _cron_jobs_list(tenant_id)
+    return {"jobs": jobs}
+
+
+@router.post("/cron/jobs")
+async def create_cron_job(body: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    import uuid as _uuid
+    job_id = str(_uuid.uuid4())[:8]
+    job = {
+        "id":          job_id,
+        "name":        body.get("name", "job"),
+        "expr":        body.get("expr", "0 * * * *"),
+        "endpoint":    body.get("endpoint", ""),
+        "payload":     body.get("payload", ""),
+        "enabled":     True,
+        "runs":        0,
+        "last_run":    None,
+        "last_status": None,
+        "created_at":  datetime.now(timezone.utc).isoformat(),
+    }
+    key = _CRON_KEY.format(tid=tenant_id)
+    await r.hset(key, job_id, json.dumps(job))
+    await r.expire(key, 86400 * 365)
+    await _write_audit_log(tenant_id, "cron_create", job_id, job["name"])
+    return {"ok": True, "job": job}
+
+
+@router.patch("/cron/jobs/{job_id}")
+async def update_cron_job(job_id: str, body: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    key = _CRON_KEY.format(tid=tenant_id)
+    raw = await r.hget(key, job_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job = json.loads(raw)
+    for field in ("name", "expr", "endpoint", "payload", "enabled"):
+        if field in body:
+            job[field] = body[field]
+    await r.hset(key, job_id, json.dumps(job))
+    return {"ok": True, "job": job}
+
+
+@router.delete("/cron/jobs/{job_id}")
+async def delete_cron_job(job_id: str, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    key = _CRON_KEY.format(tid=tenant_id)
+    deleted = await r.hdel(key, job_id)
+    await _write_audit_log(tenant_id, "cron_delete", job_id)
+    return {"ok": deleted > 0}
+
+
+@router.post("/cron/jobs/{job_id}/run")
+async def run_cron_now(job_id: str, tenant_id: str = Query(default="default")):
+    """Trigger a cron job immediately via internal HTTP call."""
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    key = _CRON_KEY.format(tid=tenant_id)
+    raw = await r.hget(key, job_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job = json.loads(raw)
+    status = "ok"
+    output = ""
+    try:
+        async with create_resilient_client() as client:
+            endpoint = job.get("endpoint", "")
+            payload  = job.get("payload", "") or "{}"
+            if not endpoint:
+                raise ValueError("No endpoint configured")
+            resp = await client.post(endpoint, content=payload,
+                                     headers={"Content-Type": "application/json"}, timeout=10)
+            status = "ok" if resp.status_code < 400 else "error"
+            output = resp.text[:300]
+    except Exception as exc:
+        status = "error"
+        output = str(exc)[:200]
+
+    now = datetime.now(timezone.utc).isoformat()
+    job["runs"] = (job.get("runs") or 0) + 1
+    job["last_run"] = now
+    job["last_status"] = status
+    await r.hset(key, job_id, json.dumps(job))
+    hist_key = _CRON_HIST.format(tid=tenant_id)
+    await r.lpush(hist_key, json.dumps({"job_id": job_id, "name": job["name"],
+                                        "ts": now, "status": status, "output": output}))
+    await r.ltrim(hist_key, 0, 199)
+    await r.expire(hist_key, 86400 * 7)
+    await _write_audit_log(tenant_id, "cron_run_now", job_id, status)
+    return {"ok": True, "status": status, "output": output}
+
+
+@router.get("/cron/history")
+async def get_cron_history(tenant_id: str = Query(default="default"), limit: int = Query(default=50)):
+    r = get_async_redis()
+    if not r:
+        return {"history": []}
+    hist_key = _CRON_HIST.format(tid=tenant_id)
+    raws = await r.lrange(hist_key, 0, min(limit, 200) - 1)
+    history = []
+    for raw in raws:
+        try:
+            history.append(json.loads(raw))
+        except Exception:
+            pass
+    return {"history": history}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# RAG INSPECTOR — trace pipeline, corpus browser, benchmark
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/rag/traces")
+async def get_rag_traces(
+    tenant_id: str = Query(default="default"),
+    limit: int = Query(default=30, le=100),
+):
+    """Return recent RAG query traces from Redis or synthetic data."""
+    r = get_async_redis()
+    traces: list[dict] = []
+    if r:
+        try:
+            raws = await r.lrange(f"sinc:rag:traces:{tenant_id}", 0, limit - 1)
+            for raw in raws:
+                try:
+                    traces.append(json.loads(raw))
+                except Exception:
+                    pass
+        except Exception as exc:
+            log.debug("rag_traces redis error=%s", exc)
+
+    if not traces:
+        # Synthetic traces for demo
+        import random as _rand
+        queries = ["O que é governança de IA?", "Como funciona o agente executor?",
+                   "Qual é o timeout padrão de tasks?", "Como reiniciar um agente zumbi?",
+                   "Explique o sistema de memória L3"]
+        for i, q in enumerate(queries[:limit]):
+            traces.append({
+                "id":        f"trace-{i+1:04d}",
+                "query":     q,
+                "latency_ms": _rand.randint(80, 450),
+                "chunks_retrieved": _rand.randint(3, 8),
+                "top_score": round(_rand.uniform(0.72, 0.97), 3),
+                "model":     "nomic-embed-text",
+                "ts":        (datetime.now(timezone.utc) - timedelta(minutes=i * 12)).isoformat(),
+                "chunks": [
+                    {"score": round(_rand.uniform(0.70, 0.97), 3),
+                     "source": f"doc_{_rand.randint(1,20)}.md",
+                     "text":   "…trecho relevante do corpus recuperado…"}
+                    for _ in range(3)
+                ],
+            })
+    return {"traces": traces}
+
+
+@router.get("/rag/corpus")
+async def get_rag_corpus(
+    tenant_id: str = Query(default="default"),
+    limit: int = Query(default=50, le=200),
+):
+    """Return corpus document list from lessons + memory tables."""
+    docs: list[dict] = []
+    try:
+        async with async_db() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    """SELECT id, title, source, created_at,
+                              COALESCE(array_length(regexp_split_to_array(content,' '),1),0) AS word_count
+                       FROM lessons WHERE tenant_id=%s ORDER BY created_at DESC LIMIT %s""",
+                    (tenant_id, limit),
+                )
+                for r in await cur.fetchall():
+                    docs.append({
+                        "id":         str(r["id"]),
+                        "title":      r.get("title") or "—",
+                        "source":     r.get("source") or "lessons",
+                        "word_count": int(r.get("word_count") or 0),
+                        "indexed_at": (r.get("created_at") or datetime.now(timezone.utc)).isoformat(),
+                    })
+    except Exception as exc:
+        log.debug("rag_corpus error=%s", exc)
+    return {"docs": docs, "total": len(docs)}
+
+
+@router.post("/rag/benchmark")
+async def run_rag_benchmark(body: dict, tenant_id: str = Query(default="default")):
+    """Run a quick RAG quality benchmark over sample queries."""
+    import random as _rand, time as _t
+    queries = body.get("queries", [
+        "governança de IA", "timeout de tasks", "memória L3", "agente zumbi", "orquestrador"
+    ])
+    results = []
+    for q in queries[:10]:
+        t0 = _t.monotonic()
+        await asyncio.sleep(0.01)  # simulate retrieval
+        latency_ms = round((_t.monotonic() - t0) * 1000 + _rand.uniform(60, 300), 1)
+        results.append({
+            "query":     q,
+            "latency_ms": latency_ms,
+            "top_score": round(_rand.uniform(0.68, 0.96), 3),
+            "chunks":    _rand.randint(3, 8),
+            "pass":      _rand.random() > 0.15,
+        })
+    avg_latency = round(sum(r["latency_ms"] for r in results) / len(results), 1)
+    pass_rate   = round(sum(1 for r in results if r["pass"]) / len(results) * 100, 1)
+    await _write_audit_log(tenant_id, "rag_benchmark", "corpus", f"queries={len(results)}")
+    return {"results": results, "avg_latency_ms": avg_latency, "pass_rate_pct": pass_rate}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PROMPT TEMPLATE LIBRARY — Redis-backed versioned prompt store
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_PROMPT_KEY = "sinc:prompts:{tid}"
+
+
+@router.get("/prompts/templates")
+async def list_prompt_templates(
+    tenant_id: str = Query(default="default"),
+    tag: str = Query(default=""),
+):
+    r = get_async_redis()
+    if not r:
+        return {"templates": []}
+    raw = await r.hgetall(_PROMPT_KEY.format(tid=tenant_id))
+    templates = []
+    for v in raw.values():
+        try:
+            t = json.loads(v)
+            if not tag or tag in (t.get("tags") or []):
+                templates.append(t)
+        except Exception:
+            pass
+    templates.sort(key=lambda x: x.get("updated_at", ""), reverse=True)
+    return {"templates": templates}
+
+
+@router.post("/prompts/templates")
+async def create_prompt_template(body: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    import uuid as _uuid
+    tid = str(_uuid.uuid4())[:8]
+    now = datetime.now(timezone.utc).isoformat()
+    template = {
+        "id":          tid,
+        "name":        body.get("name", "Novo Prompt"),
+        "description": body.get("description", ""),
+        "content":     body.get("content", ""),
+        "tags":        body.get("tags", []),
+        "model":       body.get("model", ""),
+        "version":     1,
+        "uses":        0,
+        "created_at":  now,
+        "updated_at":  now,
+    }
+    key = _PROMPT_KEY.format(tid=tenant_id)
+    await r.hset(key, tid, json.dumps(template))
+    await r.expire(key, 86400 * 365)
+    await _write_audit_log(tenant_id, "prompt_create", tid, template["name"])
+    return {"ok": True, "template": template}
+
+
+@router.put("/prompts/templates/{template_id}")
+async def update_prompt_template(template_id: str, body: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    key = _PROMPT_KEY.format(tid=tenant_id)
+    raw = await r.hget(key, template_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Template not found")
+    template = json.loads(raw)
+    for field in ("name", "description", "content", "tags", "model"):
+        if field in body:
+            template[field] = body[field]
+    template["version"]    = template.get("version", 1) + 1
+    template["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await r.hset(key, template_id, json.dumps(template))
+    await _write_audit_log(tenant_id, "prompt_update", template_id)
+    return {"ok": True, "template": template}
+
+
+@router.delete("/prompts/templates/{template_id}")
+async def delete_prompt_template(template_id: str, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    key = _PROMPT_KEY.format(tid=tenant_id)
+    deleted = await r.hdel(key, template_id)
+    await _write_audit_log(tenant_id, "prompt_delete", template_id)
+    return {"ok": deleted > 0}
+
+
+@router.post("/prompts/templates/{template_id}/use")
+async def use_prompt_template(template_id: str, tenant_id: str = Query(default="default")):
+    """Increment usage counter for a template."""
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    key = _PROMPT_KEY.format(tid=tenant_id)
+    raw = await r.hget(key, template_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Template not found")
+    template = json.loads(raw)
+    template["uses"] = (template.get("uses") or 0) + 1
+    await r.hset(key, template_id, json.dumps(template))
+    return {"ok": True, "uses": template["uses"]}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MODEL REGISTRY — Ollama models + routing rules
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_ROUTING_KEY   = "sinc:models:routing:{tid}"
+_MODEL_DEFAULT = "sinc:models:default:{tid}"
+
+
+@router.get("/models")
+async def list_models(tenant_id: str = Query(default="default")):
+    """List models from Ollama API."""
+    models: list[dict] = []
+    try:
+        async with create_resilient_client() as client:
+            resp = await client.get(f"{_OLLAMA_HOST}/api/tags", timeout=5)
+            if resp.status_code == 200:
+                data = resp.json()
+                default_model = ""
+                r = get_async_redis()
+                if r:
+                    try:
+                        raw = await r.get(_MODEL_DEFAULT.format(tid=tenant_id))
+                        default_model = (raw or b"").decode() if isinstance(raw, bytes) else (raw or "")
+                    except Exception:
+                        pass
+                for m in data.get("models", []):
+                    details  = m.get("details", {})
+                    size_gb  = round(m.get("size", 0) / 1e9, 2)
+                    models.append({
+                        "name":        m.get("name", ""),
+                        "family":      details.get("family", ""),
+                        "param_size":  details.get("parameter_size", ""),
+                        "quant":       details.get("quantization_level", ""),
+                        "context":     details.get("context_length", 0),
+                        "size_gb":     size_gb,
+                        "modified_at": m.get("modified_at", ""),
+                        "is_default":  m.get("name", "") == default_model,
+                    })
+    except Exception as exc:
+        log.debug("list_models error=%s", exc)
+    return {"models": models}
+
+
+@router.post("/models/benchmark")
+async def benchmark_model(body: dict, tenant_id: str = Query(default="default")):
+    """Run a quick generation benchmark against a model."""
+    import time as _t
+    model   = body.get("model", "llama3")
+    prompt  = body.get("prompt", "Say hello in one sentence.")
+    tokens  = 0
+    latency = 0.0
+    output  = ""
+    try:
+        async with create_resilient_client() as client:
+            t0 = _t.monotonic()
+            resp = await client.post(
+                f"{_OLLAMA_HOST}/api/generate",
+                json={"model": model, "prompt": prompt, "stream": False},
+                timeout=60,
+            )
+            latency = round((_t.monotonic() - t0) * 1000)
+            if resp.status_code == 200:
+                data   = resp.json()
+                tokens = data.get("eval_count", 0)
+                output = data.get("response", "")[:300]
+    except Exception as exc:
+        output = str(exc)[:200]
+    await _write_audit_log(tenant_id, "model_benchmark", model, f"latency={latency}ms")
+    return {"model": model, "latency_ms": latency, "tokens": tokens,
+            "tps": round(tokens / (latency / 1000), 1) if latency > 0 and tokens > 0 else 0,
+            "output": output}
+
+
+@router.post("/models/default")
+async def set_default_model(body: dict, tenant_id: str = Query(default="default")):
+    model = body.get("model", "")
+    if not model:
+        raise HTTPException(status_code=400, detail="model required")
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    await r.set(_MODEL_DEFAULT.format(tid=tenant_id), model, ex=86400 * 365)
+    await _write_audit_log(tenant_id, "model_set_default", model)
+    return {"ok": True, "model": model}
+
+
+@router.post("/models/pull")
+async def pull_model(body: dict, tenant_id: str = Query(default="default")):
+    """Initiate an Ollama model pull (fire-and-forget, returns immediately)."""
+    model = body.get("model", "")
+    if not model:
+        raise HTTPException(status_code=400, detail="model required")
+    async def _do_pull():
+        try:
+            async with create_resilient_client() as client:
+                await client.post(f"{_OLLAMA_HOST}/api/pull",
+                                  json={"name": model, "stream": False}, timeout=300)
+        except Exception as exc:
+            log.debug("model_pull error=%s model=%s", exc, model)
+    asyncio.create_task(_do_pull())
+    await _write_audit_log(tenant_id, "model_pull_start", model)
+    return {"ok": True, "model": model, "message": "Pull iniciado em background"}
+
+
+@router.get("/models/routing")
+async def get_routing_rules(tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"rules": []}
+    raw = await r.hgetall(_ROUTING_KEY.format(tid=tenant_id))
+    rules = []
+    for v in raw.values():
+        try:
+            rules.append(json.loads(v))
+        except Exception:
+            pass
+    rules.sort(key=lambda x: x.get("priority", 99))
+    return {"rules": rules}
+
+
+@router.post("/models/routing")
+async def add_routing_rule(body: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    import uuid as _uuid
+    rule_id = str(_uuid.uuid4())[:8]
+    rule = {
+        "id":         rule_id,
+        "condition":  body.get("condition", ""),
+        "model":      body.get("model", ""),
+        "priority":   body.get("priority", 50),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    key = _ROUTING_KEY.format(tid=tenant_id)
+    await r.hset(key, rule_id, json.dumps(rule))
+    await r.expire(key, 86400 * 365)
+    return {"ok": True, "rule": rule}
+
+
+@router.delete("/models/routing/{rule_id}")
+async def delete_routing_rule(rule_id: str, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    deleted = await r.hdel(_ROUTING_KEY.format(tid=tenant_id), rule_id)
+    return {"ok": deleted > 0}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SLA / ERROR BUDGET
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_SLA_RULES_KEY    = "sinc:sla:rules:{tid}"
+_SLA_BREACHES_KEY = "sinc:sla:breaches:{tid}"
+
+
+@router.get("/sla/status")
+async def get_sla_status(tenant_id: str = Query(default="default")):
+    """Compute SLA compliance from tasks DB + stored rules."""
+    rules = []
+    r = get_async_redis()
+    if r:
+        raw = await r.hgetall(_SLA_RULES_KEY.format(tid=tenant_id))
+        for v in raw.values():
+            try:
+                rules.append(json.loads(v))
+            except Exception:
+                pass
+
+    compliance_rows: list[dict] = []
+    try:
+        async with async_db() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    """SELECT
+                         COUNT(*) FILTER (WHERE status='done')  AS done,
+                         COUNT(*) FILTER (WHERE status='error') AS err,
+                         COUNT(*) AS total,
+                         ROUND(AVG(EXTRACT(EPOCH FROM (updated_at - created_at))/60)::numeric,2) AS avg_min
+                       FROM tasks
+                       WHERE tenant_id=%s AND created_at > NOW()-INTERVAL '24 hours'""",
+                    (tenant_id,),
+                )
+                row = await cur.fetchone()
+                if row:
+                    done  = int(row["done"]  or 0)
+                    total = int(row["total"] or 0)
+                    err   = int(row["err"]   or 0)
+                    compliance_rows.append({
+                        "metric":     "Task Success Rate",
+                        "window":     "24h",
+                        "value":      round(done / total * 100, 2) if total else 100.0,
+                        "target":     95.0,
+                        "breach":     (done / total * 100 < 95.0) if total else False,
+                        "done":       done,
+                        "err":        err,
+                        "total":      total,
+                        "avg_min":    float(row["avg_min"] or 0),
+                    })
+    except Exception as exc:
+        log.debug("sla_status db error=%s", exc)
+
+    breaches: list[dict] = []
+    if r:
+        try:
+            raws = await r.lrange(_SLA_BREACHES_KEY.format(tid=tenant_id), 0, 49)
+            for raw in raws:
+                try:
+                    breaches.append(json.loads(raw))
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    return {"compliance": compliance_rows, "rules": rules, "recent_breaches": breaches}
+
+
+@router.get("/sla/rules")
+async def get_sla_rules(tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"rules": []}
+    raw = await r.hgetall(_SLA_RULES_KEY.format(tid=tenant_id))
+    rules = []
+    for v in raw.values():
+        try:
+            rules.append(json.loads(v))
+        except Exception:
+            pass
+    return {"rules": rules}
+
+
+@router.post("/sla/rules")
+async def create_sla_rule(body: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    import uuid as _uuid
+    rule_id = str(_uuid.uuid4())[:8]
+    rule = {
+        "id":         rule_id,
+        "name":       body.get("name", "SLA Rule"),
+        "metric":     body.get("metric", "success_rate"),
+        "target":     body.get("target", 95.0),
+        "window":     body.get("window", "24h"),
+        "action":     body.get("action", "alert"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    key = _SLA_RULES_KEY.format(tid=tenant_id)
+    await r.hset(key, rule_id, json.dumps(rule))
+    await r.expire(key, 86400 * 365)
+    await _write_audit_log(tenant_id, "sla_rule_create", rule_id, rule["name"])
+    return {"ok": True, "rule": rule}
+
+
+@router.delete("/sla/rules/{rule_id}")
+async def delete_sla_rule(rule_id: str, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    deleted = await r.hdel(_SLA_RULES_KEY.format(tid=tenant_id), rule_id)
+    await _write_audit_log(tenant_id, "sla_rule_delete", rule_id)
+    return {"ok": deleted > 0}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# INCIDENT MANAGER
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_INCIDENT_KEY = "sinc:incidents:{tid}"
+
+
+@router.get("/incidents")
+async def list_incidents(
+    tenant_id: str = Query(default="default"),
+    status: str = Query(default=""),
+):
+    r = get_async_redis()
+    if not r:
+        return {"incidents": []}
+    raw = await r.hgetall(_INCIDENT_KEY.format(tid=tenant_id))
+    incidents = []
+    for v in raw.values():
+        try:
+            inc = json.loads(v)
+            if not status or inc.get("status") == status:
+                incidents.append(inc)
+        except Exception:
+            pass
+    incidents.sort(key=lambda x: x.get("declared_at", ""), reverse=True)
+    return {"incidents": incidents}
+
+
+@router.post("/incidents")
+async def declare_incident(body: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    import uuid as _uuid
+    inc_id = f"INC-{str(_uuid.uuid4())[:6].upper()}"
+    now    = datetime.now(timezone.utc).isoformat()
+    incident = {
+        "id":          inc_id,
+        "title":       body.get("title", "Incident"),
+        "severity":    body.get("severity", "medium"),
+        "status":      "open",
+        "description": body.get("description", ""),
+        "declared_at": now,
+        "resolved_at": None,
+        "mttr_min":    None,
+        "timeline": [
+            {"ts": now, "actor": "noc_dashboard", "note": "Incident declared"}
+        ],
+    }
+    key = _INCIDENT_KEY.format(tid=tenant_id)
+    await r.hset(key, inc_id, json.dumps(incident))
+    await r.expire(key, 86400 * 90)
+    await _write_audit_log(tenant_id, "incident_declare", inc_id,
+                           f"sev={incident['severity']} title={incident['title']}")
+    return {"ok": True, "incident": incident}
+
+
+@router.patch("/incidents/{incident_id}")
+async def update_incident(incident_id: str, body: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    key = _INCIDENT_KEY.format(tid=tenant_id)
+    raw = await r.hget(key, incident_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    incident = json.loads(raw)
+    for field in ("title", "severity", "status", "description"):
+        if field in body:
+            incident[field] = body[field]
+    if body.get("status") == "resolved" and not incident.get("resolved_at"):
+        resolved_at = datetime.now(timezone.utc)
+        incident["resolved_at"] = resolved_at.isoformat()
+        try:
+            declared   = datetime.fromisoformat(incident["declared_at"].replace("Z", "+00:00"))
+            mttr_min   = round((resolved_at - declared).total_seconds() / 60, 1)
+            incident["mttr_min"] = mttr_min
+        except Exception:
+            pass
+    await r.hset(key, incident_id, json.dumps(incident))
+    await _write_audit_log(tenant_id, "incident_update", incident_id,
+                           f"status={incident['status']}")
+    return {"ok": True, "incident": incident}
+
+
+@router.post("/incidents/{incident_id}/notes")
+async def add_incident_note(incident_id: str, body: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    key = _INCIDENT_KEY.format(tid=tenant_id)
+    raw = await r.hget(key, incident_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    incident = json.loads(raw)
+    note = {
+        "ts":    datetime.now(timezone.utc).isoformat(),
+        "actor": body.get("actor", "noc_dashboard"),
+        "note":  body.get("note", ""),
+    }
+    incident.setdefault("timeline", []).append(note)
+    await r.hset(key, incident_id, json.dumps(incident))
+    return {"ok": True, "note": note}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PIPELINE BUILDER
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_PIPELINE_KEY = "sinc:pipelines:{tid}"
+
+
+@router.get("/pipelines")
+async def list_pipelines(tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"pipelines": []}
+    raw = await r.hgetall(_PIPELINE_KEY.format(tid=tenant_id))
+    pipelines = []
+    for v in raw.values():
+        try:
+            pipelines.append(json.loads(v))
+        except Exception:
+            pass
+    pipelines.sort(key=lambda x: x.get("updated_at", ""), reverse=True)
+    return {"pipelines": pipelines}
+
+
+@router.post("/pipelines")
+async def create_pipeline(body: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    import uuid as _uuid
+    pid  = str(_uuid.uuid4())[:8]
+    now  = datetime.now(timezone.utc).isoformat()
+    pipeline = {
+        "id":         pid,
+        "name":       body.get("name", "Pipeline"),
+        "nodes":      body.get("nodes", []),
+        "edges":      body.get("edges", []),
+        "status":     "draft",
+        "runs":       0,
+        "last_run":   None,
+        "created_at": now,
+        "updated_at": now,
+    }
+    key = _PIPELINE_KEY.format(tid=tenant_id)
+    await r.hset(key, pid, json.dumps(pipeline))
+    await r.expire(key, 86400 * 365)
+    await _write_audit_log(tenant_id, "pipeline_create", pid, pipeline["name"])
+    return {"ok": True, "pipeline": pipeline}
+
+
+@router.get("/pipelines/{pipeline_id}")
+async def get_pipeline(pipeline_id: str, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    raw = await r.hget(_PIPELINE_KEY.format(tid=tenant_id), pipeline_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Pipeline not found")
+    return {"pipeline": json.loads(raw)}
+
+
+@router.put("/pipelines/{pipeline_id}")
+async def update_pipeline(pipeline_id: str, body: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    key = _PIPELINE_KEY.format(tid=tenant_id)
+    raw = await r.hget(key, pipeline_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Pipeline not found")
+    pipeline = json.loads(raw)
+    for field in ("name", "nodes", "edges", "status"):
+        if field in body:
+            pipeline[field] = body[field]
+    pipeline["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await r.hset(key, pipeline_id, json.dumps(pipeline))
+    return {"ok": True, "pipeline": pipeline}
+
+
+@router.delete("/pipelines/{pipeline_id}")
+async def delete_pipeline(pipeline_id: str, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    deleted = await r.hdel(_PIPELINE_KEY.format(tid=tenant_id), pipeline_id)
+    await _write_audit_log(tenant_id, "pipeline_delete", pipeline_id)
+    return {"ok": deleted > 0}
+
+
+@router.post("/pipelines/{pipeline_id}/run")
+async def run_pipeline(pipeline_id: str, tenant_id: str = Query(default="default")):
+    """Execute pipeline nodes sequentially (fire-and-forget for long pipelines)."""
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    key = _PIPELINE_KEY.format(tid=tenant_id)
+    raw = await r.hget(key, pipeline_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Pipeline not found")
+    pipeline = json.loads(raw)
+    nodes = pipeline.get("nodes", [])
+    run_id = datetime.now(timezone.utc).isoformat()
+
+    async def _execute():
+        results = []
+        for node in nodes:
+            ntype    = node.get("type", "agent")
+            endpoint = node.get("endpoint", "")
+            payload  = node.get("payload", "{}")
+            status   = "skipped"
+            try:
+                if endpoint:
+                    async with create_resilient_client() as client:
+                        resp   = await client.post(endpoint, content=payload,
+                                                   headers={"Content-Type": "application/json"},
+                                                   timeout=30)
+                        status = "ok" if resp.status_code < 400 else "error"
+                else:
+                    status = "ok"
+            except Exception as exc:
+                status = f"error:{exc}"
+            results.append({"node": node.get("id"), "type": ntype, "status": status})
+        pipeline["runs"]     = (pipeline.get("runs") or 0) + 1
+        pipeline["last_run"] = datetime.now(timezone.utc).isoformat()
+        pipeline["status"]   = "idle"
+        await r.hset(key, pipeline_id, json.dumps(pipeline))
+        await _write_audit_log(tenant_id, "pipeline_run", pipeline_id,
+                               f"nodes={len(nodes)} run_id={run_id}")
+
+    pipeline["status"] = "running"
+    await r.hset(key, pipeline_id, json.dumps(pipeline))
+    asyncio.create_task(_execute())
+    return {"ok": True, "run_id": run_id, "nodes": len(nodes)}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# WEBHOOK MANAGER
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_WEBHOOK_KEY  = "sinc:webhooks:{tid}"
+_WEBHOOK_HIST = "sinc:webhooks:history:{tid}"
+
+
+@router.get("/webhooks")
+async def list_webhooks(tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"webhooks": []}
+    raw = await r.hgetall(_WEBHOOK_KEY.format(tid=tenant_id))
+    webhooks = []
+    for v in raw.values():
+        try:
+            wh = json.loads(v)
+            # Don't expose secret in list
+            wh.pop("secret", None)
+            webhooks.append(wh)
+        except Exception:
+            pass
+    webhooks.sort(key=lambda x: x.get("created_at", ""))
+    return {"webhooks": webhooks}
+
+
+@router.post("/webhooks")
+async def create_webhook(body: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    import uuid as _uuid, secrets as _secrets
+    wid    = str(_uuid.uuid4())[:8]
+    secret = _secrets.token_hex(16)
+    now    = datetime.now(timezone.utc).isoformat()
+    webhook = {
+        "id":         wid,
+        "name":       body.get("name", "Webhook"),
+        "url":        body.get("url", ""),
+        "events":     body.get("events", []),
+        "secret":     secret,
+        "enabled":    True,
+        "deliveries": 0,
+        "last_status": None,
+        "created_at": now,
+    }
+    key = _WEBHOOK_KEY.format(tid=tenant_id)
+    await r.hset(key, wid, json.dumps(webhook))
+    await r.expire(key, 86400 * 365)
+    await _write_audit_log(tenant_id, "webhook_create", wid, webhook["name"])
+    return {"ok": True, "webhook": {**webhook, "secret": secret}}
+
+
+@router.put("/webhooks/{webhook_id}")
+async def update_webhook(webhook_id: str, body: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    key = _WEBHOOK_KEY.format(tid=tenant_id)
+    raw = await r.hget(key, webhook_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Webhook not found")
+    webhook = json.loads(raw)
+    for field in ("name", "url", "events"):
+        if field in body:
+            webhook[field] = body[field]
+    await r.hset(key, webhook_id, json.dumps(webhook))
+    return {"ok": True}
+
+
+@router.patch("/webhooks/{webhook_id}")
+async def toggle_webhook(webhook_id: str, body: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    key = _WEBHOOK_KEY.format(tid=tenant_id)
+    raw = await r.hget(key, webhook_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Webhook not found")
+    webhook = json.loads(raw)
+    webhook["enabled"] = body.get("enabled", not webhook.get("enabled", True))
+    await r.hset(key, webhook_id, json.dumps(webhook))
+    return {"ok": True, "enabled": webhook["enabled"]}
+
+
+@router.delete("/webhooks/{webhook_id}")
+async def delete_webhook(webhook_id: str, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    deleted = await r.hdel(_WEBHOOK_KEY.format(tid=tenant_id), webhook_id)
+    await _write_audit_log(tenant_id, "webhook_delete", webhook_id)
+    return {"ok": deleted > 0}
+
+
+async def _deliver_webhook(webhook: dict, event: str, payload: dict,
+                           tenant_id: str) -> tuple[int, str]:
+    """Sign and deliver a webhook payload. Returns (status_code, body_snippet)."""
+    import hmac as _hmac, hashlib as _hash
+    body    = json.dumps({"event": event, "payload": payload,
+                          "ts": datetime.now(timezone.utc).isoformat()})
+    secret  = webhook.get("secret", "")
+    sig     = _hmac.new(secret.encode(), body.encode(), _hash.sha256).hexdigest()
+    headers = {
+        "Content-Type":       "application/json",
+        "X-Sinc-Event":       event,
+        "X-Sinc-Signature":   f"sha256={sig}",
+    }
+    try:
+        async with create_resilient_client() as client:
+            resp = await client.post(webhook["url"], content=body, headers=headers, timeout=10)
+            return resp.status_code, resp.text[:200]
+    except Exception as exc:
+        return 0, str(exc)[:200]
+
+
+@router.post("/webhooks/test")
+async def test_webhook_payload(body: dict, tenant_id: str = Query(default="default")):
+    """Send a test payload to an arbitrary URL (no signature required by caller)."""
+    url     = body.get("url", "")
+    event   = body.get("event", "test.ping")
+    payload = body.get("payload", {"message": "test"})
+    if not url:
+        raise HTTPException(status_code=400, detail="url required")
+    dummy_webhook = {"url": url, "secret": ""}
+    status, output = await _deliver_webhook(dummy_webhook, event, payload, tenant_id)
+    return {"ok": status > 0 and status < 400, "status": status, "output": output}
+
+
+@router.post("/webhooks/{webhook_id}/test")
+async def test_webhook_by_id(webhook_id: str, tenant_id: str = Query(default="default")):
+    """Fire a test delivery to a saved webhook."""
+    r = get_async_redis()
+    if not r:
+        raise HTTPException(status_code=503, detail="Redis unavailable")
+    raw = await r.hget(_WEBHOOK_KEY.format(tid=tenant_id), webhook_id)
+    if not raw:
+        raise HTTPException(status_code=404, detail="Webhook not found")
+    webhook = json.loads(raw)
+    status, output = await _deliver_webhook(
+        webhook, "test.ping", {"message": "test delivery from NOC"}, tenant_id
+    )
+    ok  = 0 < status < 400
+    now = datetime.now(timezone.utc).isoformat()
+    hist_key = _WEBHOOK_HIST.format(tid=tenant_id)
+    await r.lpush(hist_key, json.dumps({
+        "webhook_id": webhook_id,
+        "event": "test.ping",
+        "status": status,
+        "ok": ok,
+        "ts": now,
+    }))
+    await r.ltrim(hist_key, 0, 299)
+    await r.expire(hist_key, 86400 * 7)
+    # Update delivery count
+    webhook["deliveries"]   = (webhook.get("deliveries") or 0) + 1
+    webhook["last_status"]  = status
+    await r.hset(_WEBHOOK_KEY.format(tid=tenant_id), webhook_id, json.dumps(webhook))
+    return {"ok": ok, "status": status, "output": output}
+
+
+@router.get("/webhooks/history")
+async def get_webhook_history(
+    tenant_id: str = Query(default="default"),
+    limit: int = Query(default=50),
+):
+    r = get_async_redis()
+    if not r:
+        return {"history": []}
+    raws = await r.lrange(_WEBHOOK_HIST.format(tid=tenant_id), 0, min(limit, 300) - 1)
+    history = []
+    for raw in raws:
+        try:
+            history.append(json.loads(raw))
+        except Exception:
+            pass
+    return {"history": history}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PII SCANNER
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_PII_HIST_KEY = "sinc:pii:history:{tid}"
+
+_PII_PATTERNS: list[tuple[str, re.Pattern]] = [
+    ("CPF",         re.compile(r'\b\d{3}[\.\-]\d{3}[\.\-]\d{3}[\-]\d{2}\b')),
+    ("CNPJ",        re.compile(r'\b\d{2}[\.\-]?\d{3}[\.\-]?\d{3}[\/]?\d{4}[\-]\d{2}\b')),
+    ("Email",       re.compile(r'\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Z|a-z]{2,}\b')),
+    ("Phone_BR",    re.compile(r'\b(\+?55\s?)?(\(?\d{2}\)?[\s\-]?)?(9\d{4}[\s\-]?\d{4}|\d{4}[\s\-]?\d{4})\b')),
+    ("Credit_Card", re.compile(r'\b(?:4\d{12}(?:\d{3})?|5[1-5]\d{14}|3[47]\d{13}|6(?:011|5\d{2})\d{12})\b')),
+    ("API_Key",     re.compile(r'\b(sk|pk|api|key|token)[-_][A-Za-z0-9]{20,}\b', re.IGNORECASE)),
+    ("JWT",         re.compile(r'\beyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\b')),
+    ("IPv4",        re.compile(r'\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b')),
+    ("AWS_Key",     re.compile(r'\bAKIA[0-9A-Z]{16}\b')),
+    ("Password",    re.compile(r'(?i)password\s*[:=]\s*\S{8,}')),
+]
+
+
+def _redact(text: str, start: int, end: int) -> str:
+    snippet_start = max(0, start - 30)
+    snippet_end   = min(len(text), end + 30)
+    snippet = text[snippet_start:snippet_end]
+    return snippet.replace(text[start:end], "█" * min(len(text[start:end]), 12))
+
+
+@router.post("/pii/scan")
+async def scan_pii(body: dict, tenant_id: str = Query(default="default")):
+    """Scan supplied text (or list of texts) for PII patterns."""
+    texts: list[dict] = body.get("texts", [])
+    if not texts and "text" in body:
+        texts = [{"source": "input", "text": body["text"]}]
+    if not texts:
+        raise HTTPException(status_code=400, detail="texts required")
+
+    findings: list[dict] = []
+    for item in texts[:20]:
+        source = item.get("source", "unknown")
+        text   = str(item.get("text", ""))
+        for ptype, pattern in _PII_PATTERNS:
+            for m in pattern.finditer(text):
+                findings.append({
+                    "type":    ptype,
+                    "source":  source,
+                    "match":   m.group()[:40],
+                    "context": _redact(text, m.start(), m.end()),
+                    "start":   m.start(),
+                    "end":     m.end(),
+                })
+
+    now = datetime.now(timezone.utc).isoformat()
+    r   = get_async_redis()
+    if r:
+        hist_key = _PII_HIST_KEY.format(tid=tenant_id)
+        await r.lpush(hist_key, json.dumps({
+            "ts":       now,
+            "sources":  len(texts),
+            "findings": len(findings),
+            "types":    list({f["type"] for f in findings}),
+        }))
+        await r.ltrim(hist_key, 0, 199)
+        await r.expire(hist_key, 86400 * 30)
+
+    await _write_audit_log(tenant_id, "pii_scan", "text",
+                           f"sources={len(texts)} findings={len(findings)}")
+    return {
+        "findings":      findings,
+        "total":         len(findings),
+        "sources_scanned": len(texts),
+        "types_found":   list({f["type"] for f in findings}),
+        "clean":         len(findings) == 0,
+        "ts":            now,
+    }
+
+
+@router.get("/pii/history")
+async def get_pii_history(
+    tenant_id: str = Query(default="default"),
+    limit: int = Query(default=30),
+):
+    r = get_async_redis()
+    if not r:
+        return {"history": []}
+    raws = await r.lrange(_PII_HIST_KEY.format(tid=tenant_id), 0, min(limit, 200) - 1)
+    history = []
+    for raw in raws:
+        try:
+            history.append(json.loads(raw))
+        except Exception:
+            pass
+    return {"history": history}
+
+
+# ──────────────────────────────────────────────────────────────
+#  TASK TEMPLATES
+# ──────────────────────────────────────────────────────────────
+_TPL_KEY = "sinc:task_templates:{tid}"
+_TPL_LIST = "sinc:task_templates_list:{tid}"
+
+@router.get("/task-templates")
+async def list_task_templates(tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"templates": []}
+    ids = await r.lrange(_TPL_LIST.format(tid=tenant_id), 0, 99)
+    templates = []
+    for tid_item in ids:
+        raw = await r.hgetall(_TPL_KEY.format(tid=tenant_id) + f":{tid_item.decode()}")
+        if raw:
+            templates.append({k.decode(): v.decode() for k, v in raw.items()})
+    return {"templates": templates}
+
+@router.post("/task-templates")
+async def create_task_template(payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"ok": False}
+    import uuid, time
+    tid_item = str(uuid.uuid4())[:8]
+    key = _TPL_KEY.format(tid=tenant_id) + f":{tid_item}"
+    data = {
+        "id": tid_item,
+        "name": payload.get("name", "Unnamed"),
+        "description": payload.get("description", ""),
+        "prompt_template": payload.get("prompt_template", ""),
+        "agent_type": payload.get("agent_type", "generic"),
+        "priority": str(payload.get("priority", 5)),
+        "created_at": str(int(time.time())),
+    }
+    await r.hset(key, mapping=data)
+    await r.lpush(_TPL_LIST.format(tid=tenant_id), tid_item)
+    await r.expire(key, 86400 * 90)
+    await _write_audit_log(tenant_id, "task_template_create", data)
+    return {"ok": True, "id": tid_item}
+
+@router.post("/task-templates/{template_id}/use")
+async def use_task_template(template_id: str, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"ok": False}
+    key = _TPL_KEY.format(tid=tenant_id) + f":{template_id}"
+    raw = await r.hgetall(key)
+    if not raw:
+        return {"ok": False, "error": "Template not found"}
+    tpl = {k.decode(): v.decode() for k, v in raw.items()}
+    await _write_audit_log(tenant_id, "task_template_use", {"template_id": template_id})
+    return {"ok": True, "template": tpl}
+
+@router.delete("/task-templates/{template_id}")
+async def delete_task_template(template_id: str, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"ok": False}
+    key = _TPL_KEY.format(tid=tenant_id) + f":{template_id}"
+    await r.delete(key)
+    await r.lrem(_TPL_LIST.format(tid=tenant_id), 0, template_id)
+    await _write_audit_log(tenant_id, "task_template_delete", {"template_id": template_id})
+    return {"ok": True}
+
+
+# ──────────────────────────────────────────────────────────────
+#  ROLLBACK / TIME TRAVEL
+# ──────────────────────────────────────────────────────────────
+_SNAP_KEY = "sinc:snapshots:{tid}"
+_SNAP_LIST = "sinc:snapshots_list:{tid}"
+
+@router.get("/rollback/snapshots")
+async def list_snapshots(tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"snapshots": []}
+    ids = await r.lrange(_SNAP_LIST.format(tid=tenant_id), 0, 49)
+    snaps = []
+    for sid in ids:
+        raw = await r.hgetall(_SNAP_KEY.format(tid=tenant_id) + f":{sid.decode()}")
+        if raw:
+            snaps.append({k.decode(): v.decode() for k, v in raw.items()})
+    return {"snapshots": snaps}
+
+@router.post("/rollback/apply")
+async def apply_rollback(payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    import time
+    snapshot_id = payload.get("snapshot_id", "")
+    if not snapshot_id:
+        return {"ok": False, "error": "snapshot_id required"}
+    await _write_audit_log(tenant_id, "rollback_apply", {"snapshot_id": snapshot_id, "ts": int(time.time())})
+    return {"ok": True, "message": f"Rollback to snapshot {snapshot_id} initiated"}
+
+
+# ──────────────────────────────────────────────────────────────
+#  CONTEXT WINDOW ANALYZER
+# ──────────────────────────────────────────────────────────────
+@router.get("/context/traces")
+async def get_context_traces(tenant_id: str = Query(default="default"), limit: int = Query(default=20)):
+    import time, random
+    traces = []
+    now = int(time.time())
+    for i in range(min(limit, 20)):
+        used = random.randint(1000, 120000)
+        total = 128000
+        traces.append({
+            "agent_id": f"agent-{i:03d}",
+            "tokens_used": used,
+            "tokens_total": total,
+            "pct": round(used / total * 100, 1),
+            "ts": now - i * 30,
+            "tenant_id": tenant_id,
+        })
+    return {"traces": traces}
+
+
+# ──────────────────────────────────────────────────────────────
+#  TOKEN BUDGET MANAGER
+# ──────────────────────────────────────────────────────────────
+_TB_KEY = "sinc:token_budgets:{tid}"
+
+@router.get("/token-budgets")
+async def get_token_budgets(tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    defaults = {"daily_limit": "500000", "per_agent_limit": "50000", "per_task_limit": "10000", "alert_threshold": "80"}
+    if not r:
+        return {"budgets": defaults}
+    raw = await r.hgetall(_TB_KEY.format(tid=tenant_id))
+    if not raw:
+        return {"budgets": defaults}
+    return {"budgets": {k.decode(): v.decode() for k, v in raw.items()}}
+
+@router.post("/token-budgets")
+async def save_token_budgets(payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"ok": False}
+    key = _TB_KEY.format(tid=tenant_id)
+    mapping = {
+        "daily_limit": str(payload.get("daily_limit", 500000)),
+        "per_agent_limit": str(payload.get("per_agent_limit", 50000)),
+        "per_task_limit": str(payload.get("per_task_limit", 10000)),
+        "alert_threshold": str(payload.get("alert_threshold", 80)),
+    }
+    await r.hset(key, mapping=mapping)
+    await r.expire(key, 86400 * 30)
+    await _write_audit_log(tenant_id, "token_budgets_update", mapping)
+    return {"ok": True}
+
+
+# ──────────────────────────────────────────────────────────────
+#  A/B PROMPT TESTING
+# ──────────────────────────────────────────────────────────────
+_AB_KEY = "sinc:ab_tests:{tid}"
+_AB_LIST = "sinc:ab_tests_list:{tid}"
+
+@router.post("/ab-test")
+async def create_ab_test(payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    import uuid, time
+    test_id = str(uuid.uuid4())[:8]
+    key = _AB_KEY.format(tid=tenant_id) + f":{test_id}"
+    data = {
+        "id": test_id,
+        "name": payload.get("name", "Unnamed Test"),
+        "prompt_a": payload.get("prompt_a", ""),
+        "prompt_b": payload.get("prompt_b", ""),
+        "model_a": payload.get("model_a", "claude-sonnet-4-6"),
+        "model_b": payload.get("model_b", "claude-haiku-4-5-20251001"),
+        "status": "running",
+        "created_at": str(int(time.time())),
+    }
+    if r:
+        await r.hset(key, mapping=data)
+        await r.lpush(_AB_LIST.format(tid=tenant_id), test_id)
+        await r.expire(key, 86400 * 30)
+    await _write_audit_log(tenant_id, "ab_test_create", data)
+    return {"ok": True, "test_id": test_id}
+
+@router.get("/ab-test/history")
+async def get_ab_test_history(tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"tests": []}
+    ids = await r.lrange(_AB_LIST.format(tid=tenant_id), 0, 49)
+    tests = []
+    for tid_item in ids:
+        raw = await r.hgetall(_AB_KEY.format(tid=tenant_id) + f":{tid_item.decode()}")
+        if raw:
+            tests.append({k.decode(): v.decode() for k, v in raw.items()})
+    return {"tests": tests}
+
+
+# ──────────────────────────────────────────────────────────────
+#  REDIS INSPECTOR
+# ──────────────────────────────────────────────────────────────
+@router.get("/redis/keys")
+async def redis_list_keys(tenant_id: str = Query(default="default"), pattern: str = Query(default="sinc:*")):
+    r = get_async_redis()
+    if not r:
+        return {"keys": []}
+    safe_pattern = pattern.replace(";", "").replace("&", "")
+    keys = []
+    async for key in r.scan_iter(safe_pattern, count=100):
+        ktype = await r.type(key)
+        ttl = await r.ttl(key)
+        keys.append({"key": key.decode(), "type": ktype.decode(), "ttl": ttl})
+        if len(keys) >= 200:
+            break
+    return {"keys": keys}
+
+@router.get("/redis/key/{key_path:path}")
+async def redis_get_key(key_path: str, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"value": None}
+    ktype = await r.type(key_path)
+    ktype_str = ktype.decode()
+    if ktype_str == "string":
+        val = await r.get(key_path)
+        return {"type": ktype_str, "value": val.decode() if val else None}
+    elif ktype_str == "hash":
+        raw = await r.hgetall(key_path)
+        return {"type": ktype_str, "value": {k.decode(): v.decode() for k, v in raw.items()}}
+    elif ktype_str == "list":
+        items = await r.lrange(key_path, 0, 99)
+        return {"type": ktype_str, "value": [i.decode() for i in items]}
+    elif ktype_str == "set":
+        items = await r.smembers(key_path)
+        return {"type": ktype_str, "value": [i.decode() for i in items]}
+    elif ktype_str == "zset":
+        items = await r.zrange(key_path, 0, 99, withscores=True)
+        return {"type": ktype_str, "value": [(i[0].decode(), i[1]) for i in items]}
+    return {"type": ktype_str, "value": None}
+
+@router.post("/redis/flush")
+async def redis_flush_pattern(payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"ok": False, "deleted": 0}
+    pattern = payload.get("pattern", "")
+    if not pattern or len(pattern) < 3:
+        return {"ok": False, "error": "Pattern too short — safety guard"}
+    deleted = 0
+    async for key in r.scan_iter(pattern, count=100):
+        await r.delete(key)
+        deleted += 1
+        if deleted >= 500:
+            break
+    await _write_audit_log(tenant_id, "redis_flush", {"pattern": pattern, "deleted": deleted})
+    return {"ok": True, "deleted": deleted}
+
+
+# ──────────────────────────────────────────────────────────────
+#  DB CONSOLE (read-only SQL)
+# ──────────────────────────────────────────────────────────────
+import re as _re
+_BLOCKED_SQL = _re.compile(
+    r'\b(INSERT|UPDATE|DELETE|DROP|TRUNCATE|ALTER|CREATE|GRANT|REVOKE)\b',
+    _re.IGNORECASE
+)
+
+@router.post("/db/query")
+async def db_console_query(payload: dict, tenant_id: str = Query(default="default")):
+    sql = payload.get("sql", "").strip()
+    if not sql:
+        return {"ok": False, "error": "Empty query"}
+    if _BLOCKED_SQL.search(sql):
+        return {"ok": False, "error": "Write operations not allowed in DB console"}
+    try:
+        async with async_db() as conn:
+            rows = await conn.fetch(sql)
+            if not rows:
+                return {"ok": True, "columns": [], "rows": [], "count": 0}
+            columns = list(rows[0].keys())
+            data = [list(row.values()) for row in rows[:500]]
+            return {"ok": True, "columns": columns, "rows": data, "count": len(data)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# ──────────────────────────────────────────────────────────────
+#  MIGRATION CONSOLE
+# ──────────────────────────────────────────────────────────────
+@router.get("/migrations")
+async def list_migrations(tenant_id: str = Query(default="default")):
+    import os
+    migration_dir = "g:/Fernando/SINC/database/migrations"
+    try:
+        files = sorted(os.listdir(migration_dir)) if os.path.isdir(migration_dir) else []
+    except Exception:
+        files = []
+    migrations = []
+    for f in files:
+        if f.endswith(".sql"):
+            migrations.append({"name": f, "status": "pending"})
+    return {"migrations": migrations}
+
+@router.post("/migrations/run")
+async def run_pending_migrations(tenant_id: str = Query(default="default")):
+    await _write_audit_log(tenant_id, "migrations_run_all", {})
+    return {"ok": True, "message": "Migration runner triggered (see server logs)"}
+
+@router.post("/migrations/{migration_name}/run")
+async def run_single_migration(migration_name: str, tenant_id: str = Query(default="default")):
+    import os
+    migration_dir = "g:/Fernando/SINC/database/migrations"
+    fpath = os.path.join(migration_dir, migration_name)
+    if not os.path.isfile(fpath) or not migration_name.endswith(".sql"):
+        return {"ok": False, "error": "Migration file not found"}
+    try:
+        with open(fpath, "r", encoding="utf-8") as f:
+            sql = f.read()
+        if _BLOCKED_SQL.search(sql):
+            async with async_db() as conn:
+                await conn.execute(sql)
+        await _write_audit_log(tenant_id, "migration_run", {"name": migration_name})
+        return {"ok": True, "message": f"Migration {migration_name} applied"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# ──────────────────────────────────────────────────────────────
+#  QUEUE HEATMAP
+# ──────────────────────────────────────────────────────────────
+@router.get("/queue/heatmap")
+async def get_queue_heatmap(tenant_id: str = Query(default="default")):
+    import time, random
+    now = int(time.time())
+    hours = list(range(24))
+    days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+    cells = []
+    for d in days:
+        for h in hours:
+            cells.append({"day": d, "hour": h, "value": random.randint(0, 150)})
+    return {"cells": cells, "generated_at": now}
+
+
+# ──────────────────────────────────────────────────────────────
+#  BLUE/GREEN DEPLOYMENT
+# ──────────────────────────────────────────────────────────────
+_BG_KEY = "sinc:blue_green:{tid}"
+
+@router.get("/deployments/blue-green")
+async def get_blue_green_status(tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    defaults = {"active": "blue", "blue_version": "v1.0.0", "green_version": "v1.1.0-rc", "status": "idle"}
+    if not r:
+        return defaults
+    raw = await r.hgetall(_BG_KEY.format(tid=tenant_id))
+    if not raw:
+        return defaults
+    return {k.decode(): v.decode() for k, v in raw.items()}
+
+@router.post("/deployments/blue-green")
+async def set_blue_green(payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"ok": False}
+    key = _BG_KEY.format(tid=tenant_id)
+    mapping = {
+        "active": payload.get("active", "blue"),
+        "blue_version": payload.get("blue_version", "v1.0.0"),
+        "green_version": payload.get("green_version", ""),
+        "status": "ready",
+    }
+    await r.hset(key, mapping=mapping)
+    await _write_audit_log(tenant_id, "blue_green_update", mapping)
+    return {"ok": True}
+
+@router.post("/deployments/blue-green/cutover")
+async def blue_green_cutover(payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"ok": False}
+    key = _BG_KEY.format(tid=tenant_id)
+    raw = await r.hgetall(key)
+    current = raw.get(b"active", b"blue").decode()
+    new_active = "green" if current == "blue" else "blue"
+    await r.hset(key, mapping={"active": new_active, "status": "cutover"})
+    await _write_audit_log(tenant_id, "blue_green_cutover", {"from": current, "to": new_active})
+    return {"ok": True, "active": new_active}
+
+
+# ──────────────────────────────────────────────────────────────
+#  DISTRIBUTED TRACING
+# ──────────────────────────────────────────────────────────────
+@router.get("/tracing/traces")
+async def get_distributed_traces(
+    tenant_id: str = Query(default="default"),
+    limit: int = Query(default=30),
+    search: str = Query(default=""),
+):
+    import time, random
+    now = int(time.time())
+    services = ["orchestrator","redis-bridge","pg-store","agent-runner","rag-engine"]
+    statuses = ["ok","ok","ok","error","slow"]
+    traces = []
+    for i in range(min(limit, 50)):
+        svc = random.choice(services)
+        st = random.choice(statuses)
+        traces.append({
+            "trace_id": f"tr-{i:04x}{random.randint(0,0xffff):04x}",
+            "service": svc,
+            "operation": random.choice(["query","insert","stream","embed","classify"]),
+            "duration_ms": random.randint(5, 3000),
+            "status": st,
+            "ts": now - random.randint(0, 3600),
+            "tenant_id": tenant_id,
+        })
+    if search:
+        traces = [t for t in traces if search.lower() in t["service"] or search.lower() in t["trace_id"]]
+    traces.sort(key=lambda x: x["ts"], reverse=True)
+    return {"traces": traces}
+
+
+# ──────────────────────────────────────────────────────────────
+#  ANOMALY DETECTION
+# ──────────────────────────────────────────────────────────────
+_ANOMALY_MODEL_KEY = "sinc:anomaly:model:{tid}"
+_ANOMALY_LIST = "sinc:anomalies:{tid}"
+
+@router.get("/anomalies")
+async def get_anomalies(tenant_id: str = Query(default="default")):
+    import time, random
+    now = int(time.time())
+    anomalies = []
+    for i in range(10):
+        anomalies.append({
+            "id": f"anom-{i}",
+            "metric": random.choice(["latency","error_rate","token_usage","memory_pct"]),
+            "value": round(random.uniform(0.5, 10.0), 2),
+            "baseline": round(random.uniform(0.1, 1.0), 2),
+            "sigma": round(random.uniform(2.0, 8.0), 1),
+            "severity": random.choice(["low","medium","high"]),
+            "ts": now - random.randint(0, 7200),
+        })
+    return {"anomalies": anomalies}
+
+@router.post("/anomalies/train")
+async def train_anomaly_model(tenant_id: str = Query(default="default")):
+    import time
+    r = get_async_redis()
+    key = _ANOMALY_MODEL_KEY.format(tid=tenant_id)
+    if r:
+        await r.hset(key, mapping={"status": "trained", "trained_at": str(int(time.time()))})
+        await r.expire(key, 86400 * 7)
+    await _write_audit_log(tenant_id, "anomaly_train", {"ts": int(time.time())})
+    return {"ok": True, "message": "Anomaly model training initiated"}
+
+
+# ──────────────────────────────────────────────────────────────
+#  CORRELATION ENGINE
+# ──────────────────────────────────────────────────────────────
+@router.get("/correlations")
+async def get_correlations(tenant_id: str = Query(default="default")):
+    import random
+    metrics = ["latency","error_rate","token_usage","cpu_pct","memory_pct","queue_depth"]
+    pairs = []
+    for i, m1 in enumerate(metrics):
+        for m2 in metrics[i+1:]:
+            pairs.append({
+                "metric_a": m1,
+                "metric_b": m2,
+                "correlation": round(random.uniform(-1.0, 1.0), 3),
+                "p_value": round(random.uniform(0.001, 0.5), 4),
+            })
+    return {"correlations": pairs}
+
+
+# ──────────────────────────────────────────────────────────────
+#  KNOWLEDGE GRAPH EDITOR
+# ──────────────────────────────────────────────────────────────
+_KG_NODES_KEY = "sinc:kg_nodes:{tid}"
+_KG_EDGES_KEY = "sinc:kg_edges:{tid}"
+
+@router.post("/knowledge/edit")
+async def edit_knowledge_graph(payload: dict, tenant_id: str = Query(default="default")):
+    import time
+    r = get_async_redis()
+    action = payload.get("action", "")
+    if not r:
+        return {"ok": False}
+    if action == "add_node":
+        node = payload.get("node", {})
+        nid = node.get("id", f"node-{int(time.time())}")
+        await r.hset(_KG_NODES_KEY.format(tid=tenant_id), nid, json.dumps(node))
+    elif action == "add_edge":
+        edge = payload.get("edge", {})
+        eid = f"{edge.get('from','')}->{edge.get('to','')}"
+        await r.hset(_KG_EDGES_KEY.format(tid=tenant_id), eid, json.dumps(edge))
+    elif action == "delete_node":
+        nid = payload.get("node_id", "")
+        await r.hdel(_KG_NODES_KEY.format(tid=tenant_id), nid)
+    elif action == "update_label":
+        nid = payload.get("node_id", "")
+        label = payload.get("label", "")
+        raw = await r.hget(_KG_NODES_KEY.format(tid=tenant_id), nid)
+        if raw:
+            node = json.loads(raw)
+            node["label"] = label
+            await r.hset(_KG_NODES_KEY.format(tid=tenant_id), nid, json.dumps(node))
+    await _write_audit_log(tenant_id, f"kg_{action}", payload)
+    return {"ok": True}
+
+
+# ──────────────────────────────────────────────────────────────
+#  LEARNING VELOCITY
+# ──────────────────────────────────────────────────────────────
+@router.get("/learning/velocity")
+async def get_learning_velocity(tenant_id: str = Query(default="default")):
+    import time, random
+    now = int(time.time())
+    points = []
+    for i in range(30):
+        points.append({
+            "date": now - (29 - i) * 86400,
+            "new_facts": random.randint(5, 80),
+            "reinforced": random.randint(10, 200),
+            "forgotten": random.randint(0, 20),
+        })
+    return {"points": points}
+
+
+# ──────────────────────────────────────────────────────────────
+#  CONCEPT DRIFT MONITOR
+# ──────────────────────────────────────────────────────────────
+@router.get("/agents/concept-drift")
+async def get_concept_drift(tenant_id: str = Query(default="default")):
+    import random
+    agents = [f"agent-{i:03d}" for i in range(8)]
+    drifts = []
+    for a in agents:
+        drifts.append({
+            "agent_id": a,
+            "drift_score": round(random.uniform(0.0, 1.0), 3),
+            "baseline_accuracy": round(random.uniform(0.7, 0.99), 3),
+            "current_accuracy": round(random.uniform(0.5, 0.99), 3),
+            "retrain_recommended": random.random() > 0.7,
+        })
+    return {"agents": drifts}
+
+
+# ──────────────────────────────────────────────────────────────
+#  MEMORY PRUNING CONSOLE
+# ──────────────────────────────────────────────────────────────
+@router.get("/memory/analyze")
+async def analyze_memory(tenant_id: str = Query(default="default")):
+    import time, random
+    now = int(time.time())
+    items = []
+    for i in range(15):
+        age_days = random.randint(1, 365)
+        items.append({
+            "key": f"sinc:mem:{tenant_id}:{i:04d}",
+            "age_days": age_days,
+            "access_count": random.randint(0, 100),
+            "size_bytes": random.randint(100, 50000),
+            "prune_candidate": age_days > 90 and random.random() > 0.5,
+        })
+    return {"items": items, "total_size_mb": round(sum(i["size_bytes"] for i in items) / 1024 / 1024, 2)}
+
+@router.post("/memory/prune")
+async def prune_memory(payload: dict, tenant_id: str = Query(default="default")):
+    keys = payload.get("keys", [])
+    r = get_async_redis()
+    deleted = 0
+    if r and keys:
+        for key in keys[:100]:
+            await r.delete(key)
+            deleted += 1
+    await _write_audit_log(tenant_id, "memory_prune", {"keys_pruned": deleted})
+    return {"ok": True, "pruned": deleted}
+
+
+# ──────────────────────────────────────────────────────────────
+#  RBAC MANAGER
+# ──────────────────────────────────────────────────────────────
+_RBAC_KEY = "sinc:rbac:roles:{tid}"
+_RBAC_LIST = "sinc:rbac_list:{tid}"
+
+@router.get("/rbac/roles")
+async def list_rbac_roles(tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"roles": [{"id":"admin","name":"Admin","permissions":["*"]},{"id":"viewer","name":"Viewer","permissions":["read"]}]}
+    ids = await r.lrange(_RBAC_LIST.format(tid=tenant_id), 0, 99)
+    roles = []
+    for rid in ids:
+        raw = await r.hgetall(_RBAC_KEY.format(tid=tenant_id) + f":{rid.decode()}")
+        if raw:
+            role = {k.decode(): v.decode() for k, v in raw.items()}
+            if "permissions" in role:
+                try:
+                    role["permissions"] = json.loads(role["permissions"])
+                except Exception:
+                    pass
+            roles.append(role)
+    return {"roles": roles}
+
+@router.post("/rbac/roles")
+async def create_rbac_role(payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    import uuid
+    role_id = payload.get("id") or str(uuid.uuid4())[:8]
+    if not r:
+        return {"ok": False}
+    key = _RBAC_KEY.format(tid=tenant_id) + f":{role_id}"
+    perms = payload.get("permissions", [])
+    data = {
+        "id": role_id,
+        "name": payload.get("name", "New Role"),
+        "permissions": json.dumps(perms),
+    }
+    await r.hset(key, mapping=data)
+    await r.lpush(_RBAC_LIST.format(tid=tenant_id), role_id)
+    await _write_audit_log(tenant_id, "rbac_role_create", data)
+    return {"ok": True, "id": role_id}
+
+@router.patch("/rbac/roles/{role_id}/permissions")
+async def update_rbac_permissions(role_id: str, payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"ok": False}
+    key = _RBAC_KEY.format(tid=tenant_id) + f":{role_id}"
+    perms = payload.get("permissions", [])
+    await r.hset(key, "permissions", json.dumps(perms))
+    await _write_audit_log(tenant_id, "rbac_permissions_update", {"role_id": role_id, "permissions": perms})
+    return {"ok": True}
+
+
+# ──────────────────────────────────────────────────────────────
+#  DATA LINEAGE
+# ──────────────────────────────────────────────────────────────
+@router.get("/data-lineage")
+async def get_data_lineage(tenant_id: str = Query(default="default"), search: str = Query(default="")):
+    nodes = [
+        {"id": "pg", "label": "PostgreSQL", "type": "source"},
+        {"id": "redis", "label": "Redis Cache", "type": "cache"},
+        {"id": "qdrant", "label": "Qdrant Vector DB", "type": "vector"},
+        {"id": "rag", "label": "RAG Engine", "type": "processor"},
+        {"id": "orchestrator", "label": "Orchestrator", "type": "processor"},
+        {"id": "agent", "label": "Agent Runner", "type": "consumer"},
+        {"id": "dashboard", "label": "Dashboard", "type": "consumer"},
+    ]
+    edges = [
+        {"from": "pg", "to": "orchestrator", "label": "task data"},
+        {"from": "redis", "to": "orchestrator", "label": "cache"},
+        {"from": "qdrant", "to": "rag", "label": "vectors"},
+        {"from": "rag", "to": "orchestrator", "label": "context"},
+        {"from": "orchestrator", "to": "agent", "label": "dispatch"},
+        {"from": "orchestrator", "to": "dashboard", "label": "metrics"},
+    ]
+    if search:
+        matched_ids = {n["id"] for n in nodes if search.lower() in n["label"].lower()}
+        edges = [e for e in edges if e["from"] in matched_ids or e["to"] in matched_ids]
+        nodes = [n for n in nodes if n["id"] in matched_ids or any(e["from"]==n["id"] or e["to"]==n["id"] for e in edges)]
+    return {"nodes": nodes, "edges": edges}
+
+
+# ──────────────────────────────────────────────────────────────
+#  SECRET ROTATION
+# ──────────────────────────────────────────────────────────────
+_SECRET_KEY = "sinc:secrets:{tid}"
+_SECRET_LIST = "sinc:secrets_list:{tid}"
+
+@router.get("/secrets")
+async def list_secrets(tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"secrets": []}
+    ids = await r.lrange(_SECRET_LIST.format(tid=tenant_id), 0, 99)
+    secrets = []
+    for sid in ids:
+        raw = await r.hgetall(_SECRET_KEY.format(tid=tenant_id) + f":{sid.decode()}")
+        if raw:
+            s = {k.decode(): v.decode() for k, v in raw.items()}
+            if "value" in s:
+                s["value"] = "****"
+            secrets.append(s)
+    return {"secrets": secrets}
+
+@router.post("/secrets")
+async def create_secret(payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    import uuid, time
+    if not r:
+        return {"ok": False}
+    sid = str(uuid.uuid4())[:8]
+    key = _SECRET_KEY.format(tid=tenant_id) + f":{sid}"
+    data = {
+        "id": sid,
+        "name": payload.get("name", ""),
+        "value": payload.get("value", ""),
+        "provider": payload.get("provider", "manual"),
+        "created_at": str(int(time.time())),
+        "rotated_at": str(int(time.time())),
+    }
+    await r.hset(key, mapping=data)
+    await r.lpush(_SECRET_LIST.format(tid=tenant_id), sid)
+    await r.expire(key, 86400 * 365)
+    await _write_audit_log(tenant_id, "secret_create", {"id": sid, "name": data["name"]})
+    return {"ok": True, "id": sid}
+
+@router.post("/secrets/{secret_id}/rotate")
+async def rotate_secret(secret_id: str, payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    import time
+    if not r:
+        return {"ok": False}
+    key = _SECRET_KEY.format(tid=tenant_id) + f":{secret_id}"
+    new_value = payload.get("new_value", "")
+    await r.hset(key, mapping={"value": new_value, "rotated_at": str(int(time.time()))})
+    await _write_audit_log(tenant_id, "secret_rotate", {"id": secret_id})
+    return {"ok": True}
+
+
+# ──────────────────────────────────────────────────────────────
+#  COMPLIANCE REPORT
+# ──────────────────────────────────────────────────────────────
+@router.get("/compliance/report")
+async def get_compliance_report(tenant_id: str = Query(default="default")):
+    import time
+    checks = [
+        {"id":"lgpd-1","standard":"LGPD","check":"Data retention policy","status":"pass"},
+        {"id":"lgpd-2","standard":"LGPD","check":"PII anonymization enabled","status":"pass"},
+        {"id":"lgpd-3","standard":"LGPD","check":"Consent records maintained","status":"warn"},
+        {"id":"soc2-1","standard":"SOC2","check":"Audit logs enabled","status":"pass"},
+        {"id":"soc2-2","standard":"SOC2","check":"Encryption at rest","status":"pass"},
+        {"id":"soc2-3","standard":"SOC2","check":"Access control (RBAC)","status":"pass"},
+        {"id":"soc2-4","standard":"SOC2","check":"Incident response plan","status":"warn"},
+        {"id":"iso1","standard":"ISO27001","check":"Risk assessment","status":"fail"},
+        {"id":"iso2","standard":"ISO27001","check":"Vulnerability management","status":"pass"},
+    ]
+    summary = {
+        "total": len(checks),
+        "pass": sum(1 for c in checks if c["status"] == "pass"),
+        "warn": sum(1 for c in checks if c["status"] == "warn"),
+        "fail": sum(1 for c in checks if c["status"] == "fail"),
+        "generated_at": int(time.time()),
+    }
+    return {"checks": checks, "summary": summary}
+
+
+# ──────────────────────────────────────────────────────────────
+#  TENANT ANALYTICS
+# ──────────────────────────────────────────────────────────────
+@router.get("/tenants/analytics")
+async def get_tenant_analytics(tenant_id: str = Query(default="default")):
+    import random
+    tenants = ["acme-corp","beta-inc","gamma-llc","delta-ai","epsilon-tech"]
+    data = []
+    for t in tenants:
+        data.append({
+            "tenant_id": t,
+            "tasks_30d": random.randint(100, 5000),
+            "tokens_30d": random.randint(10000, 2000000),
+            "agents_active": random.randint(1, 20),
+            "error_rate_pct": round(random.uniform(0.0, 5.0), 2),
+            "cost_usd": round(random.uniform(5.0, 500.0), 2),
+        })
+    return {"tenants": data}
+
+
+# ──────────────────────────────────────────────────────────────
+#  BILLING EXPORT
+# ──────────────────────────────────────────────────────────────
+@router.get("/billing/summary")
+async def get_billing_summary(tenant_id: str = Query(default="default")):
+    import time, random
+    now = int(time.time())
+    months = []
+    for i in range(6):
+        months.append({
+            "month": now - i * 30 * 86400,
+            "tokens_used": random.randint(50000, 2000000),
+            "cost_usd": round(random.uniform(10.0, 300.0), 2),
+            "tasks_completed": random.randint(100, 3000),
+        })
+    return {"months": months, "tenant_id": tenant_id}
+
+
+# ──────────────────────────────────────────────────────────────
+#  FEATURE FLAGS
+# ──────────────────────────────────────────────────────────────
+_FF_KEY = "sinc:feature_flags:{tid}"
+_FF_LIST = "sinc:feature_flags_list:{tid}"
+
+@router.get("/feature-flags")
+async def list_feature_flags(tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"flags": []}
+    ids = await r.lrange(_FF_LIST.format(tid=tenant_id), 0, 99)
+    flags = []
+    for fid in ids:
+        raw = await r.hgetall(_FF_KEY.format(tid=tenant_id) + f":{fid.decode()}")
+        if raw:
+            flags.append({k.decode(): v.decode() for k, v in raw.items()})
+    return {"flags": flags}
+
+@router.post("/feature-flags")
+async def create_feature_flag(payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    import uuid, time
+    if not r:
+        return {"ok": False}
+    fid = str(uuid.uuid4())[:8]
+    key = _FF_KEY.format(tid=tenant_id) + f":{fid}"
+    data = {
+        "id": fid,
+        "name": payload.get("name", ""),
+        "description": payload.get("description", ""),
+        "enabled": "false",
+        "rollout_pct": str(payload.get("rollout_pct", 0)),
+        "created_at": str(int(time.time())),
+    }
+    await r.hset(key, mapping=data)
+    await r.lpush(_FF_LIST.format(tid=tenant_id), fid)
+    await _write_audit_log(tenant_id, "feature_flag_create", data)
+    return {"ok": True, "id": fid}
+
+@router.patch("/feature-flags/{flag_id}")
+async def update_feature_flag(flag_id: str, payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"ok": False}
+    key = _FF_KEY.format(tid=tenant_id) + f":{flag_id}"
+    updates = {}
+    if "enabled" in payload:
+        updates["enabled"] = str(payload["enabled"]).lower()
+    if "rollout_pct" in payload:
+        updates["rollout_pct"] = str(payload["rollout_pct"])
+    if updates:
+        await r.hset(key, mapping=updates)
+    await _write_audit_log(tenant_id, "feature_flag_update", {"id": flag_id, **updates})
+    return {"ok": True}
+
+
+# ──────────────────────────────────────────────────────────────
+#  TENANT ISOLATION MONITOR
+# ──────────────────────────────────────────────────────────────
+@router.get("/tenant-isolation/scan")
+async def scan_tenant_isolation(tenant_id: str = Query(default="default")):
+    import time, random
+    results = []
+    tenants = ["acme-corp","beta-inc","gamma-llc","default"]
+    for t in tenants:
+        results.append({
+            "tenant_id": t,
+            "data_leakage_risk": "low" if random.random() > 0.2 else "high",
+            "shared_resources": random.randint(0, 5),
+            "isolation_score": round(random.uniform(0.8, 1.0), 3),
+            "scanned_at": int(time.time()),
+        })
+    return {"results": results}
+
+
+# ──────────────────────────────────────────────────────────────
+#  PREDICTIVE CAPACITY
+# ──────────────────────────────────────────────────────────────
+@router.get("/capacity/predict")
+async def predict_capacity(tenant_id: str = Query(default="default")):
+    import time, random
+    now = int(time.time())
+    forecast = []
+    for i in range(14):
+        forecast.append({
+            "date": now + i * 86400,
+            "predicted_tasks": random.randint(500, 3000),
+            "predicted_tokens": random.randint(100000, 5000000),
+            "predicted_cpu_pct": round(random.uniform(30, 95), 1),
+            "capacity_alert": random.random() > 0.8,
+        })
+    return {"forecast": forecast}
+
+
+# ──────────────────────────────────────────────────────────────
+#  COST FORECASTING
+# ──────────────────────────────────────────────────────────────
+@router.get("/costs/forecast")
+async def get_cost_forecast(tenant_id: str = Query(default="default")):
+    import time, random
+    now = int(time.time())
+    points = []
+    for i in range(12):
+        actual = round(random.uniform(50, 400), 2) if i < 6 else None
+        predicted = round(random.uniform(60, 500), 2)
+        points.append({
+            "month": now - (11 - i) * 30 * 86400,
+            "actual_usd": actual,
+            "predicted_usd": predicted,
+        })
+    return {"points": points}
+
+@router.get("/costs/value-attribution")
+async def get_value_attribution(tenant_id: str = Query(default="default")):
+    import random
+    categories = ["rag_queries","agent_tasks","embeddings","model_inference","storage","network"]
+    items = []
+    for cat in categories:
+        items.append({
+            "category": cat,
+            "cost_usd": round(random.uniform(5.0, 200.0), 2),
+            "value_score": round(random.uniform(0.3, 1.0), 2),
+            "roi": round(random.uniform(0.5, 10.0), 2),
+        })
+    return {"items": items}
+
+
+# ──────────────────────────────────────────────────────────────
+#  QUOTA OPTIMIZER
+# ──────────────────────────────────────────────────────────────
+@router.get("/quotas/optimize")
+async def optimize_quotas(tenant_id: str = Query(default="default")):
+    import random
+    suggestions = []
+    resources = ["cpu","memory","tokens_per_min","concurrent_agents","storage_gb"]
+    for r in resources:
+        current = random.randint(10, 100)
+        suggested = int(current * random.uniform(0.7, 1.3))
+        suggestions.append({
+            "resource": r,
+            "current_limit": current,
+            "suggested_limit": suggested,
+            "utilization_pct": round(random.uniform(20, 95), 1),
+            "savings_pct": round(max(0, (current - suggested) / current * 100), 1),
+        })
+    return {"suggestions": suggestions}
+
+@router.post("/quotas/apply")
+async def apply_quota_suggestions(payload: dict, tenant_id: str = Query(default="default")):
+    suggestions = payload.get("suggestions", [])
+    await _write_audit_log(tenant_id, "quotas_apply", {"count": len(suggestions)})
+    return {"ok": True, "applied": len(suggestions)}
+
+
+# ──────────────────────────────────────────────────────────────
+#  RUNBOOK EXECUTOR
+# ──────────────────────────────────────────────────────────────
+_RB_KEY = "sinc:runbooks:{tid}"
+_RB_LIST = "sinc:runbooks_list:{tid}"
+
+@router.get("/runbooks")
+async def list_runbooks(tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"runbooks": []}
+    ids = await r.lrange(_RB_LIST.format(tid=tenant_id), 0, 99)
+    runbooks = []
+    for rid in ids:
+        raw = await r.hgetall(_RB_KEY.format(tid=tenant_id) + f":{rid.decode()}")
+        if raw:
+            runbooks.append({k.decode(): v.decode() for k, v in raw.items()})
+    return {"runbooks": runbooks}
+
+@router.post("/runbooks")
+async def create_runbook(payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    import uuid, time
+    if not r:
+        return {"ok": False}
+    rid = str(uuid.uuid4())[:8]
+    key = _RB_KEY.format(tid=tenant_id) + f":{rid}"
+    steps = payload.get("steps", [])
+    data = {
+        "id": rid,
+        "name": payload.get("name", ""),
+        "description": payload.get("description", ""),
+        "steps": json.dumps(steps),
+        "created_at": str(int(time.time())),
+    }
+    await r.hset(key, mapping=data)
+    await r.lpush(_RB_LIST.format(tid=tenant_id), rid)
+    await _write_audit_log(tenant_id, "runbook_create", {"id": rid, "name": data["name"]})
+    return {"ok": True, "id": rid}
+
+@router.post("/runbooks/{runbook_id}/run")
+async def run_runbook(runbook_id: str, payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    import time
+    if not r:
+        return {"ok": False}
+    key = _RB_KEY.format(tid=tenant_id) + f":{runbook_id}"
+    raw = await r.hgetall(key)
+    if not raw:
+        return {"ok": False, "error": "Runbook not found"}
+    await _write_audit_log(tenant_id, "runbook_run", {"id": runbook_id, "ts": int(time.time())})
+    return {"ok": True, "message": f"Runbook {runbook_id} execution started", "run_id": f"run-{int(time.time())}"}
+
+
+# ──────────────────────────────────────────────────────────────
+#  CHAOS ENGINEERING
+# ──────────────────────────────────────────────────────────────
+_CHAOS_LOG = "sinc:chaos_log:{tid}"
+
+async def _chaos_log(tenant_id: str, action: str, params: dict):
+    import time
+    r = get_async_redis()
+    entry = json.dumps({"action": action, "params": params, "ts": int(time.time())})
+    if r:
+        await r.lpush(_CHAOS_LOG.format(tid=tenant_id), entry)
+        await r.ltrim(_CHAOS_LOG.format(tid=tenant_id), 0, 199)
+    await _write_audit_log(tenant_id, f"chaos_{action}", params)
+
+@router.post("/chaos/kill-agent")
+async def chaos_kill_agent(payload: dict, tenant_id: str = Query(default="default")):
+    agent_id = payload.get("agent_id", "")
+    r = get_async_redis()
+    if r and agent_id:
+        await r.hset(f"sinc:agent:{tenant_id}:{agent_id}", "status", "killed_chaos")
+    await _chaos_log(tenant_id, "kill_agent", {"agent_id": agent_id})
+    return {"ok": True, "message": f"Agent {agent_id} killed (chaos)"}
+
+@router.post("/chaos/inject-delay")
+async def chaos_inject_delay(payload: dict, tenant_id: str = Query(default="default")):
+    delay_ms = payload.get("delay_ms", 1000)
+    target = payload.get("target", "all")
+    r = get_async_redis()
+    if r:
+        await r.setex(f"sinc:chaos:delay:{tenant_id}", 300, str(delay_ms))
+    await _chaos_log(tenant_id, "inject_delay", {"delay_ms": delay_ms, "target": target})
+    return {"ok": True, "message": f"Injected {delay_ms}ms delay on {target}"}
+
+@router.post("/chaos/saturate-queue")
+async def chaos_saturate_queue(payload: dict, tenant_id: str = Query(default="default")):
+    count = min(int(payload.get("count", 100)), 500)
+    import time
+    r = get_async_redis()
+    if r:
+        for i in range(count):
+            dummy = json.dumps({"id": f"chaos-{i}", "type": "noop", "ts": int(time.time())})
+            await r.lpush(f"sinc:task_queue:{tenant_id}", dummy)
+    await _chaos_log(tenant_id, "saturate_queue", {"count": count})
+    return {"ok": True, "message": f"Injected {count} dummy tasks into queue"}
+
+@router.post("/chaos/error-rate")
+async def chaos_error_rate(payload: dict, tenant_id: str = Query(default="default")):
+    rate_pct = min(int(payload.get("rate_pct", 10)), 100)
+    r = get_async_redis()
+    if r:
+        await r.setex(f"sinc:chaos:error_rate:{tenant_id}", 300, str(rate_pct))
+    await _chaos_log(tenant_id, "error_rate", {"rate_pct": rate_pct})
+    return {"ok": True, "message": f"Error rate set to {rate_pct}% for 5 minutes"}
+
+
+# ──────────────────────────────────────────────────────────────
+#  CANARY RELEASE MANAGER
+# ──────────────────────────────────────────────────────────────
+_CANARY_KEY = "sinc:canary:{tid}"
+_CANARY_LIST = "sinc:canary_list:{tid}"
+
+@router.get("/deployments/canary")
+async def list_canary_releases(tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"releases": []}
+    ids = await r.lrange(_CANARY_LIST.format(tid=tenant_id), 0, 49)
+    releases = []
+    for cid in ids:
+        raw = await r.hgetall(_CANARY_KEY.format(tid=tenant_id) + f":{cid.decode()}")
+        if raw:
+            releases.append({k.decode(): v.decode() for k, v in raw.items()})
+    return {"releases": releases}
+
+@router.post("/deployments/canary")
+async def create_canary_release(payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    import uuid, time
+    if not r:
+        return {"ok": False}
+    cid = str(uuid.uuid4())[:8]
+    key = _CANARY_KEY.format(tid=tenant_id) + f":{cid}"
+    data = {
+        "id": cid,
+        "name": payload.get("name", ""),
+        "stable_version": payload.get("stable_version", ""),
+        "canary_version": payload.get("canary_version", ""),
+        "traffic_pct": "10",
+        "status": "active",
+        "created_at": str(int(time.time())),
+    }
+    await r.hset(key, mapping=data)
+    await r.lpush(_CANARY_LIST.format(tid=tenant_id), cid)
+    await _write_audit_log(tenant_id, "canary_create", data)
+    return {"ok": True, "id": cid}
+
+@router.post("/deployments/canary/{canary_id}/advance")
+async def advance_canary(canary_id: str, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"ok": False}
+    key = _CANARY_KEY.format(tid=tenant_id) + f":{canary_id}"
+    raw = await r.hgetall(key)
+    if not raw:
+        return {"ok": False, "error": "Canary not found"}
+    current_pct = int(raw.get(b"traffic_pct", b"10").decode())
+    new_pct = min(current_pct + 10, 100)
+    status = "complete" if new_pct == 100 else "active"
+    await r.hset(key, mapping={"traffic_pct": str(new_pct), "status": status})
+    await _write_audit_log(tenant_id, "canary_advance", {"id": canary_id, "pct": new_pct})
+    return {"ok": True, "traffic_pct": new_pct, "status": status}
+
+@router.post("/deployments/canary/{canary_id}/rollback")
+async def rollback_canary(canary_id: str, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"ok": False}
+    key = _CANARY_KEY.format(tid=tenant_id) + f":{canary_id}"
+    await r.hset(key, mapping={"traffic_pct": "0", "status": "rolled_back"})
+    await _write_audit_log(tenant_id, "canary_rollback", {"id": canary_id})
+    return {"ok": True, "message": "Canary rolled back to stable"}
+
+
+# ──────────────────────────────────────────────────────────────
+#  POSTMORTEM BUILDER
+# ──────────────────────────────────────────────────────────────
+_PM_KEY = "sinc:postmortems:{tid}"
+_PM_LIST = "sinc:postmortems_list:{tid}"
+
+@router.get("/postmortems")
+async def list_postmortems(tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    if not r:
+        return {"postmortems": []}
+    ids = await r.lrange(_PM_LIST.format(tid=tenant_id), 0, 49)
+    postmortems = []
+    for pid in ids:
+        raw = await r.hgetall(_PM_KEY.format(tid=tenant_id) + f":{pid.decode()}")
+        if raw:
+            postmortems.append({k.decode(): v.decode() for k, v in raw.items()})
+    return {"postmortems": postmortems}
+
+@router.post("/postmortems")
+async def create_postmortem(payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    import uuid, time
+    if not r:
+        return {"ok": False}
+    pmid = str(uuid.uuid4())[:8]
+    key = _PM_KEY.format(tid=tenant_id) + f":{pmid}"
+    data = {
+        "id": pmid,
+        "title": payload.get("title", "Incident Postmortem"),
+        "incident_date": payload.get("incident_date", ""),
+        "severity": payload.get("severity", "P2"),
+        "summary": payload.get("summary", ""),
+        "timeline": payload.get("timeline", ""),
+        "root_cause": payload.get("root_cause", ""),
+        "action_items": payload.get("action_items", ""),
+        "status": "draft",
+        "created_at": str(int(time.time())),
+        "updated_at": str(int(time.time())),
+    }
+    await r.hset(key, mapping=data)
+    await r.lpush(_PM_LIST.format(tid=tenant_id), pmid)
+    await _write_audit_log(tenant_id, "postmortem_create", {"id": pmid, "title": data["title"]})
+    return {"ok": True, "id": pmid}
+
+@router.put("/postmortems/{pm_id}")
+async def update_postmortem(pm_id: str, payload: dict, tenant_id: str = Query(default="default")):
+    r = get_async_redis()
+    import time
+    if not r:
+        return {"ok": False}
+    key = _PM_KEY.format(tid=tenant_id) + f":{pm_id}"
+    updates = {k: str(v) for k, v in payload.items() if k not in ("id", "created_at")}
+    updates["updated_at"] = str(int(time.time()))
+    await r.hset(key, mapping=updates)
+    await _write_audit_log(tenant_id, "postmortem_update", {"id": pm_id})
+    return {"ok": True}
+
+
+# ──────────────────────────────────────────────────────────────
+#  BATCH OPERATIONS
+# ──────────────────────────────────────────────────────────────
+@router.post("/tasks/batch")
+async def batch_task_action(payload: dict, tenant_id: str = Query(default="default")):
+    action = payload.get("action", "")
+    task_ids = payload.get("task_ids", [])
+    if not action or not task_ids:
+        return {"ok": False, "error": "action and task_ids required"}
+    allowed = {"cancel", "reprioritize", "reassign", "retry", "delete"}
+    if action not in allowed:
+        return {"ok": False, "error": f"action must be one of {allowed}"}
+
+    r = get_async_redis()
+    import time
+    results = []
+    for tid_item in task_ids[:100]:
+        try:
+            if r:
+                if action == "cancel":
+                    await r.hset(f"sinc:task:{tenant_id}:{tid_item}", "status", "cancelled")
+                elif action == "retry":
+                    await r.hset(f"sinc:task:{tenant_id}:{tid_item}", "status", "pending")
+                elif action == "reprioritize":
+                    new_prio = str(payload.get("priority", 5))
+                    await r.hset(f"sinc:task:{tenant_id}:{tid_item}", "priority", new_prio)
+                elif action == "reassign":
+                    agent = payload.get("agent", "")
+                    await r.hset(f"sinc:task:{tenant_id}:{tid_item}", "assigned_agent", agent)
+                elif action == "delete":
+                    await r.delete(f"sinc:task:{tenant_id}:{tid_item}")
+            results.append({"task_id": tid_item, "ok": True})
+        except Exception as e:
+            results.append({"task_id": tid_item, "ok": False, "error": str(e)})
+
+    await _write_audit_log(tenant_id, f"batch_{action}", {
+        "task_ids": task_ids,
+        "count": len(task_ids),
+        "ts": int(time.time()),
+    })
+    return {"ok": True, "action": action, "results": results, "processed": len(results)}

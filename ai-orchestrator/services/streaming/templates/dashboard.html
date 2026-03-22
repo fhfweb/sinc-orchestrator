@@ -82,104 +82,160 @@
 
 <!-- SIDEBAR -->
 <aside class="sb" id="sb">
+  <!-- SEARCH -->
+  <div style="padding:8px 10px 4px">
+    <div style="position:relative">
+      <input id="sb-search" class="inp" placeholder="Buscar..." oninput="sbSearch(this.value)"
+        style="width:100%;padding:5px 8px 5px 26px;font-size:10px;font-family:var(--m);background:rgba(255,255,255,0.04);border:1px solid var(--b);border-radius:5px;color:var(--t1);box-sizing:border-box;outline:none">
+      <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--t3);pointer-events:none">⌕</span>
+    </div>
+  </div>
+
+  <!-- PINNED NOC -->
   <div class="ng">NOC</div>
   <div class="ni on" onclick="showPage('home')">
     <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
-    <span class="ni-label">Grid de Saúde</span>
+    <span class="ni-label">Visão Geral</span>
   </div>
   <div class="ni" onclick="showPage('logs')">
     <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.5" y="1.5" width="11" height="9" rx="1"/><line x1="1.5" y1="4" x2="12.5" y2="4"/><line x1="4" y1="4" x2="4" y2="10.5"/></svg>
     <span class="ni-label">Live Logs</span><span class="nbadge hot">ERR</span>
   </div>
   <div class="ni" onclick="showPage('kanban')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5.5"/><line x1="7" y1="4" x2="7" y2="7.5"/><line x1="9.5" y1="9" x2="7" y2="7.5"/></svg>
-    <span class="ni-label">Zombie Killer</span><span class="nbadge warn">2</span>
-  </div>
-  <div class="ni" onclick="showPage('metrics')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="1,10 4,5.5 8,7 13,2.5"/></svg>
-    <span class="ni-label">Métricas RED</span>
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="2" width="3.5" height="10" rx="0.7"/><rect x="5.5" y="2" width="3.5" height="10" rx="0.7"/><rect x="10" y="2" width="3.5" height="10" rx="0.7"/></svg>
+    <span class="ni-label">Job Board</span><span class="nbadge warn">2</span>
   </div>
   <div class="ni" onclick="showPage('agents')">
     <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="5" r="2.5"/><path d="M1.5 12.5a5.5 5.5 0 0 1 11 0"/><circle cx="11" cy="10" r="1.2" fill="currentColor" stroke="none"/></svg>
-    <span class="ni-label">Agent Control</span>
+    <span class="ni-label">Agentes</span>
     <span class="nbadge" id="sb-agents-badge" style="background:var(--pud);color:var(--pu);border-color:var(--pu)">L1</span>
-  </div>
-  <div class="ni" onclick="showPage('engine-room')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5.5"/></svg>
-    <span class="ni-label">Engine Room</span>
-  </div>
-  <div class="ni" onclick="showPage('neural')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="4" r="1.5"/><circle cx="3" cy="10" r="1.5"/><circle cx="11" cy="10" r="1.5"/><line x1="7" y1="5.5" x2="3" y2="8.5"/><line x1="7" y1="5.5" x2="11" y2="8.5"/><line x1="3" y1="8.5" x2="11" y2="8.5"/></svg>
-    <span class="ni-label">Neural Steering</span>
-    <span class="nbadge" style="background:rgba(255,80,80,0.15);color:var(--rd);border-color:var(--rd);animation:pulse 2s infinite">N5</span>
-  </div>
-  <div class="ng" style="margin-top:6px">Inteligência</div>
-  <div class="ni" onclick="showPage('rep')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><polygon points="7,1.5 8.8,5.2 13,5.6 10,8.4 11,12.5 7,10.2 3,12.5 4,8.4 1,5.6 5.2,5.2"/></svg>
-    <span class="ni-label">Reputação</span>
-  </div>
-  <div class="ni" onclick="showPage('explorer')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="5" cy="5" r="2.5"/><circle cx="10" cy="5" r="1.5"/><line x1="7.5" y1="5" x2="8.5" y2="5"/><path d="M2 12a4 4 0 0 1 7.8-1"/></svg>
-    <span class="ni-label">Exploração N5</span>
   </div>
   <div class="ni" onclick="showPage('ask')">
     <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 2h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H5l-3 2V3a1 1 0 0 1 1-1z"/><line x1="4.5" y1="5.5" x2="9.5" y2="5.5"/><line x1="4.5" y1="7.5" x2="7.5" y2="7.5"/></svg>
     <span class="ni-label">Ask N5</span>
     <span class="nbadge" style="background:var(--pud);color:var(--pu);border-color:var(--pu);font-size:7px">LLM</span>
   </div>
-  <div class="ni" onclick="showPage('lessons')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="2" width="10" height="10" rx="1.5"/><line x1="5" y1="2" x2="5" y2="12"/><line x1="2" y1="5.5" x2="12" y2="5.5"/></svg>
-    <span class="ni-label">Base de Lições</span><span class="nbadge new" id="sb-lessons-badge">53</span>
+  <div class="ni" onclick="showPage('metrics')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="1,10 4,5.5 8,7 13,2.5"/></svg>
+    <span class="ni-label">Métricas RED</span>
   </div>
-  <div class="ng" style="margin-top:6px">Governança</div>
-  <div class="ni" onclick="showPage('cost')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5.5"/><line x1="7" y1="4" x2="7" y2="10"/><line x1="5" y1="5.5" x2="9" y2="5.5"/><line x1="5" y1="8.5" x2="9" y2="8.5"/></svg>
-    <span class="ni-label">Custos</span>
-    <span class="nbadge" style="background:rgba(100,220,100,0.15);color:var(--gr);border-color:var(--gr)">L6</span>
+  <div class="ni" onclick="showPage('engine-room')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="2.5"/><path d="M7 1.5v1.5M7 11v1.5M1.5 7H3M11 7h1.5M3.1 3.1l1.1 1.1M9.8 9.8l1.1 1.1M3.1 10.9l1.1-1.1M9.8 4.2l1.1-1.1"/></svg>
+    <span class="ni-label">Engine Room</span>
   </div>
-  <div class="ni" onclick="showPage('audit')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="1" width="10" height="12" rx="1"/><line x1="4.5" y1="4" x2="9.5" y2="4"/><line x1="4.5" y1="7" x2="9.5" y2="7"/><line x1="4.5" y1="10" x2="7" y2="10"/></svg>
-    <span class="ni-label">Audit Log</span>
+  <div class="ni" onclick="showPage('incidents')">
+    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 1.5L12.5 11H1.5z"/><line x1="7" y1="5.5" x2="7" y2="8"/><circle cx="7" cy="9.5" r="0.7" fill="currentColor" stroke="none"/></svg>
+    <span class="ni-label">Incidents</span>
+    <span class="nbadge" id="sb-incidents-badge" style="display:none;background:rgba(255,80,80,0.15);color:var(--rd);border-color:var(--rd)">!</span>
   </div>
-  <div class="ni" onclick="showPage('security')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 1.5L11.5 3v4c0 3-3 5-4.5 5.5C5.5 12 2.5 10 2.5 7V3z"/><polyline points="4.5,7 6.5,9 10,5"/></svg>
-    <span class="ni-label">Segurança</span>
-    <span class="nbadge" style="background:rgba(255,80,80,0.12);color:var(--rd);border-color:var(--rd)">L8</span>
-  </div>
-  <div class="ni" onclick="showPage('alerts')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 2a4 4 0 0 0-4 4c0 4-1.5 5-1.5 5h11S11 10 11 6a4 4 0 0 0-4-4z"/><line x1="5.5" y1="12" x2="8.5" y2="12"/></svg>
-    <span class="ni-label">Alertas</span>
-  </div>
-  <div class="ni" onclick="showPage('tenants')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 1a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/><path d="M1 13a6.5 6.5 0 0 1 12 0"/></svg>
-    <span class="ni-label">Tenants</span>
-  </div>
-  <div class="ni" onclick="showPage('memory')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="3.5" width="12" height="8" rx="1.5"/><circle cx="4.5" cy="7.5" r="0.8" fill="currentColor"/><circle cx="7" cy="7.5" r="0.8" fill="currentColor"/><circle cx="9.5" cy="7.5" r="0.8" fill="currentColor"/></svg>
-    <span class="ni-label">Quotas</span>
-  </div>
-  <div class="ni" onclick="showPage('simulate')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 1.5L12 4v6L7 12.5 2 10V4z"/><circle cx="7" cy="7" r="1.5"/></svg>
-    <span class="ni-label">Simulação</span>
-    <span class="nbadge" style="background:rgba(150,100,255,0.15);color:var(--pu);border-color:var(--pu)">L10</span>
-  </div>
-  <div class="ni" onclick="showPage('topology')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="1.5" fill="currentColor" stroke="none"/><circle cx="2" cy="3" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="3" r="1" fill="currentColor" stroke="none"/><circle cx="2" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="11" r="1" fill="currentColor" stroke="none"/><line x1="7" y1="7" x2="2" y2="3"/><line x1="7" y1="7" x2="12" y2="3"/><line x1="7" y1="7" x2="2" y2="11"/><line x1="7" y1="7" x2="12" y2="11"/></svg>
-    <span class="ni-label">Topologia Cognitiva</span>
-  </div>
-  <div class="ng" style="margin-top:6px">Deep Trace</div>
-  <div class="ni" onclick="showPage('prompt-inspector')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 3h10M2 7h7M2 11h5"/><circle cx="11" cy="10" r="2"/><line x1="12.5" y1="11.5" x2="13.5" y2="12.5"/></svg>
-    <span class="ni-label">Prompt Inspector</span>
-  </div>
-  <div class="ni" onclick="showPage('timeline')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="3" width="12" height="2.5" rx="1"/><rect x="1" y="7" width="8" height="2.5" rx="1"/><rect x="1" y="11" width="10" height="2.5" rx="1"/></svg>
-    <span class="ni-label">Tool Timeline</span>
-  </div>
-  <div class="ni" onclick="showPage('events')">
-    <svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="3.5" cy="3.5" r="1" fill="currentColor"/><circle cx="3.5" cy="7" r="1" fill="currentColor"/><circle cx="3.5" cy="10.5" r="1" fill="currentColor"/><line x1="6" y1="3.5" x2="12.5" y2="3.5"/><line x1="6" y1="7" x2="12.5" y2="7"/><line x1="6" y1="10.5" x2="10" y2="10.5"/></svg>
-    <span class="ni-label">Pulso do Sistema</span>
-  </div>
+
+  <!-- EXECUÇÃO -->
+  <div class="ng ng-col" onclick="sbToggle(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-top:4px;user-select:none">
+    <span>Execução</span><span class="ng-arr">▶</span></div>
+  <div class="ni sb-grp" data-grp="exec" style="display:none" onclick="showPage('dag')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="2.5" cy="7" r="1.5"/><circle cx="7" cy="2.5" r="1.5"/><circle cx="7" cy="11.5" r="1.5"/><circle cx="11.5" cy="7" r="1.5"/><line x1="4" y1="7" x2="10" y2="7"/><line x1="4" y1="6.2" x2="5.5" y2="4"/><line x1="4" y1="7.8" x2="5.5" y2="10"/></svg><span class="ni-label">DAG Viewer</span></div>
+  <div class="ni sb-grp" data-grp="exec" style="display:none" onclick="showPage('pipelines')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="5.5" width="3" height="3" rx="0.7"/><rect x="5.5" y="5.5" width="3" height="3" rx="0.7"/><rect x="10" y="5.5" width="3" height="3" rx="0.7"/><line x1="4" y1="7" x2="5.5" y2="7"/><line x1="8.5" y1="7" x2="10" y2="7"/></svg><span class="ni-label">Pipeline Builder</span></div>
+  <div class="ni sb-grp" data-grp="exec" style="display:none" onclick="showPage('cron')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5.5"/><line x1="7" y1="3.5" x2="7" y2="7"/><line x1="7" y1="7" x2="10" y2="8.5"/></svg><span class="ni-label">Scheduler · Cron</span><span class="nbadge" id="sb-cron-badge" style="background:rgba(77,128,255,0.15);color:var(--bl);border-color:var(--bl)">0</span></div>
+  <div class="ni sb-grp" data-grp="exec" style="display:none" onclick="showPage('batch-ops')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="2" width="12" height="3" rx="0.7"/><rect x="1" y="6.5" width="12" height="3" rx="0.7"/><rect x="1" y="11" width="8" height="2.5" rx="0.7"/></svg><span class="ni-label">Batch Operations</span></div>
+  <div class="ni sb-grp" data-grp="exec" style="display:none" onclick="showPage('task-templates')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.5" y="1.5" width="11" height="11" rx="1"/><line x1="4" y1="4" x2="10" y2="4"/><line x1="4" y1="6.5" x2="8" y2="6.5"/><line x1="4" y1="9" x2="10" y2="9"/></svg><span class="ni-label">Task Templates</span></div>
+  <div class="ni sb-grp" data-grp="exec" style="display:none" onclick="showPage('rollback')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2.5 7a4.5 4.5 0 1 0 1-2.8"/><polyline points="2.5,3 2.5,7 6.5,7"/></svg><span class="ni-label">Rollback · Time Travel</span></div>
+
+  <!-- INTELIGÊNCIA -->
+  <div class="ng ng-col" onclick="sbToggle(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-top:4px;user-select:none">
+    <span>Inteligência</span><span class="ng-arr">▶</span></div>
+  <div class="ni sb-grp" data-grp="intel" style="display:none" onclick="showPage('neural')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="4" r="1.5"/><circle cx="3" cy="10" r="1.5"/><circle cx="11" cy="10" r="1.5"/><line x1="7" y1="5.5" x2="3" y2="8.5"/><line x1="7" y1="5.5" x2="11" y2="8.5"/><line x1="3" y1="8.5" x2="11" y2="8.5"/></svg><span class="ni-label">Neural Steering</span><span class="nbadge" style="background:rgba(255,80,80,0.15);color:var(--rd);border-color:var(--rd)">N5</span></div>
+  <div class="ni sb-grp" data-grp="intel" style="display:none" onclick="showPage('rag-inspector')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><ellipse cx="7" cy="7" rx="5.5" ry="3"/><line x1="1.5" y1="7" x2="1.5" y2="10"/><line x1="12.5" y1="7" x2="12.5" y2="10"/><ellipse cx="7" cy="10" rx="5.5" ry="3"/></svg><span class="ni-label">RAG Inspector</span></div>
+  <div class="ni sb-grp" data-grp="intel" style="display:none" onclick="showPage('prompts')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.5" y="2" width="11" height="10" rx="1"/><line x1="3.5" y1="5" x2="10.5" y2="5"/><line x1="3.5" y1="7.5" x2="8" y2="7.5"/></svg><span class="ni-label">Prompt Templates</span></div>
+  <div class="ni sb-grp" data-grp="intel" style="display:none" onclick="showPage('models')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="3" width="5" height="8" rx="1"/><rect x="8" y="3" width="5" height="8" rx="1"/><line x1="6" y1="7" x2="8" y2="7"/></svg><span class="ni-label">Model Registry</span><span class="nbadge" style="background:rgba(155,123,255,0.15);color:var(--pu);border-color:var(--pu)">LLM</span></div>
+  <div class="ni sb-grp" data-grp="intel" style="display:none" onclick="showPage('lessons')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="2" width="10" height="10" rx="1.5"/><line x1="5" y1="2" x2="5" y2="12"/><line x1="2" y1="5.5" x2="12" y2="5.5"/></svg><span class="ni-label">Base de Lições</span><span class="nbadge new" id="sb-lessons-badge">53</span></div>
+  <div class="ni sb-grp" data-grp="intel" style="display:none" onclick="showPage('rep')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><polygon points="7,1.5 8.8,5.2 13,5.6 10,8.4 11,12.5 7,10.2 3,12.5 4,8.4 1,5.6 5.2,5.2"/></svg><span class="ni-label">Reputação</span></div>
+  <div class="ni sb-grp" data-grp="intel" style="display:none" onclick="showPage('explorer')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="5" cy="5" r="2.5"/><circle cx="10" cy="5" r="1.5"/><line x1="7.5" y1="5" x2="8.5" y2="5"/><path d="M2 12a4 4 0 0 1 7.8-1"/></svg><span class="ni-label">Exploração N5</span></div>
+
+  <!-- LLM OPS -->
+  <div class="ng ng-col" onclick="sbToggle(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-top:4px;user-select:none">
+    <span>LLM Ops</span><span class="ng-arr">▶</span></div>
+  <div class="ni sb-grp" data-grp="llm" style="display:none" onclick="showPage('context-analyzer')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="2" width="12" height="10" rx="1"/><rect x="2.5" y="3.5" width="4" height="7" rx="0.5" fill="rgba(77,128,255,0.2)"/><line x1="8" y1="5" x2="12" y2="5"/><line x1="8" y1="7" x2="11" y2="7"/></svg><span class="ni-label">Context Analyzer</span></div>
+  <div class="ni sb-grp" data-grp="llm" style="display:none" onclick="showPage('token-budget')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5.5"/><path d="M4 9.5 Q7 2 10 9.5" fill="rgba(46,212,122,0.15)" stroke="var(--gr)"/></svg><span class="ni-label">Token Budget</span><span class="nbadge" id="sb-token-badge" style="background:rgba(46,212,122,0.15);color:var(--gr);border-color:var(--gr)">OK</span></div>
+  <div class="ni sb-grp" data-grp="llm" style="display:none" onclick="showPage('ab-testing')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="3" width="5" height="8" rx="0.7"/><rect x="8" y="3" width="5" height="8" rx="0.7"/><line x1="6" y1="7" x2="8" y2="7" stroke-dasharray="1,1"/></svg><span class="ni-label">A/B Testing</span></div>
+
+  <!-- INFRAESTRUTURA -->
+  <div class="ng ng-col" onclick="sbToggle(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-top:4px;user-select:none">
+    <span>Infraestrutura</span><span class="ng-arr">▶</span></div>
+  <div class="ni sb-grp" data-grp="infra" style="display:none" onclick="showPage('containers')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="4" width="12" height="7" rx="1"/><polyline points="1,6 7,2 13,6"/></svg><span class="ni-label">Containers</span><span class="nbadge" id="sb-containers-badge" style="background:rgba(46,212,122,0.15);color:var(--gr);border-color:var(--gr)">OK</span></div>
+  <div class="ni sb-grp" data-grp="infra" style="display:none" onclick="showPage('redis-inspector')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><ellipse cx="7" cy="4" rx="5" ry="2"/><path d="M2 4v2c0 1.1 2.2 2 5 2s5-.9 5-2V4"/><path d="M2 8v2c0 1.1 2.2 2 5 2s5-.9 5-2V8"/></svg><span class="ni-label">Redis Inspector</span></div>
+  <div class="ni sb-grp" data-grp="infra" style="display:none" onclick="showPage('db-console')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="1.5" width="12" height="11" rx="1"/><line x1="1" y1="4.5" x2="13" y2="4.5"/><polyline points="3,7 5,8.5 3,10"/><line x1="6.5" y1="10" x2="10" y2="10"/></svg><span class="ni-label">DB Console</span></div>
+  <div class="ni sb-grp" data-grp="infra" style="display:none" onclick="showPage('migration-console')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="3" width="12" height="8" rx="1"/><line x1="1" y1="6" x2="13" y2="6"/><line x1="4" y1="3" x2="4" y2="12"/></svg><span class="ni-label">Migrations</span></div>
+  <div class="ni sb-grp" data-grp="infra" style="display:none" onclick="showPage('queue-heatmap')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="9" width="2" height="4" rx="0.4" fill="var(--gr)"/><rect x="4" y="6" width="2" height="7" rx="0.4" fill="var(--am)"/><rect x="7" y="3" width="2" height="10" rx="0.4" fill="var(--rd)"/><rect x="10" y="5" width="2" height="8" rx="0.4" fill="var(--am)"/></svg><span class="ni-label">Queue Heatmap</span></div>
+  <div class="ni sb-grp" data-grp="infra" style="display:none" onclick="showPage('blue-green')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="4" cy="7" r="3" stroke="var(--bl)"/><circle cx="10" cy="7" r="3" stroke="var(--gr)"/><line x1="4" y1="7" x2="10" y2="7" stroke-dasharray="1,1"/></svg><span class="ni-label">Blue/Green Deploy</span></div>
+
+  <!-- OBSERVABILIDADE -->
+  <div class="ng ng-col" onclick="sbToggle(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-top:4px;user-select:none">
+    <span>Observabilidade</span><span class="ng-arr">▶</span></div>
+  <div class="ni sb-grp" data-grp="obs" style="display:none" onclick="showPage('tracing')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="2" cy="3" r="1.2"/><circle cx="12" cy="3" r="1.2"/><circle cx="2" cy="7" r="1.2"/><circle cx="9" cy="7" r="1.2"/><line x1="3.2" y1="3" x2="10.8" y2="3"/><line x1="3.2" y1="7" x2="7.8" y2="7"/></svg><span class="ni-label">Distributed Tracing</span></div>
+  <div class="ni sb-grp" data-grp="obs" style="display:none" onclick="showPage('anomaly')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="1,10 3,8 5,9 7,4 9,9 10,7 11,2 13,10"/><circle cx="7" cy="4" r="1.5" stroke="var(--rd)" fill="rgba(255,80,80,0.2)"/></svg><span class="ni-label">Anomaly Detection</span><span class="nbadge" id="sb-anomaly-badge" style="display:none;background:rgba(255,80,80,0.15);color:var(--rd);border-color:var(--rd)">!</span></div>
+  <div class="ni sb-grp" data-grp="obs" style="display:none" onclick="showPage('correlation')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="3" cy="3" r="1.5"/><circle cx="11" cy="3" r="1.5"/><circle cx="3" cy="11" r="1.5"/><circle cx="11" cy="11" r="1.5"/><line x1="4.5" y1="3" x2="9.5" y2="3"/><line x1="3" y1="4.5" x2="3" y2="9.5"/></svg><span class="ni-label">Correlation Engine</span></div>
+  <div class="ni sb-grp" data-grp="obs" style="display:none" onclick="showPage('sla')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.5" y="2" width="11" height="10" rx="1"/><line x1="4" y1="6" x2="10" y2="6"/><polyline points="4,9 6.5,7 8.5,8.5 10,7"/></svg><span class="ni-label">SLA · Error Budget</span><span class="nbadge" id="sb-sla-badge" style="background:rgba(46,212,122,0.15);color:var(--gr);border-color:var(--gr)">OK</span></div>
+  <div class="ni sb-grp" data-grp="obs" style="display:none" onclick="showPage('topology')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="1.5" fill="currentColor" stroke="none"/><circle cx="2" cy="3" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="3" r="1" fill="currentColor" stroke="none"/><circle cx="2" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="11" r="1" fill="currentColor" stroke="none"/><line x1="7" y1="7" x2="2" y2="3"/><line x1="7" y1="7" x2="12" y2="3"/><line x1="7" y1="7" x2="2" y2="11"/><line x1="7" y1="7" x2="12" y2="11"/></svg><span class="ni-label">Topologia Cognitiva</span></div>
+
+  <!-- CONHECIMENTO -->
+  <div class="ng ng-col" onclick="sbToggle(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-top:4px;user-select:none">
+    <span>Conhecimento</span><span class="ng-arr">▶</span></div>
+  <div class="ni sb-grp" data-grp="know" style="display:none" onclick="showPage('knowledge-editor')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="2"/><circle cx="2" cy="4" r="1.2"/><circle cx="12" cy="4" r="1.2"/><circle cx="2" cy="10" r="1.2"/><circle cx="12" cy="10" r="1.2"/><line x1="3.2" y1="4.5" x2="5.2" y2="6"/><line x1="10.8" y1="4.5" x2="8.8" y2="6"/></svg><span class="ni-label">Knowledge Editor</span></div>
+  <div class="ni sb-grp" data-grp="know" style="display:none" onclick="showPage('learn-velocity')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="1,11 3.5,8 6,9.5 9,4 13,2"/></svg><span class="ni-label">Learning Velocity</span></div>
+  <div class="ni sb-grp" data-grp="know" style="display:none" onclick="showPage('concept-drift')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1 7 Q3.5 4 7 7 Q10.5 10 13 7"/><path d="M1 7 Q3.5 7 7 7 Q10.5 7 13 7" stroke-dasharray="1.5,1" stroke="var(--t3)"/></svg><span class="ni-label">Concept Drift</span></div>
+  <div class="ni sb-grp" data-grp="know" style="display:none" onclick="showPage('memory-pruning')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="4" width="12" height="7" rx="1"/><line x1="4" y1="2" x2="4" y2="4"/><line x1="7" y1="2" x2="7" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/></svg><span class="ni-label">Memory Pruning</span></div>
+
+  <!-- SEGURANÇA -->
+  <div class="ng ng-col" onclick="sbToggle(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-top:4px;user-select:none">
+    <span>Segurança</span><span class="ng-arr">▶</span></div>
+  <div class="ni sb-grp" data-grp="sec" style="display:none" onclick="showPage('rbac')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 1.5L11.5 3v4c0 3-3 5-4.5 5.5C5.5 12 2.5 10 2.5 7V3z"/><polyline points="4.5,7 6.5,9 10,5"/></svg><span class="ni-label">RBAC Manager</span><span class="nbadge" style="background:rgba(255,80,80,0.12);color:var(--rd);border-color:var(--rd)">IAM</span></div>
+  <div class="ni sb-grp" data-grp="sec" style="display:none" onclick="showPage('pii-scanner')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 1.5L11.5 3v4c0 3-3 5-4.5 5.5C5.5 12 2.5 10 2.5 7V3z"/><line x1="5" y1="5" x2="9" y2="9"/><line x1="9" y1="5" x2="5" y2="9"/></svg><span class="ni-label">PII Scanner</span></div>
+  <div class="ni sb-grp" data-grp="sec" style="display:none" onclick="showPage('data-lineage')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="2" cy="7" r="1.5"/><circle cx="7" cy="3" r="1.5"/><circle cx="7" cy="11" r="1.5"/><circle cx="12" cy="7" r="1.5"/><line x1="3.5" y1="7" x2="5.5" y2="4"/><line x1="3.5" y1="7" x2="5.5" y2="10"/></svg><span class="ni-label">Data Lineage</span></div>
+  <div class="ni sb-grp" data-grp="sec" style="display:none" onclick="showPage('secret-rotation')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M5 7a2 2 0 1 1 4 0v1H5z"/><rect x="3.5" y="8" width="7" height="4.5" rx="1"/></svg><span class="ni-label">Secret Rotation</span></div>
+  <div class="ni sb-grp" data-grp="sec" style="display:none" onclick="showPage('compliance')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.5" y="1" width="11" height="12" rx="1"/><polyline points="4,9.5 5.5,11 8,8"/></svg><span class="ni-label">Compliance · LGPD</span></div>
+  <div class="ni sb-grp" data-grp="sec" style="display:none" onclick="showPage('audit')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="1" width="10" height="12" rx="1"/><line x1="4.5" y1="4" x2="9.5" y2="4"/><line x1="4.5" y1="7" x2="9.5" y2="7"/><line x1="4.5" y1="10" x2="7" y2="10"/></svg><span class="ni-label">Audit Log</span></div>
+  <div class="ni sb-grp" data-grp="sec" style="display:none" onclick="showPage('alerts')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 2a4 4 0 0 0-4 4c0 4-1.5 5-1.5 5h11S11 10 11 6a4 4 0 0 0-4-4z"/><line x1="5.5" y1="12" x2="8.5" y2="12"/></svg><span class="ni-label">Alertas</span></div>
+  <div class="ni sb-grp" data-grp="sec" style="display:none" onclick="showPage('security')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 1.5L11.5 3v4c0 3-3 5-4.5 5.5C5.5 12 2.5 10 2.5 7V3z"/></svg><span class="ni-label">Segurança</span></div>
+
+  <!-- MULTI-TENANCY -->
+  <div class="ng ng-col" onclick="sbToggle(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-top:4px;user-select:none">
+    <span>Multi-tenancy</span><span class="ng-arr">▶</span></div>
+  <div class="ni sb-grp" data-grp="tenant" style="display:none" onclick="showPage('tenants')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 1a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/><path d="M1 13a6.5 6.5 0 0 1 12 0"/></svg><span class="ni-label">Tenants</span></div>
+  <div class="ni sb-grp" data-grp="tenant" style="display:none" onclick="showPage('tenant-analytics')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="7" width="2.5" height="6" rx="0.5" fill="rgba(77,128,255,0.3)"/><rect x="4.5" y="4" width="2.5" height="9" rx="0.5" fill="rgba(46,212,122,0.3)"/><rect x="8" y="5" width="2.5" height="8" rx="0.5" fill="rgba(255,150,0,0.3)"/><rect x="11.5" y="2" width="2.5" height="11" rx="0.5" fill="rgba(155,123,255,0.3)"/></svg><span class="ni-label">Tenant Analytics</span></div>
+  <div class="ni sb-grp" data-grp="tenant" style="display:none" onclick="showPage('billing')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="3" width="12" height="8" rx="1"/><line x1="1" y1="6" x2="13" y2="6"/><line x1="4" y1="3" x2="4" y2="6"/></svg><span class="ni-label">Billing · Export</span></div>
+  <div class="ni sb-grp" data-grp="tenant" style="display:none" onclick="showPage('feature-flags')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><line x1="2" y1="2" x2="2" y2="12"/><polyline points="2,2 10,2 7,5.5 10,9 2,9"/></svg><span class="ni-label">Feature Flags</span></div>
+  <div class="ni sb-grp" data-grp="tenant" style="display:none" onclick="showPage('tenant-onboarding')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="5.5" cy="5" r="2.5"/><path d="M1 12a4.5 4.5 0 0 1 9 0"/><line x1="10.5" y1="4" x2="13" y2="4"/><line x1="11.75" y1="2.75" x2="11.75" y2="5.25"/></svg><span class="ni-label">Tenant Onboarding</span></div>
+  <div class="ni sb-grp" data-grp="tenant" style="display:none" onclick="showPage('tenant-isolation')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="1" width="5.5" height="5.5" rx="0.8" stroke="var(--bl)"/><rect x="7.5" y="1" width="5.5" height="5.5" rx="0.8" stroke="var(--gr)"/><rect x="1" y="7.5" width="5.5" height="5.5" rx="0.8" stroke="var(--pu)"/><rect x="7.5" y="7.5" width="5.5" height="5.5" rx="0.8" stroke="var(--am)"/></svg><span class="ni-label">Tenant Isolation</span></div>
+
+  <!-- FINOPS -->
+  <div class="ng ng-col" onclick="sbToggle(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-top:4px;user-select:none">
+    <span>FinOps</span><span class="ng-arr">▶</span></div>
+  <div class="ni sb-grp" data-grp="finops" style="display:none" onclick="showPage('cost')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5.5"/><line x1="7" y1="4" x2="7" y2="10"/><line x1="5" y1="5.5" x2="9" y2="5.5"/><line x1="5" y1="8.5" x2="9" y2="8.5"/></svg><span class="ni-label">Custos</span><span class="nbadge" style="background:rgba(100,220,100,0.15);color:var(--gr);border-color:var(--gr)">L6</span></div>
+  <div class="ni sb-grp" data-grp="finops" style="display:none" onclick="showPage('memory')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="3.5" width="12" height="8" rx="1.5"/><circle cx="4.5" cy="7.5" r="0.8" fill="currentColor"/><circle cx="7" cy="7.5" r="0.8" fill="currentColor"/><circle cx="9.5" cy="7.5" r="0.8" fill="currentColor"/></svg><span class="ni-label">Quotas</span></div>
+  <div class="ni sb-grp" data-grp="finops" style="display:none" onclick="showPage('predictive-capacity')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="1,11 4,7 7,8 10,4" stroke="var(--bl)"/><polyline points="10,4 13,1" stroke="var(--pu)" stroke-dasharray="1.5,1"/></svg><span class="ni-label">Predictive Capacity</span></div>
+  <div class="ni sb-grp" data-grp="finops" style="display:none" onclick="showPage('cost-forecast')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="1,10 4,7 7,9 10,5 13,3"/></svg><span class="ni-label">Cost Forecasting</span></div>
+  <div class="ni sb-grp" data-grp="finops" style="display:none" onclick="showPage('value-attribution')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="3" cy="10" r="1.5"/><circle cx="7" cy="6" r="1.5"/><circle cx="11" cy="3.5" r="1.5"/></svg><span class="ni-label">Value Attribution</span></div>
+  <div class="ni sb-grp" data-grp="finops" style="display:none" onclick="showPage('quota-optimizer')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="7" width="2" height="6" rx="0.4"/><rect x="4.5" y="4" width="2" height="9" rx="0.4"/><rect x="8" y="5" width="2" height="8" rx="0.4"/><rect x="11.5" y="3" width="2" height="10" rx="0.4"/></svg><span class="ni-label">Quota Optimizer</span></div>
+
+  <!-- OPERAÇÕES -->
+  <div class="ng ng-col" onclick="sbToggle(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-top:4px;user-select:none">
+    <span>Operações</span><span class="ng-arr">▶</span></div>
+  <div class="ni sb-grp" data-grp="ops" style="display:none" onclick="showPage('runbook')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.5" y="1" width="11" height="12" rx="1"/><line x1="4" y1="4" x2="10" y2="4"/><polyline points="4,6.5 5.5,8 4,9.5"/><line x1="6.5" y1="8" x2="10" y2="8"/></svg><span class="ni-label">Runbook Executor</span></div>
+  <div class="ni sb-grp" data-grp="ops" style="display:none" onclick="showPage('chaos')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 2L9 6H13L10 9L11 13L7 10.5L3 13L4 9L1 6H5z" fill="rgba(255,80,80,0.1)" stroke="var(--rd)"/></svg><span class="ni-label">Chaos Engineering</span><span class="nbadge" style="background:rgba(255,80,80,0.15);color:var(--rd);border-color:var(--rd)">!</span></div>
+  <div class="ni sb-grp" data-grp="ops" style="display:none" onclick="showPage('canary')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="5" width="6" height="7" rx="1" fill="rgba(77,128,255,0.15)"/><rect x="8" y="5" width="5" height="7" rx="1" fill="rgba(46,212,122,0.15)"/><line x1="7" y1="5" x2="7" y2="12" stroke-dasharray="1,1"/></svg><span class="ni-label">Canary Release</span></div>
+  <div class="ni sb-grp" data-grp="ops" style="display:none" onclick="showPage('postmortem')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.5" y="1.5" width="11" height="11" rx="1"/><line x1="4" y1="4.5" x2="10" y2="4.5"/><line x1="4" y1="7" x2="7" y2="7"/></svg><span class="ni-label">Postmortem Builder</span></div>
+  <div class="ni sb-grp" data-grp="ops" style="display:none" onclick="showPage('simulate')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 1.5L12 4v6L7 12.5 2 10V4z"/><circle cx="7" cy="7" r="1.5"/></svg><span class="ni-label">Simulação</span><span class="nbadge" style="background:rgba(150,100,255,0.15);color:var(--pu);border-color:var(--pu)">L10</span></div>
+
+  <!-- DEVELOPER -->
+  <div class="ng ng-col" onclick="sbToggle(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-top:4px;user-select:none">
+    <span>Developer</span><span class="ng-arr">▶</span></div>
+  <div class="ni sb-grp" data-grp="dev" style="display:none" onclick="showPage('webhooks')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="3" cy="7" r="1.8"/><circle cx="11" cy="3.5" r="1.8"/><circle cx="11" cy="10.5" r="1.8"/><line x1="4.8" y1="6.3" x2="9.2" y2="4.2"/><line x1="4.8" y1="7.7" x2="9.2" y2="9.8"/></svg><span class="ni-label">Webhooks</span><span class="nbadge" id="sb-webhooks-badge" style="background:rgba(30,207,184,0.15);color:var(--cy);border-color:var(--cy)">0</span></div>
+  <div class="ni sb-grp" data-grp="dev" style="display:none" onclick="showPage('playground')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="2,4 5,7 2,10"/><line x1="6" y1="10" x2="12" y2="10"/></svg><span class="ni-label">API Playground</span></div>
+  <div class="ni sb-grp" data-grp="dev" style="display:none" onclick="showPage('sdk-gen')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="3,4 1,7 3,10"/><polyline points="11,4 13,7 11,10"/><line x1="6" y1="3" x2="8" y2="11"/></svg><span class="ni-label">SDK Generator</span></div>
+  <div class="ni sb-grp" data-grp="dev" style="display:none" onclick="showPage('changelog')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="3" cy="4" r="1"/><line x1="5" y1="4" x2="12" y2="4"/><circle cx="3" cy="7" r="1"/><line x1="5" y1="7" x2="10" y2="7"/><circle cx="3" cy="10" r="1"/><line x1="5" y1="10" x2="11" y2="10"/></svg><span class="ni-label">Changelog</span><span class="nbadge" style="background:rgba(30,207,184,0.15);color:var(--cy);border-color:var(--cy)">NEW</span></div>
+  <div class="ni sb-grp" data-grp="dev" style="display:none" onclick="showPage('prompt-inspector')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 3h10M2 7h7M2 11h5"/><circle cx="11" cy="10" r="2"/></svg><span class="ni-label">Prompt Inspector</span></div>
+  <div class="ni sb-grp" data-grp="dev" style="display:none" onclick="showPage('timeline')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="3" width="12" height="2.5" rx="1"/><rect x="1" y="7" width="8" height="2.5" rx="1"/><rect x="1" y="11" width="10" height="2.5" rx="1"/></svg><span class="ni-label">Tool Timeline</span></div>
+  <div class="ni sb-grp" data-grp="dev" style="display:none" onclick="showPage('events')"><svg class="nic" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="3.5" cy="3.5" r="1" fill="currentColor"/><circle cx="3.5" cy="7" r="1" fill="currentColor"/><circle cx="3.5" cy="10.5" r="1" fill="currentColor"/><line x1="6" y1="3.5" x2="12.5" y2="3.5"/><line x1="6" y1="7" x2="12.5" y2="7"/><line x1="6" y1="10.5" x2="10" y2="10.5"/></svg><span class="ni-label">Pulso do Sistema</span></div>
+
   <div class="sfooter">
     <div class="sft">CPU <span id="sv-cpu">0%</span></div>
     <div class="sbr"><div class="sbf" id="sb-cpu" style="width:0%;background:linear-gradient(90deg,var(--bl),var(--pu))"></div></div>
@@ -188,6 +244,7 @@
     <div class="sft">Uptime <span style="color:var(--gr)">100%</span></div>
   </div>
 </aside>
+
 
 <!-- MAIN -->
 <main class="main">
@@ -607,7 +664,42 @@
 
   <!-- HOME-ONLY: Gauges + Tenants column -->
   <div class="gmain" data-home-only="1">
-    <div style="display:none"></div><!-- placeholder for grid alignment -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <!-- AGENT ROSTER -->
+      <div class="card">
+        <div class="chd">
+          <div class="ct">Agent Roster · Swarm</div>
+          <div class="cacts">
+            <div class="chip grn" id="roster-status">● Online</div>
+            <div class="chip" onclick="loadAgentRoster()" style="cursor:pointer">↻</div>
+          </div>
+        </div>
+        <div id="agent-roster-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:4px 0">
+          <div style="padding:20px;color:var(--t3);text-align:center;font-size:10px;font-family:var(--m);grid-column:span 2">Carregando agentes...</div>
+        </div>
+      </div>
+      <!-- STATUS OPERACIONAL -->
+      <div class="card">
+        <div class="chd">
+          <div class="ct">Status Operacional</div>
+          <div class="cacts"><div class="chip grn" id="ops-status-chip">● Nominal</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:4px 0">
+          <div onclick="showPage('sla')" style="cursor:pointer;text-align:center;padding:10px 4px;border:1px solid rgba(255,255,255,0.06);border-radius:7px;background:rgba(46,212,122,0.04)">
+            <div style="font-size:20px;font-weight:700;color:var(--gr);font-family:var(--m)" id="home-sla-pct">99.9%</div>
+            <div style="font-size:9px;color:var(--t3);margin-top:2px">SLA</div>
+          </div>
+          <div onclick="showPage('incidents')" style="cursor:pointer;text-align:center;padding:10px 4px;border:1px solid rgba(255,255,255,0.06);border-radius:7px">
+            <div style="font-size:20px;font-weight:700;color:var(--am);font-family:var(--m)" id="home-incidents-count">0</div>
+            <div style="font-size:9px;color:var(--t3);margin-top:2px">Incidents</div>
+          </div>
+          <div onclick="showPage('alerts')" style="cursor:pointer;text-align:center;padding:10px 4px;border:1px solid rgba(255,255,255,0.06);border-radius:7px">
+            <div style="font-size:20px;font-weight:700;color:var(--cy);font-family:var(--m)" id="home-alerts-count">0</div>
+            <div style="font-size:9px;color:var(--t3);margin-top:2px">Alertas</div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div style="display:flex;flex-direction:column;gap:12px">
       <!-- Infra Gauges -->
       <div class="card">
@@ -1318,6 +1410,1292 @@
     </div>
   </div>
 
+
+  <!-- ═══════════════════════════════════════════ CONTAINERS ═══ -->
+  <div class="card" id="section-containers" data-section="containers" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">Container Manager · Docker Stack N5</div>
+      <div class="cacts">
+        <div class="chip grn" id="containers-status-chip">● Carregando…</div>
+        <button class="btn" onclick="loadContainers()" style="padding:3px 10px;font-size:10px">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="containers-kpi-row">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="cont-kpi-running">—</div><div class="mini-kpi-lbl">Running</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="cont-kpi-stopped" style="color:var(--t3)">—</div><div class="mini-kpi-lbl">Stopped</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="cont-kpi-cpu">—</div><div class="mini-kpi-lbl">CPU Total</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="cont-kpi-mem">—</div><div class="mini-kpi-lbl">RAM Total</div></div>
+      </div>
+      <div id="containers-list" style="display:flex;flex-direction:column;gap:6px">
+        <div style="padding:20px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Carregando containers…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ DAG VIEWER ═══ -->
+  <div class="card" id="section-dag" data-section="dag" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">DAG Viewer · Dependências de Tasks</div>
+      <div class="cacts">
+        <div class="ctabs" id="dag-tab-row">
+          <div class="ctab on" onclick="switchDagTab('live',this)">Live</div>
+          <div class="ctab" onclick="switchDagTab('history',this)">Histórico</div>
+          <div class="ctab" onclick="switchDagTab('blueprint',this)">Blueprint</div>
+        </div>
+        <button class="btn" onclick="loadDag()" style="padding:3px 10px;font-size:10px">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="cbd" style="padding:0;display:flex;height:calc(100vh - 280px);min-height:400px">
+      <div id="dag-network" style="flex:1"></div>
+      <div style="width:200px;border-left:1px solid var(--b);padding:12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px">Nó Selecionado</div>
+        <div id="dag-node-detail" style="font-size:10px;color:var(--t2);font-family:var(--m);line-height:1.7">Clique em um nó.</div>
+        <div style="border-top:1px solid var(--b);padding-top:8px">
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Legenda</div>
+          <div style="display:flex;flex-direction:column;gap:4px;font-size:9px;font-family:var(--m)">
+            <span><span style="color:var(--gr)">●</span> Done</span>
+            <span><span style="color:var(--bl)">●</span> Running</span>
+            <span><span style="color:var(--am)">●</span> Pending</span>
+            <span><span style="color:var(--rd)">●</span> Error</span>
+            <span><span style="color:var(--t3)">●</span> Blocked</span>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--b);padding-top:8px">
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);margin-bottom:4px">Filtrar por agente</div>
+          <input id="dag-agent-filter" type="text" placeholder="agente…" oninput="filterDagNodes(this.value)" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--b);border-radius:5px;color:var(--t1);font-family:var(--m);font-size:10px;padding:5px 8px;outline:none"/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SCHEDULER / CRON ═══ -->
+  <div class="card" id="section-cron" data-section="cron" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">Scheduler · Tarefas Recorrentes</div>
+      <div class="cacts">
+        <div class="chip" id="cron-count-chip" style="font-family:var(--m)">0 jobs</div>
+        <button class="btn p" onclick="openCronModal()" style="padding:3px 12px;font-size:10px">+ Novo Job</button>
+        <button class="btn" onclick="loadCronJobs()" style="padding:3px 10px;font-size:10px">↻</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:8px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Jobs Ativos</div>
+          <div id="cron-jobs-list" style="display:flex;flex-direction:column;gap:6px">
+            <div style="padding:20px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Carregando…</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Próximas Execuções</div>
+          <div id="cron-next-runs" style="display:flex;flex-direction:column;gap:5px;font-family:var(--m);font-size:10px"></div>
+          <div style="margin-top:14px;border-top:1px solid var(--b);padding-top:10px">
+            <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Histórico de Execuções</div>
+            <div id="cron-history" style="display:flex;flex-direction:column;gap:4px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Cron Create Modal -->
+  <div class="wmodal-overlay" id="cron-modal-overlay" onclick="closeCronModal()" style="display:none"></div>
+  <div class="wmodal" id="cron-modal" style="width:460px;max-width:95vw;display:none">
+    <div class="wmodal-hd"><div class="wmodal-title">⏱ Novo Job Agendado</div><button class="btn" onclick="closeCronModal()" style="padding:4px 10px">✕</button></div>
+    <div class="wmodal-body" style="display:flex;flex-direction:column;gap:10px;padding:14px">
+      <label style="font-size:10px;color:var(--t3);font-family:var(--m)">Nome do Job</label>
+      <input id="cron-name" type="text" placeholder="ex: daily-cleanup" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:8px 10px;outline:none"/>
+      <label style="font-size:10px;color:var(--t3);font-family:var(--m)">Expressão Cron</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="cron-expr" type="text" placeholder="0 * * * *" style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:8px 10px;outline:none"/>
+        <span id="cron-expr-desc" style="font-family:var(--m);font-size:9px;color:var(--t3);min-width:80px">—</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <div class="chip" style="cursor:pointer;font-size:9px" onclick="document.getElementById('cron-expr').value='0 * * * *';parseCronExpr()">cada hora</div>
+        <div class="chip" style="cursor:pointer;font-size:9px" onclick="document.getElementById('cron-expr').value='0 6 * * *';parseCronExpr()">diário 06:00</div>
+        <div class="chip" style="cursor:pointer;font-size:9px" onclick="document.getElementById('cron-expr').value='0 0 * * 0';parseCronExpr()">semanal</div>
+        <div class="chip" style="cursor:pointer;font-size:9px" onclick="document.getElementById('cron-expr').value='*/15 * * * *';parseCronExpr()">15 min</div>
+        <div class="chip" style="cursor:pointer;font-size:9px" onclick="document.getElementById('cron-expr').value='*/5 * * * *';parseCronExpr()">5 min</div>
+      </div>
+      <label style="font-size:10px;color:var(--t3);font-family:var(--m)">Agente Executor</label>
+      <input id="cron-agent" type="text" placeholder="ex: cleanup_agent" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:8px 10px;outline:none"/>
+      <label style="font-size:10px;color:var(--t3);font-family:var(--m)">Prompt / Descrição da Tarefa</label>
+      <textarea id="cron-prompt" rows="3" placeholder="Descreva o que o agente deve fazer…" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:8px 10px;outline:none;resize:vertical"></textarea>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1">
+          <div style="font-size:10px;color:var(--t3);font-family:var(--m);margin-bottom:4px">Prioridade</div>
+          <select id="cron-priority" style="width:100%;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px;outline:none">
+            <option value="3">Baixa (3)</option><option value="5" selected>Normal (5)</option><option value="8">Alta (8)</option><option value="10">Crítica (10)</option>
+          </select>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:10px;color:var(--t3);font-family:var(--m);margin-bottom:4px">Timeout (min)</div>
+          <input id="cron-timeout" type="number" value="30" min="1" max="1440" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:12px;padding:7px 10px;outline:none"/>
+        </div>
+      </div>
+      <button class="btn p" onclick="createCronJob()" style="width:100%;padding:10px;font-size:13px">⏱ Criar Job Agendado</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ RAG INSPECTOR ═══ -->
+  <div class="card" id="section-rag-inspector" data-section="rag-inspector" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">RAG Pipeline Inspector · Trace Completo</div>
+      <div class="cacts">
+        <div class="ctabs" id="rag-tab-row">
+          <div class="ctab on" onclick="switchRagTab('traces',this)">Traces</div>
+          <div class="ctab" onclick="switchRagTab('corpus',this)">Corpus</div>
+          <div class="ctab" onclick="switchRagTab('bench',this)">Benchmark</div>
+        </div>
+        <button class="btn" onclick="loadRagTraces()" style="padding:3px 10px;font-size:10px">↻</button>
+      </div>
+    </div>
+    <div class="cbd" style="padding:0">
+      <div id="rag-view-traces" style="display:block;padding:10px 0">
+        <div style="display:flex;gap:8px;padding:0 0 10px 0">
+          <input id="rag-filter-query" type="text" placeholder="Filtrar por query…" style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px 10px;outline:none"/>
+          <select id="rag-filter-agent" style="background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px;outline:none">
+            <option value="">Todos agentes</option>
+          </select>
+        </div>
+        <div id="rag-traces-list" style="display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 360px);overflow-y:auto">
+          <div style="padding:20px;text-align:center;color:var(--t3);font-size:10px;font-family:var(--m)">Carregando traces RAG…</div>
+        </div>
+      </div>
+      <div id="rag-view-corpus" style="display:none;padding:10px 0">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" id="rag-corpus-stats">
+          <div class="mini-kpi"><div class="mini-kpi-val" id="rag-total-docs">—</div><div class="mini-kpi-lbl">Documentos</div></div>
+          <div class="mini-kpi"><div class="mini-kpi-val" id="rag-total-chunks">—</div><div class="mini-kpi-lbl">Chunks</div></div>
+          <div class="mini-kpi"><div class="mini-kpi-val" id="rag-avg-score">—</div><div class="mini-kpi-lbl">Score médio</div></div>
+        </div>
+        <div style="margin-top:12px" id="rag-collections-list"></div>
+      </div>
+      <div id="rag-view-bench" style="display:none;padding:10px 0">
+        <div style="font-size:10px;color:var(--t3);font-family:var(--m);margin-bottom:10px">Execute uma query de benchmark para medir qualidade da recuperação RAG.</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input id="rag-bench-query" type="text" placeholder="Pergunta de teste…" style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:8px 10px;outline:none"/>
+          <input id="rag-bench-k" type="number" value="5" min="1" max="20" style="width:60px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:8px;outline:none"/>
+          <button class="btn p" onclick="runRagBenchmark()" style="padding:8px 14px">▶ Run</button>
+        </div>
+        <div id="rag-bench-results"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ PROMPT TEMPLATES ═══ -->
+  <div class="card" id="section-prompts" data-section="prompts" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">Prompt Template Library · Versionado</div>
+      <div class="cacts">
+        <div class="chip" id="prompts-count-chip" style="font-family:var(--m)">0 templates</div>
+        <button class="btn p" onclick="openPromptModal()" style="padding:3px 12px;font-size:10px">+ Novo Template</button>
+        <button class="btn" onclick="loadPromptTemplates()" style="padding:3px 10px;font-size:10px">↻</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;gap:12px;padding:8px 0;height:calc(100vh - 260px)">
+      <div style="width:260px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;border-right:1px solid var(--b);padding-right:12px">
+        <input id="prompts-search" type="text" placeholder="Buscar templates…" oninput="filterPrompts(this.value)" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:10px;padding:6px 10px;outline:none"/>
+        <div id="prompts-list" style="display:flex;flex-direction:column;gap:5px"></div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+        <div id="prompt-detail-view" style="flex:1;display:flex;flex-direction:column;gap:10px">
+          <div style="padding:40px;text-align:center;color:var(--t3);font-size:11px;font-family:var(--m)">Selecione um template para ver detalhes ou editar.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Prompt Modal -->
+  <div class="wmodal-overlay" id="prompt-modal-overlay" onclick="closePromptModal()" style="display:none"></div>
+  <div class="wmodal" id="prompt-modal" style="width:560px;max-width:95vw;display:none">
+    <div class="wmodal-hd"><div class="wmodal-title">📝 Template de Prompt</div><button class="btn" onclick="closePromptModal()" style="padding:4px 10px">✕</button></div>
+    <div class="wmodal-body" style="display:flex;flex-direction:column;gap:10px;padding:14px">
+      <input type="hidden" id="prompt-edit-id"/>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Nome</label><input id="prompt-name" type="text" placeholder="ex: code_review_v2" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px 10px;outline:none"/></div>
+        <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Agente</label><input id="prompt-agent" type="text" placeholder="ex: CodeAnalyzer" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px 10px;outline:none"/></div>
+      </div>
+      <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Tags (vírgula)</label><input id="prompt-tags" type="text" placeholder="code, review, python" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px 10px;outline:none"/></div>
+      <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">System Prompt</label><textarea id="prompt-system" rows="3" placeholder="Você é um especialista em…" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:8px 10px;outline:none;resize:vertical"></textarea></div>
+      <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Template (use {{variavel}} para variáveis)</label><textarea id="prompt-body" rows="6" placeholder="Analise o seguinte código: {{code}}\n\nFoco em: {{focus}}" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:8px 10px;outline:none;resize:vertical"></textarea></div>
+      <button class="btn p" onclick="savePromptTemplate()" style="width:100%;padding:10px">💾 Salvar Template</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ MODEL REGISTRY ═══ -->
+  <div class="card" id="section-models" data-section="models" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">Model Registry · LLMs Disponíveis</div>
+      <div class="cacts">
+        <div class="ctabs" id="models-tab-row">
+          <div class="ctab on" onclick="switchModelsTab('registry',this)">Registry</div>
+          <div class="ctab" onclick="switchModelsTab('bench',this)">Benchmark</div>
+          <div class="ctab" onclick="switchModelsTab('routing',this)">Routing Rules</div>
+        </div>
+        <button class="btn" onclick="loadModelRegistry()" style="padding:3px 10px;font-size:10px">↻ Sync Ollama</button>
+      </div>
+    </div>
+    <div class="cbd" style="padding:0">
+      <div id="models-view-registry" style="display:block;padding:10px 0">
+        <div id="models-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">
+          <div style="padding:20px;color:var(--t3);font-size:10px;font-family:var(--m)">Carregando modelos…</div>
+        </div>
+      </div>
+      <div id="models-view-bench" style="display:none;padding:10px 0">
+        <div style="font-size:10px;color:var(--t3);font-family:var(--m);margin-bottom:10px">Envie o mesmo prompt para múltiplos modelos e compare respostas, latência e tokens.</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <textarea id="bench-prompt-input" rows="3" placeholder="Prompt para comparar entre modelos…" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:8px 10px;outline:none;resize:vertical"></textarea>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div id="bench-model-select" style="display:flex;gap:6px;flex-wrap:wrap;flex:1"></div>
+            <button class="btn p" onclick="runModelBenchmark()" style="padding:8px 16px">▶ Comparar</button>
+          </div>
+          <div id="bench-results" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px"></div>
+        </div>
+      </div>
+      <div id="models-view-routing" style="display:none;padding:10px 0">
+        <div style="font-size:10px;color:var(--t3);font-family:var(--m);margin-bottom:10px">Defina regras de roteamento: qual modelo é usado por cada tipo de task ou agente.</div>
+        <div id="routing-rules-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        <button class="btn p" onclick="addRoutingRule()" style="margin-top:10px;padding:7px 14px;font-size:11px">+ Adicionar Regra</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLA · ERROR BUDGET ═══ -->
+  <div class="card" id="section-sla" data-section="sla" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">SLA · Error Budget · Confiabilidade</div>
+      <div class="cacts">
+        <div class="chip grn" id="sla-overall-chip">— uptime</div>
+        <button class="btn p" onclick="openSlaModal()" style="padding:3px 12px;font-size:10px">+ SLA Rule</button>
+        <button class="btn" onclick="loadSlaData()" style="padding:3px 10px;font-size:10px">↻</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:16px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="sla-uptime">—</div><div class="mini-kpi-lbl">Uptime 30d</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="sla-budget-remaining">—</div><div class="mini-kpi-lbl">Error Budget</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="sla-breaches">—</div><div class="mini-kpi-lbl">Breaches 7d</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="sla-mttr">—</div><div class="mini-kpi-lbl">MTTR avg</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">SLA Rules</div>
+          <div id="sla-rules-list" style="display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Breaches Recentes</div>
+          <div id="sla-breaches-list" style="display:flex;flex-direction:column;gap:6px"></div>
+          <div style="margin-top:14px">
+            <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Burn Rate do Error Budget</div>
+            <div style="background:var(--bg4);border-radius:6px;height:10px;overflow:hidden">
+              <div id="sla-burn-bar" style="height:100%;background:linear-gradient(90deg,var(--gr),var(--am));border-radius:6px;transition:width .5s;width:0%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-family:var(--m);font-size:9px;color:var(--t3);margin-top:4px">
+              <span>0% consumido</span><span id="sla-burn-pct">—</span><span>100% = breach</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="wmodal-overlay" id="sla-modal-overlay" onclick="closeSlaModal()" style="display:none"></div>
+  <div class="wmodal" id="sla-modal" style="width:440px;max-width:95vw;display:none">
+    <div class="wmodal-hd"><div class="wmodal-title">📋 Nova SLA Rule</div><button class="btn" onclick="closeSlaModal()" style="padding:4px 10px">✕</button></div>
+    <div class="wmodal-body" style="display:flex;flex-direction:column;gap:10px;padding:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Nome</label><input id="sla-name" type="text" placeholder="ex: code_review_sla" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px;outline:none"/></div>
+        <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Tipo de Task</label><input id="sla-task-type" type="text" placeholder="ex: code_analysis" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px;outline:none"/></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Latência máx (s)</label><input id="sla-latency" type="number" value="30" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px;outline:none"/></div>
+        <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Taxa erro máx (%)</label><input id="sla-error-rate" type="number" value="5" min="0" max="100" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px;outline:none"/></div>
+      </div>
+      <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">SLO Target (%)</label><input id="sla-slo" type="number" value="99.5" min="90" max="100" step="0.1" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px;outline:none"/></div>
+      <button class="btn p" onclick="saveSlaRule()" style="width:100%;padding:10px">💾 Salvar SLA Rule</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ INCIDENTS ═══ -->
+  <div class="card" id="section-incidents" data-section="incidents" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">Incident Manager · Rastreamento de Incidentes</div>
+      <div class="cacts">
+        <div class="chip" id="incidents-count-chip" style="font-family:var(--m)">0 abertos</div>
+        <button class="btn danger" onclick="openIncidentModal()" style="padding:3px 12px;font-size:10px">+ Declarar Incidente</button>
+        <button class="btn" onclick="loadIncidents()" style="padding:3px 10px;font-size:10px">↻</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="inc-open" style="color:var(--rd)">—</div><div class="mini-kpi-lbl">Abertos</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="inc-resolving" style="color:var(--am)">—</div><div class="mini-kpi-lbl">Em Resolução</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="inc-resolved-7d" style="color:var(--gr)">—</div><div class="mini-kpi-lbl">Resolvidos 7d</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="inc-mttd">—</div><div class="mini-kpi-lbl">MTTD avg</div></div>
+      </div>
+      <div id="incidents-list" style="display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 360px);overflow-y:auto"></div>
+    </div>
+  </div>
+  <div class="wmodal-overlay" id="incident-modal-overlay" onclick="closeIncidentModal()" style="display:none"></div>
+  <div class="wmodal" id="incident-modal" style="width:500px;max-width:95vw;display:none">
+    <div class="wmodal-hd"><div class="wmodal-title">⚠ Declarar Incidente</div><button class="btn" onclick="closeIncidentModal()" style="padding:4px 10px">✕</button></div>
+    <div class="wmodal-body" style="display:flex;flex-direction:column;gap:10px;padding:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Título</label><input id="inc-title" type="text" placeholder="ex: API timeout em cascade" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px;outline:none"/></div>
+        <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Severidade</label>
+          <select id="inc-severity" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px;outline:none">
+            <option value="P4">P4 - Low</option><option value="P3">P3 - Medium</option><option value="P2" selected>P2 - High</option><option value="P1">P1 - Critical</option><option value="P0">P0 - SEV0 · All Hands</option>
+          </select>
+        </div>
+      </div>
+      <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Serviços Afetados</label><input id="inc-services" type="text" placeholder="ex: orchestrator, redis, qdrant" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px;outline:none"/></div>
+      <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Responsável (on-call)</label><input id="inc-owner" type="text" placeholder="ex: @eng-oncall" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px;outline:none"/></div>
+      <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Descrição / Impacto</label><textarea id="inc-desc" rows="3" placeholder="O que está acontecendo, impacto nos usuários…" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:8px 10px;outline:none;resize:vertical"></textarea></div>
+      <button class="btn danger" onclick="declareIncident()" style="width:100%;padding:10px;font-size:13px">⚠ Declarar Incidente</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ PIPELINE BUILDER ═══ -->
+  <div class="card" id="section-pipelines" data-section="pipelines" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">Pipeline Builder · Orquestração Visual</div>
+      <div class="cacts">
+        <div class="chip" id="pipelines-count-chip" style="font-family:var(--m)">0 pipelines</div>
+        <button class="btn p" onclick="newPipeline()" style="padding:3px 12px;font-size:10px">+ Novo Pipeline</button>
+        <button class="btn" onclick="loadPipelines()" style="padding:3px 10px;font-size:10px">↻</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;gap:0;padding:0;height:calc(100vh - 260px)">
+      <div style="width:220px;border-right:1px solid var(--b);padding:12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px">Meus Pipelines</div>
+        <div id="pipelines-list" style="display:flex;flex-direction:column;gap:5px"></div>
+        <div style="border-top:1px solid var(--b);padding-top:10px;margin-top:4px">
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Blocos Disponíveis</div>
+          <div style="display:flex;flex-direction:column;gap:4px" id="pipeline-blocks-palette">
+            <div class="pipeline-block-item" draggable="true" data-type="agent" ondragstart="pipeDragStart(event)">🤖 Agent Task</div>
+            <div class="pipeline-block-item" draggable="true" data-type="condition" ondragstart="pipeDragStart(event)">⚡ Condition</div>
+            <div class="pipeline-block-item" draggable="true" data-type="parallel" ondragstart="pipeDragStart(event)">⟋ Parallel</div>
+            <div class="pipeline-block-item" draggable="true" data-type="delay" ondragstart="pipeDragStart(event)">⏱ Delay</div>
+            <div class="pipeline-block-item" draggable="true" data-type="webhook" ondragstart="pipeDragStart(event)">↗ Webhook Call</div>
+            <div class="pipeline-block-item" draggable="true" data-type="llm" ondragstart="pipeDragStart(event)">💡 LLM Step</div>
+            <div class="pipeline-block-item" draggable="true" data-type="rag" ondragstart="pipeDragStart(event)">📚 RAG Query</div>
+            <div class="pipeline-block-item" draggable="true" data-type="end" ondragstart="pipeDragStart(event)">⬛ End</div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column">
+        <div style="padding:8px 12px;border-bottom:1px solid var(--b);display:flex;gap:8px;align-items:center">
+          <input id="pipeline-name-input" type="text" placeholder="Nome do pipeline…" style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:5px;color:var(--t1);font-family:var(--m);font-size:11px;padding:5px 10px;outline:none"/>
+          <button class="btn p" onclick="savePipeline()" style="padding:5px 12px;font-size:10px">💾 Salvar</button>
+          <button class="btn" onclick="runPipeline()" style="padding:5px 12px;font-size:10px;color:var(--gr)">▶ Executar</button>
+          <button class="btn" onclick="clearPipelineCanvas()" style="padding:5px 10px;font-size:10px">✕ Limpar</button>
+        </div>
+        <div id="pipeline-canvas" ondragover="event.preventDefault()" ondrop="pipelineDrop(event)" style="flex:1;position:relative;overflow:hidden;background:repeating-linear-gradient(0deg,transparent,transparent 29px,var(--b) 29px,var(--b) 30px),repeating-linear-gradient(90deg,transparent,transparent 29px,var(--b) 29px,var(--b) 30px)">
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:var(--t3);font-size:11px;font-family:var(--m);pointer-events:none" id="pipeline-empty-hint">
+            Arraste blocos aqui para montar o pipeline
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ WEBHOOKS ═══ -->
+  <div class="card" id="section-webhooks" data-section="webhooks" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">Webhook Manager · Callbacks de Eventos</div>
+      <div class="cacts">
+        <div class="chip" id="webhooks-count-chip" style="font-family:var(--m)">0 webhooks</div>
+        <button class="btn p" onclick="openWebhookModal()" style="padding:3px 12px;font-size:10px">+ Novo Webhook</button>
+        <button class="btn" onclick="loadWebhooks()" style="padding:3px 10px;font-size:10px">↻</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="font-size:10px;color:var(--t3);font-family:var(--m);line-height:1.7;background:var(--bg3);border-radius:6px;padding:8px 12px">
+        Webhooks disparam callbacks HTTP quando eventos ocorrem: task concluída, agente morreu, zombie detectado, SLA breach, incidente declarado.
+      </div>
+      <div id="webhooks-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div style="border-top:1px solid var(--b);padding-top:12px">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Histórico de Disparos · últimas 24h</div>
+        <div id="webhooks-history" style="display:flex;flex-direction:column;gap:5px"></div>
+      </div>
+    </div>
+  </div>
+  <div class="wmodal-overlay" id="webhook-modal-overlay" onclick="closeWebhookModal()" style="display:none"></div>
+  <div class="wmodal" id="webhook-modal" style="width:480px;max-width:95vw;display:none">
+    <div class="wmodal-hd"><div class="wmodal-title">↗ Novo Webhook</div><button class="btn" onclick="closeWebhookModal()" style="padding:4px 10px">✕</button></div>
+    <div class="wmodal-body" style="display:flex;flex-direction:column;gap:10px;padding:14px">
+      <input type="hidden" id="webhook-edit-id"/>
+      <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Nome</label><input id="webhook-name" type="text" placeholder="ex: slack-alerts" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px;outline:none"/></div>
+      <div><label style="font-size:10px;color:var(--t3);font-family:var(--m)">URL de destino</label><input id="webhook-url" type="url" placeholder="https://…" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px;outline:none"/></div>
+      <div>
+        <div style="font-size:10px;color:var(--t3);font-family:var(--m);margin-bottom:6px">Eventos disparadores</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="wh-ev-task-done" checked> task.done</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="wh-ev-task-error"> task.error</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="wh-ev-zombie"> agent.zombie</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="wh-ev-sla-breach"> sla.breach</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="wh-ev-incident"> incident.declared</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="wh-ev-heal"> heal.action</label>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1"><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Secret (HMAC)</label><input id="webhook-secret" type="text" placeholder="opcional" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px;outline:none"/></div>
+        <div style="flex:1"><label style="font-size:10px;color:var(--t3);font-family:var(--m)">Método HTTP</label>
+          <select id="webhook-method" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg3);border:1px solid var(--b);border-radius:6px;color:var(--t1);font-family:var(--m);font-size:11px;padding:7px;outline:none">
+            <option>POST</option><option>PUT</option><option>PATCH</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn p" onclick="saveWebhook()" style="flex:1;padding:9px">💾 Salvar</button>
+        <button class="btn" onclick="testWebhook()" style="padding:9px 14px">🔬 Testar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ API PLAYGROUND ═══ -->
+  <div class="card" id="section-playground" data-section="playground" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">API Playground · Explorador Interativo</div>
+      <div class="cacts">
+        <div class="chip" style="background:rgba(155,123,255,0.15);color:var(--pu);border-color:var(--pu)">REST · v5</div>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;gap:0;padding:0;height:calc(100vh - 260px)">
+      <div style="width:240px;border-right:1px solid var(--b);display:flex;flex-direction:column;overflow-y:auto">
+        <div style="padding:10px 12px;border-bottom:1px solid var(--b)">
+          <input id="playground-filter" type="text" placeholder="Filtrar endpoints…" oninput="filterPlayground(this.value)" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--b);border-radius:5px;color:var(--t1);font-family:var(--m);font-size:10px;padding:5px 10px;outline:none"/>
+        </div>
+        <div id="playground-endpoints" style="flex:1;overflow-y:auto;padding:8px"></div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column">
+        <div style="padding:10px 12px;border-bottom:1px solid var(--b);display:flex;gap:8px;align-items:center">
+          <select id="playground-method" style="background:var(--bg3);border:1px solid var(--b);border-radius:5px;color:var(--t1);font-family:var(--m);font-size:11px;padding:5px 8px;outline:none;width:80px">
+            <option style="color:var(--gr)">GET</option><option style="color:var(--am)">POST</option><option style="color:var(--bl)">PATCH</option><option style="color:var(--rd)">DELETE</option>
+          </select>
+          <input id="playground-url" type="text" value="/api/v5/dashboard/system-metrics" style="flex:1;background:var(--bg3);border:1px solid var(--b);border-radius:5px;color:var(--t1);font-family:var(--m);font-size:11px;padding:5px 10px;outline:none"/>
+          <button class="btn p" onclick="runPlayground()" style="padding:5px 14px">▶ Send</button>
+        </div>
+        <div style="display:flex;flex:1;gap:0">
+          <div style="flex:1;border-right:1px solid var(--b);display:flex;flex-direction:column">
+            <div style="padding:6px 12px;font-size:9px;color:var(--t3);font-family:var(--m);border-bottom:1px solid var(--b)">BODY (JSON)</div>
+            <textarea id="playground-body" style="flex:1;resize:none;background:transparent;border:none;color:var(--t1);font-family:var(--m);font-size:11px;padding:10px 12px;outline:none" placeholder='{"key": "value"}'></textarea>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column">
+            <div style="padding:6px 12px;display:flex;gap:8px;align-items:center;font-size:9px;color:var(--t3);font-family:var(--m);border-bottom:1px solid var(--b)">
+              RESPONSE <span id="playground-status" style="margin-left:6px"></span>
+              <span style="margin-left:auto" id="playground-latency"></span>
+            </div>
+            <pre id="playground-response" style="flex:1;overflow:auto;margin:0;padding:10px 12px;font-family:var(--m);font-size:10px;color:var(--t2);background:transparent;white-space:pre-wrap;word-break:break-all"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ PII SCANNER ═══ -->
+  <div class="card" id="section-pii-scanner" data-section="pii-scanner" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd">
+      <div class="ct">PII Scanner · Detecção de Dados Sensíveis</div>
+      <div class="cacts">
+        <div class="chip" id="pii-status-chip" style="font-family:var(--m)">Pronto</div>
+        <button class="btn p" onclick="runPiiScan()" style="padding:3px 12px;font-size:10px">▶ Escanear Agora</button>
+        <button class="btn" onclick="loadPiiHistory()" style="padding:3px 10px;font-size:10px">↻ Histórico</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:14px;padding:8px 0">
+      <div style="background:rgba(255,80,80,0.07);border:1px solid rgba(255,80,80,0.2);border-radius:8px;padding:10px 14px;font-family:var(--m);font-size:10px;color:var(--t2);line-height:1.8">
+        <span style="color:var(--rd);font-weight:600">⚠ LGPD/GDPR Compliance:</span> Detecta CPF, emails, telefones, cartões de crédito, tokens de API e chaves privadas em logs, prompts e respostas armazenadas.
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="pii-total-found" style="color:var(--rd)">—</div><div class="mini-kpi-lbl">Encontrados</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="pii-masked">—</div><div class="mini-kpi-lbl">Mascarados</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="pii-last-scan">—</div><div class="mini-kpi-lbl">Último Scan</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="pii-risk-score" style="color:var(--am)">—</div><div class="mini-kpi-lbl">Risk Score</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Configuração do Scan</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="pii-scan-logs" checked> Logs do sistema</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="pii-scan-prompts" checked> Prompts / Respostas LLM</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="pii-scan-tasks" checked> Descrições de Tasks</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="pii-auto-mask"> Auto-mascarar ao detectar</label>
+          </div>
+          <div style="margin-top:12px">
+            <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Tipos de PII detectados</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px">
+              <div class="chip" style="font-size:9px;background:rgba(255,80,80,0.1);color:var(--rd);border-color:var(--rd)33">CPF/CNPJ</div>
+              <div class="chip" style="font-size:9px">Email</div>
+              <div class="chip" style="font-size:9px">Telefone</div>
+              <div class="chip" style="font-size:9px">Cartão</div>
+              <div class="chip" style="font-size:9px">API Key</div>
+              <div class="chip" style="font-size:9px">JWT Token</div>
+              <div class="chip" style="font-size:9px">IP Address</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Resultados · Última Varredura</div>
+          <div id="pii-results-list" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto">
+            <div style="color:var(--t3);font-size:10px;font-family:var(--m)">Execute um scan para ver resultados.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ BATCH OPERATIONS ═══ -->
+  <div class="card" id="section-batch-ops" data-section="batch-ops" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Batch Operations · Tasks em Massa</div>
+      <div class="cacts">
+        <button class="btn" onclick="batchSelectAll()" style="padding:3px 10px;font-size:10px">☑ Selecionar Tudo</button>
+        <button class="btn p" onclick="batchApply('cancel')" style="padding:3px 10px;font-size:10px;background:rgba(255,80,80,0.15);color:var(--rd);border-color:var(--rd)">✕ Cancelar Sel.</button>
+        <button class="btn p" onclick="batchApply('reprioritize')" style="padding:3px 10px;font-size:10px">↑ Repriorizar</button>
+        <button class="btn" onclick="batchApply('reassign')" style="padding:3px 10px;font-size:10px">↔ Reatribuir</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="batch-filter" class="inp" placeholder="Filtrar por tipo, agente, status..." style="flex:1;padding:6px 10px;font-size:11px" oninput="loadBatchTasks(this.value)">
+        <select id="batch-agent-filter" class="inp" style="padding:5px 8px;font-size:11px;min-width:120px" onchange="loadBatchTasks()">
+          <option value="">Todos os agentes</option>
+        </select>
+        <select id="batch-status-filter" class="inp" style="padding:5px 8px;font-size:11px;min-width:100px" onchange="loadBatchTasks()">
+          <option value="">Todos os status</option>
+          <option value="pending">Pending</option>
+          <option value="running">Running</option>
+          <option value="error">Error</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;font-size:10px;color:var(--t3)">
+        <span id="batch-sel-count" style="color:var(--cy);font-family:var(--m)">0 selecionadas</span>
+        <span>·</span>
+        <span id="batch-total-count">0 tasks</span>
+      </div>
+      <div id="batch-task-list" style="display:flex;flex-direction:column;gap:4px;max-height:60vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ TASK TEMPLATES ═══ -->
+  <div class="card" id="section-task-templates" data-section="task-templates" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Task Templates · Configurações Reutilizáveis</div>
+      <div class="cacts">
+        <button class="btn p" onclick="openTaskTemplateModal()" style="padding:3px 12px;font-size:10px">+ Novo Template</button>
+        <button class="btn" onclick="loadTaskTemplates()" style="padding:3px 10px;font-size:10px">↻ Atualizar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div id="task-templates-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ ROLLBACK / TIME TRAVEL ═══ -->
+  <div class="card" id="section-rollback" data-section="rollback" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Rollback · Time Travel</div>
+      <div class="cacts">
+        <div class="chip" style="background:rgba(255,150,0,0.12);color:var(--am);border-color:var(--am);font-family:var(--m);font-size:9px">⚠ OPERAÇÃO DESTRUTIVA</div>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:14px;padding:8px 0">
+      <div style="background:rgba(255,150,0,0.08);border:1px solid rgba(255,150,0,0.25);border-radius:8px;padding:10px 14px;font-size:10px;color:var(--t2);line-height:1.8">
+        <strong style="color:var(--am)">Time Travel:</strong> Reverte o estado das tasks e configurações para um ponto no passado. Snapshots automáticos são criados a cada hora.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Snapshots Disponíveis</div>
+          <div id="rollback-snapshots" style="display:flex;flex-direction:column;gap:5px;max-height:50vh;overflow-y:auto"></div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Diff do Snapshot Selecionado</div>
+          <div id="rollback-diff" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:10px;font-family:var(--m);font-size:9px;color:var(--t2);min-height:200px;white-space:pre-wrap">Selecione um snapshot para visualizar o diff.</div>
+          <button id="rollback-confirm-btn" class="btn" onclick="confirmRollback()" style="display:none;margin-top:10px;width:100%;background:rgba(255,150,0,0.15);color:var(--am);border-color:var(--am);padding:6px;font-size:11px">⚠ Confirmar Rollback</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ CONTEXT WINDOW ANALYZER ═══ -->
+  <div class="card" id="section-context-analyzer" data-section="context-analyzer" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Context Window Analyzer · Visibilidade LLM</div>
+      <div class="cacts">
+        <button class="btn" onclick="loadContextTraces()" style="padding:3px 10px;font-size:10px">↻ Atualizar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="ctx-avg-tokens" style="color:var(--bl)">—</div><div class="mini-kpi-lbl">Tokens Médios</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="ctx-max-tokens">—</div><div class="mini-kpi-lbl">Máximo Usado</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="ctx-efficiency" style="color:var(--gr)">—</div><div class="mini-kpi-lbl">Eficiência</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="ctx-truncated" style="color:var(--rd)">—</div><div class="mini-kpi-lbl">Truncados</div></div>
+      </div>
+      <div id="context-trace-list" style="display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ TOKEN BUDGET MANAGER ═══ -->
+  <div class="card" id="section-token-budget" data-section="token-budget" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Token Budget Manager · Orçamentos por Agente</div>
+      <div class="cacts">
+        <button class="btn p" onclick="saveTokenBudgets()" style="padding:3px 12px;font-size:10px">💾 Salvar Budgets</button>
+        <button class="btn" onclick="loadTokenBudgets()" style="padding:3px 10px;font-size:10px">↻ Atualizar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="tb-daily-total" style="color:var(--am)">—</div><div class="mini-kpi-lbl">Tokens Hoje</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="tb-budget-used" style="color:var(--bl)">—</div><div class="mini-kpi-lbl">% Budget Usado</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="tb-projected-cost" style="color:var(--gr)">—</div><div class="mini-kpi-lbl">Custo Projetado</div></div>
+      </div>
+      <div id="token-budget-list" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ A/B PROMPT TESTING ═══ -->
+  <div class="card" id="section-ab-testing" data-section="ab-testing" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">A/B Prompt Testing · Comparação em Produção</div>
+      <div class="cacts">
+        <button class="btn p" onclick="runAbTest()" style="padding:3px 12px;font-size:10px">▶ Executar Teste</button>
+        <button class="btn" onclick="loadAbTests()" style="padding:3px 10px;font-size:10px">↻ Histórico</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Variant A</div>
+          <textarea id="ab-prompt-a" class="inp" rows="6" placeholder="Prompt A..." style="width:100%;resize:vertical;font-family:var(--m);font-size:10px;padding:8px"></textarea>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Variant B</div>
+          <textarea id="ab-prompt-b" class="inp" rows="6" placeholder="Prompt B..." style="width:100%;resize:vertical;font-family:var(--m);font-size:10px;padding:8px"></textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="ab-model" class="inp" style="padding:5px 8px;font-size:11px">
+          <option>llama3</option><option>mistral</option><option>codestral</option>
+        </select>
+        <input id="ab-test-query" class="inp" placeholder="Query de teste..." style="flex:1;padding:5px 10px;font-size:11px">
+        <span style="font-size:10px;color:var(--t3)">Splits:</span>
+        <input id="ab-splits" class="inp" type="number" value="5" min="1" max="20" style="width:60px;padding:5px 8px;font-size:11px">
+      </div>
+      <div id="ab-results" style="display:none;flex-direction:column;gap:8px"></div>
+      <div id="ab-history-list" style="display:flex;flex-direction:column;gap:5px;max-height:35vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ REDIS INSPECTOR ═══ -->
+  <div class="card" id="section-redis-inspector" data-section="redis-inspector" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Redis Inspector · Browser de Keys</div>
+      <div class="cacts">
+        <button class="btn" onclick="loadRedisKeys()" style="padding:3px 10px;font-size:10px">↻ Refresh</button>
+        <button class="btn" onclick="flushRedisPattern()" style="padding:3px 10px;font-size:10px;color:var(--rd);border-color:var(--rd)40">🗑 Flush Pattern</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;gap:12px;padding:8px 0;height:calc(100vh - 240px)">
+      <div style="width:300px;display:flex;flex-direction:column;gap:6px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+          <div class="mini-kpi"><div class="mini-kpi-val" id="redis-total-keys" style="color:var(--cy)">—</div><div class="mini-kpi-lbl">Keys</div></div>
+          <div class="mini-kpi"><div class="mini-kpi-val" id="redis-mem-used">—</div><div class="mini-kpi-lbl">Memória</div></div>
+          <div class="mini-kpi"><div class="mini-kpi-val" id="redis-ops-sec">—</div><div class="mini-kpi-lbl">ops/s</div></div>
+        </div>
+        <input id="redis-key-filter" class="inp" placeholder="Filtrar keys (ex: sinc:*)" style="padding:5px 10px;font-size:11px" oninput="filterRedisKeys(this.value)">
+        <div id="redis-key-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px"></div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase">Key Detail</div>
+        <div id="redis-key-detail" style="flex:1;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:12px;font-family:var(--m);font-size:10px;color:var(--t2);overflow-y:auto;white-space:pre-wrap">Selecione uma key para ver o valor.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ DB CONSOLE ═══ -->
+  <div class="card" id="section-db-console" data-section="db-console" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">DB Console · SQL Read-Only</div>
+      <div class="cacts">
+        <div class="chip" style="background:rgba(46,212,122,0.1);color:var(--gr);border-color:var(--gr);font-family:var(--m);font-size:9px">READ-ONLY</div>
+        <button class="btn p" onclick="runDbQuery()" style="padding:3px 12px;font-size:10px">▶ Executar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0;height:calc(100vh - 240px)">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="chip" onclick="dbQuickQuery('SELECT agent_name, COUNT(*) as tasks, AVG(EXTRACT(EPOCH FROM (updated_at-created_at))/60) as avg_min FROM tasks WHERE tenant_id=$$default$$ GROUP BY agent_name ORDER BY tasks DESC LIMIT 10')" style="font-size:9px;cursor:pointer">Tasks por Agente</button>
+        <button class="chip" onclick="dbQuickQuery('SELECT status, COUNT(*) FROM tasks WHERE tenant_id=$$default$$ AND created_at > NOW()-INTERVAL $$24 hours$$ GROUP BY status')" style="font-size:9px;cursor:pointer">Status 24h</button>
+        <button class="chip" onclick="dbQuickQuery('SELECT title, source, created_at FROM lessons WHERE tenant_id=$$default$$ ORDER BY created_at DESC LIMIT 20')" style="font-size:9px;cursor:pointer">Lições Recentes</button>
+        <button class="chip" onclick="dbQuickQuery('SELECT * FROM workers ORDER BY heartbeat DESC LIMIT 10')" style="font-size:9px;cursor:pointer">Workers</button>
+      </div>
+      <textarea id="db-query-input" class="inp" rows="5" placeholder="SELECT * FROM tasks WHERE tenant_id='default' LIMIT 10;" style="width:100%;resize:vertical;font-family:var(--m);font-size:11px;padding:8px"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;font-size:10px;color:var(--t3)">
+        <span id="db-query-status">Pronto</span>
+        <span id="db-query-time" style="color:var(--cy)"></span>
+        <span id="db-row-count"></span>
+      </div>
+      <div id="db-results-table" style="flex:1;overflow:auto;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-radius:6px;font-family:var(--m);font-size:10px"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ MIGRATION CONSOLE ═══ -->
+  <div class="card" id="section-migration-console" data-section="migration-console" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Migration Console · Histórico e Execução</div>
+      <div class="cacts">
+        <button class="btn" onclick="loadMigrations()" style="padding:3px 10px;font-size:10px">↻ Status</button>
+        <button class="btn p" onclick="runPendingMigrations()" style="padding:3px 12px;font-size:10px">▶ Aplicar Pendentes</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="mig-applied" style="color:var(--gr)">—</div><div class="mini-kpi-lbl">Aplicadas</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="mig-pending" style="color:var(--am)">—</div><div class="mini-kpi-lbl">Pendentes</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="mig-failed" style="color:var(--rd)">—</div><div class="mini-kpi-lbl">Falhas</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="mig-last">—</div><div class="mini-kpi-lbl">Última</div></div>
+      </div>
+      <div id="migration-list" style="display:flex;flex-direction:column;gap:4px;max-height:60vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ QUEUE HEATMAP ═══ -->
+  <div class="card" id="section-queue-heatmap" data-section="queue-heatmap" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Queue Heatmap · Volume por Hora × Dia</div>
+      <div class="cacts">
+        <button class="btn" onclick="loadQueueHeatmap()" style="padding:3px 10px;font-size:10px">↻ Atualizar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:14px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="hm-peak-hour" style="color:var(--rd)">—</div><div class="mini-kpi-lbl">Peak Hour</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="hm-avg-tasks">—</div><div class="mini-kpi-lbl">Média/Hora</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="hm-total-7d">—</div><div class="mini-kpi-lbl">Total 7d</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="hm-idle-hours" style="color:var(--gr)">—</div><div class="mini-kpi-lbl">Horas Idle</div></div>
+      </div>
+      <div id="queue-heatmap-grid" style="overflow-x:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ BLUE/GREEN DEPLOYMENT ═══ -->
+  <div class="card" id="section-blue-green" data-section="blue-green" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Blue/Green Deployment · Zero-Downtime</div>
+      <div class="cacts">
+        <button class="btn" onclick="loadBlueGreenStatus()" style="padding:3px 10px;font-size:10px">↻ Status</button>
+        <button class="btn p" onclick="triggerCutover()" style="padding:3px 12px;font-size:10px;background:rgba(46,212,122,0.15);color:var(--gr);border-color:var(--gr)">⇄ Cutover</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:12px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div id="bg-blue-slot" style="background:rgba(77,128,255,0.08);border:1px solid rgba(77,128,255,0.25);border-radius:8px;padding:14px">
+          <div style="font-size:11px;font-weight:600;color:var(--bl);margin-bottom:8px">🔵 BLUE (Active)</div>
+          <div id="bg-blue-info" style="font-size:10px;color:var(--t2);line-height:1.8">Carregando...</div>
+        </div>
+        <div id="bg-green-slot" style="background:rgba(46,212,122,0.08);border:1px solid rgba(46,212,122,0.25);border-radius:8px;padding:14px">
+          <div style="font-size:11px;font-weight:600;color:var(--gr);margin-bottom:8px">🟢 GREEN (Standby)</div>
+          <div id="bg-green-info" style="font-size:10px;color:var(--t2);line-height:1.8">Carregando...</div>
+        </div>
+      </div>
+      <div id="bg-metrics-compare" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div>
+      <div id="bg-history" style="display:flex;flex-direction:column;gap:4px;max-height:30vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ DISTRIBUTED TRACING ═══ -->
+  <div class="card" id="section-tracing" data-section="tracing" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Distributed Tracing · OpenTelemetry Explorer</div>
+      <div class="cacts">
+        <input id="trace-search" class="inp" placeholder="Buscar trace ID ou serviço..." style="padding:4px 10px;font-size:10px;width:200px" oninput="searchTraces(this.value)">
+        <button class="btn" onclick="loadTraces()" style="padding:3px 10px;font-size:10px">↻ Atualizar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;gap:12px;padding:8px 0;height:calc(100vh - 240px)">
+      <div style="width:320px;display:flex;flex-direction:column;gap:6px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <div class="mini-kpi"><div class="mini-kpi-val" id="trace-total" style="color:var(--cy)">—</div><div class="mini-kpi-lbl">Traces</div></div>
+          <div class="mini-kpi"><div class="mini-kpi-val" id="trace-p99" style="color:var(--am)">—</div><div class="mini-kpi-lbl">P99 ms</div></div>
+        </div>
+        <div id="trace-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px"></div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+        <div id="trace-detail" style="flex:1;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:12px;overflow-y:auto">
+          <div style="font-size:10px;color:var(--t3);font-family:var(--m)">Selecione um trace para ver o span waterfall.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ ANOMALY DETECTION ═══ -->
+  <div class="card" id="section-anomaly" data-section="anomaly" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Anomaly Detection · ML-Based</div>
+      <div class="cacts">
+        <button class="btn" onclick="loadAnomalies()" style="padding:3px 10px;font-size:10px">↻ Scan</button>
+        <button class="btn p" onclick="trainAnomalyModel()" style="padding:3px 12px;font-size:10px">🧠 Re-treinar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="anomaly-count" style="color:var(--rd)">—</div><div class="mini-kpi-lbl">Anomalias</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="anomaly-score" style="color:var(--am)">—</div><div class="mini-kpi-lbl">Score Médio</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="anomaly-services">—</div><div class="mini-kpi-lbl">Serviços</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="anomaly-last-train" style="color:var(--gr)">—</div><div class="mini-kpi-lbl">Último Treino</div></div>
+      </div>
+      <div id="anomaly-list" style="display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ CORRELATION ENGINE ═══ -->
+  <div class="card" id="section-correlation" data-section="correlation" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Correlation Engine · Erros Cross-Service</div>
+      <div class="cacts">
+        <button class="btn" onclick="loadCorrelations()" style="padding:3px 10px;font-size:10px">↻ Analisar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div id="correlation-timeline" style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:12px;min-height:120px"></div>
+      <div id="correlation-list" style="display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ KNOWLEDGE GRAPH EDITOR ═══ -->
+  <div class="card" id="section-knowledge-editor" data-section="knowledge-editor" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Knowledge Graph Editor · Nós e Arestas</div>
+      <div class="cacts">
+        <button class="btn p" onclick="addKgNode()" style="padding:3px 10px;font-size:10px">+ Nó</button>
+        <button class="btn" onclick="addKgEdge()" style="padding:3px 10px;font-size:10px">+ Aresta</button>
+        <button class="btn p" onclick="saveKgChanges()" style="padding:3px 12px;font-size:10px">💾 Salvar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;gap:12px;padding:8px 0;height:calc(100vh - 240px)">
+      <div id="kg-editor-canvas" style="flex:1;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-radius:8px;position:relative;overflow:hidden"></div>
+      <div style="width:240px;display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase">Propriedades</div>
+        <div id="kg-properties-panel" style="flex:1;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:10px;font-size:10px;color:var(--t2)">Selecione um nó para editar.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ LEARNING VELOCITY ═══ -->
+  <div class="card" id="section-learn-velocity" data-section="learn-velocity" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Learning Velocity Tracker</div>
+      <div class="cacts"><button class="btn" onclick="loadLearnVelocity()" style="padding:3px 10px;font-size:10px">↻ Atualizar</button></div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="lv-today" style="color:var(--gr)">—</div><div class="mini-kpi-lbl">Lições Hoje</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="lv-week">—</div><div class="mini-kpi-lbl">Esta Semana</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="lv-velocity" style="color:var(--cy)">—</div><div class="mini-kpi-lbl">Velocidade/dia</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="lv-trend" style="color:var(--pu)">—</div><div class="mini-kpi-lbl">Tendência</div></div>
+      </div>
+      <canvas id="lv-chart" height="180" style="width:100%;border:1px solid rgba(255,255,255,0.06);border-radius:6px"></canvas>
+      <div id="lv-breakdown" style="display:flex;flex-direction:column;gap:4px;max-height:30vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ CONCEPT DRIFT MONITOR ═══ -->
+  <div class="card" id="section-concept-drift" data-section="concept-drift" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Concept Drift Monitor · Divergência de Comportamento</div>
+      <div class="cacts"><button class="btn" onclick="loadConceptDrift()" style="padding:3px 10px;font-size:10px">↻ Analisar</button></div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div id="drift-agent-list" style="display:flex;flex-direction:column;gap:8px;max-height:65vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ MEMORY PRUNING CONSOLE ═══ -->
+  <div class="card" id="section-memory-pruning" data-section="memory-pruning" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Memory Pruning Console · Gestão de Memória</div>
+      <div class="cacts">
+        <button class="btn" onclick="analyzeMemory()" style="padding:3px 10px;font-size:10px">🔍 Analisar</button>
+        <button class="btn p" onclick="pruneMemory()" style="padding:3px 12px;font-size:10px;background:rgba(255,80,80,0.12);color:var(--rd);border-color:var(--rd)">✂ Podar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="prune-total" style="color:var(--cy)">—</div><div class="mini-kpi-lbl">Total Memórias</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="prune-stale" style="color:var(--am)">—</div><div class="mini-kpi-lbl">Stale (>30d)</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="prune-dupes" style="color:var(--rd)">—</div><div class="mini-kpi-lbl">Duplicatas</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="prune-low-score" style="color:var(--t3)">—</div><div class="mini-kpi-lbl">Score Baixo</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Estratégias de Poda</div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="prune-by-age" checked> Por idade (>30 dias sem acesso)</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="prune-by-dupes"> Duplicatas semânticas (sim &gt; 0.95)</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:10px;color:var(--t2);cursor:pointer"><input type="checkbox" id="prune-by-score"> Score de relevância baixo (&lt;0.3)</label>
+      </div>
+      <div id="prune-results" style="display:flex;flex-direction:column;gap:4px;max-height:40vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ RBAC MANAGER ═══ -->
+  <div class="card" id="section-rbac" data-section="rbac" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">RBAC Manager · Controle de Acesso</div>
+      <div class="cacts">
+        <button class="btn p" onclick="openRbacModal()" style="padding:3px 12px;font-size:10px">+ Novo Role</button>
+        <button class="btn" onclick="loadRbac()" style="padding:3px 10px;font-size:10px">↻ Atualizar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;gap:12px;padding:8px 0;height:calc(100vh - 240px)">
+      <div style="width:220px;display:flex;flex-direction:column;gap:6px">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase">Roles</div>
+        <div id="rbac-role-list" style="flex:1;display:flex;flex-direction:column;gap:4px;overflow-y:auto"></div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase">Permissões do Role Selecionado</div>
+        <div id="rbac-permissions-panel" style="flex:1;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:12px;overflow-y:auto">Selecione um role.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ DATA LINEAGE ═══ -->
+  <div class="card" id="section-data-lineage" data-section="data-lineage" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Data Lineage · Rastreamento de Origem</div>
+      <div class="cacts">
+        <input id="lineage-search" class="inp" placeholder="Buscar campo ou tabela..." style="padding:4px 10px;font-size:10px;width:200px" oninput="searchLineage(this.value)">
+        <button class="btn" onclick="loadDataLineage()" style="padding:3px 10px;font-size:10px">↻ Atualizar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div id="lineage-graph" style="height:350px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-radius:8px;position:relative"></div>
+      <div id="lineage-detail" style="font-size:10px;color:var(--t2);padding:8px;background:rgba(0,0,0,0.15);border-radius:6px;display:none"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SECRET ROTATION ═══ -->
+  <div class="card" id="section-secret-rotation" data-section="secret-rotation" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Secret Rotation · API Keys &amp; Credenciais</div>
+      <div class="cacts">
+        <button class="btn" onclick="loadSecrets()" style="padding:3px 10px;font-size:10px">↻ Atualizar</button>
+        <button class="btn p" onclick="openSecretModal()" style="padding:3px 12px;font-size:10px">+ Nova Key</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="background:rgba(255,80,80,0.07);border:1px solid rgba(255,80,80,0.2);border-radius:8px;padding:10px 14px;font-size:10px;color:var(--t2)">
+        <strong style="color:var(--rd)">⚠ Segurança:</strong> Valores mascarados — apenas os últimos 4 caracteres são exibidos. Rotação automática disponível.
+      </div>
+      <div id="secrets-list" style="display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ COMPLIANCE REPORT ═══ -->
+  <div class="card" id="section-compliance" data-section="compliance" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Compliance Report · LGPD / SOC2</div>
+      <div class="cacts">
+        <button class="btn" onclick="generateComplianceReport()" style="padding:3px 10px;font-size:10px">↻ Gerar Relatório</button>
+        <button class="btn p" onclick="exportCompliancePdf()" style="padding:3px 12px;font-size:10px">📄 Exportar PDF</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:12px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="comp-score" style="color:var(--gr)">—</div><div class="mini-kpi-lbl">Score LGPD</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="comp-pii-events" style="color:var(--am)">—</div><div class="mini-kpi-lbl">Eventos PII</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="comp-audit-completeness">—</div><div class="mini-kpi-lbl">Auditoria</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="comp-retention">—</div><div class="mini-kpi-lbl">Retenção OK</div></div>
+      </div>
+      <div id="compliance-checks" style="display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ TENANT ANALYTICS ═══ -->
+  <div class="card" id="section-tenant-analytics" data-section="tenant-analytics" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Tenant Analytics · Uso Detalhado</div>
+      <div class="cacts">
+        <select id="ta-period" class="inp" style="padding:4px 8px;font-size:10px" onchange="loadTenantAnalytics()">
+          <option value="7">7 dias</option><option value="30" selected>30 dias</option><option value="90">90 dias</option>
+        </select>
+        <button class="btn" onclick="exportTenantCsv()" style="padding:3px 10px;font-size:10px">↓ CSV</button>
+        <button class="btn" onclick="loadTenantAnalytics()" style="padding:3px 10px;font-size:10px">↻ Atualizar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div id="tenant-analytics-table" style="overflow-x:auto"></div>
+      <canvas id="ta-chart" height="180" style="width:100%;border:1px solid rgba(255,255,255,0.06);border-radius:6px"></canvas>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ BILLING EXPORT ═══ -->
+  <div class="card" id="section-billing" data-section="billing" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Billing Export · Faturamento por Tenant</div>
+      <div class="cacts">
+        <input id="billing-from" type="date" class="inp" style="padding:4px 8px;font-size:10px">
+        <input id="billing-to" type="date" class="inp" style="padding:4px 8px;font-size:10px">
+        <button class="btn p" onclick="generateInvoice()" style="padding:3px 12px;font-size:10px">📄 Gerar Fatura</button>
+        <button class="btn" onclick="loadBillingData()" style="padding:3px 10px;font-size:10px">↻ Atualizar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="bill-total-cost" style="color:var(--am)">—</div><div class="mini-kpi-lbl">Total USD</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="bill-total-tokens">—</div><div class="mini-kpi-lbl">Total Tokens</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="bill-tenants">—</div><div class="mini-kpi-lbl">Tenants</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="bill-top-spender" style="color:var(--rd)">—</div><div class="mini-kpi-lbl">Top Spender</div></div>
+      </div>
+      <div id="billing-table" style="overflow-x:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ FEATURE FLAGS ═══ -->
+  <div class="card" id="section-feature-flags" data-section="feature-flags" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Feature Flags · Funcionalidades por Tenant</div>
+      <div class="cacts">
+        <button class="btn p" onclick="openFlagModal()" style="padding:3px 12px;font-size:10px">+ Nova Flag</button>
+        <button class="btn" onclick="loadFeatureFlags()" style="padding:3px 10px;font-size:10px">↻ Atualizar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div id="feature-flags-list" style="display:flex;flex-direction:column;gap:6px;max-height:70vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ TENANT ONBOARDING ═══ -->
+  <div class="card" id="section-tenant-onboarding" data-section="tenant-onboarding" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Tenant Onboarding Wizard</div></div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:14px;padding:8px 0;max-width:600px">
+      <div id="onboarding-steps" style="display:flex;gap:0;margin-bottom:8px">
+        <div class="onboarding-step active" id="ob-step-1">① Criar Tenant</div>
+        <div class="onboarding-step" id="ob-step-2">② Quotas</div>
+        <div class="onboarding-step" id="ob-step-3">③ API Key</div>
+        <div class="onboarding-step" id="ob-step-4">④ Testar</div>
+      </div>
+      <div id="ob-panel-1" class="ob-panel">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Dados do Tenant</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div><div style="font-size:10px;color:var(--t2);margin-bottom:4px">Tenant ID</div><input id="ob-tid" class="inp" placeholder="ex: acme-corp" style="width:100%;padding:6px 10px;font-size:11px"></div>
+          <div><div style="font-size:10px;color:var(--t2);margin-bottom:4px">Nome Display</div><input id="ob-name" class="inp" placeholder="ACME Corporation" style="width:100%;padding:6px 10px;font-size:11px"></div>
+          <div><div style="font-size:10px;color:var(--t2);margin-bottom:4px">Email Admin</div><input id="ob-email" class="inp" type="email" placeholder="admin@acme.com" style="width:100%;padding:6px 10px;font-size:11px"></div>
+          <button class="btn p" onclick="obNextStep(2)" style="padding:6px 16px;font-size:11px;align-self:flex-start">Próximo →</button>
+        </div>
+      </div>
+      <div id="ob-panel-2" class="ob-panel" style="display:none">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Configurar Quotas</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div><div style="font-size:10px;color:var(--t2);margin-bottom:4px">Tokens/dia</div><input id="ob-tokens" class="inp" type="number" value="100000" style="width:100%;padding:6px 10px;font-size:11px"></div>
+          <div><div style="font-size:10px;color:var(--t2);margin-bottom:4px">Tasks/hora</div><input id="ob-tasks" class="inp" type="number" value="50" style="width:100%;padding:6px 10px;font-size:11px"></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn" onclick="obNextStep(1)" style="padding:6px 12px;font-size:11px">← Voltar</button>
+            <button class="btn p" onclick="obNextStep(3)" style="padding:6px 16px;font-size:11px">Próximo →</button>
+          </div>
+        </div>
+      </div>
+      <div id="ob-panel-3" class="ob-panel" style="display:none">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Gerar API Key</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn p" onclick="obCreateTenant()" style="padding:6px 16px;font-size:11px;align-self:flex-start">🔑 Criar Tenant + Gerar Key</button>
+          <div id="ob-api-key-result" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:10px;font-family:var(--m);font-size:10px;color:var(--cy);display:none;word-break:break-all"></div>
+          <button id="ob-next-3" class="btn" onclick="obNextStep(4)" style="padding:6px 12px;font-size:11px;display:none">Próximo →</button>
+        </div>
+      </div>
+      <div id="ob-panel-4" class="ob-panel" style="display:none">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Testar Integração</div>
+        <button class="btn p" onclick="obRunTest()" style="padding:6px 16px;font-size:11px">▶ Executar Teste</button>
+        <div id="ob-test-result" style="margin-top:10px;font-size:10px;color:var(--t2);font-family:var(--m)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ TENANT ISOLATION ═══ -->
+  <div class="card" id="section-tenant-isolation" data-section="tenant-isolation" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Tenant Isolation Monitor · Detecção de Vazamento</div>
+      <div class="cacts"><button class="btn p" onclick="runIsolationScan()" style="padding:3px 12px;font-size:10px">🔍 Scan Agora</button></div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="iso-status" style="color:var(--gr)">OK</div><div class="mini-kpi-lbl">Isolamento</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="iso-cross-queries" style="color:var(--rd)">—</div><div class="mini-kpi-lbl">Cross-Queries</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="iso-last-scan">—</div><div class="mini-kpi-lbl">Último Scan</div></div>
+      </div>
+      <div id="isolation-results" style="display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ PREDICTIVE CAPACITY ═══ -->
+  <div class="card" id="section-predictive-capacity" data-section="predictive-capacity" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Predictive Capacity Planning</div>
+      <div class="cacts"><button class="btn" onclick="loadPredictiveCapacity()" style="padding:3px 10px;font-size:10px">↻ Projetar</button></div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="pc-days-workers" style="color:var(--am)">—</div><div class="mini-kpi-lbl">Workers → Máx em</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="pc-days-tokens" style="color:var(--am)">—</div><div class="mini-kpi-lbl">Tokens → Máx em</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="pc-growth-rate" style="color:var(--cy)">—</div><div class="mini-kpi-lbl">Taxa Crescimento</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="pc-recommendation" style="color:var(--gr)">—</div><div class="mini-kpi-lbl">Recomendação</div></div>
+      </div>
+      <canvas id="pc-chart" height="200" style="width:100%;border:1px solid rgba(255,255,255,0.06);border-radius:6px"></canvas>
+      <div id="pc-alerts" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ COST FORECASTING ═══ -->
+  <div class="card" id="section-cost-forecast" data-section="cost-forecast" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Cost Forecasting · Projeção de Gastos</div>
+      <div class="cacts"><button class="btn" onclick="loadCostForecast()" style="padding:3px 10px;font-size:10px">↻ Projetar</button></div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="mini-kpi"><div class="mini-kpi-val" id="cf-today" style="color:var(--bl)">—</div><div class="mini-kpi-lbl">Hoje USD</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="cf-month" style="color:var(--am)">—</div><div class="mini-kpi-lbl">Mês Projetado</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="cf-vs-budget" style="color:var(--gr)">—</div><div class="mini-kpi-lbl">vs Budget</div></div>
+        <div class="mini-kpi"><div class="mini-kpi-val" id="cf-burn-rate">—</div><div class="mini-kpi-lbl">Burn Rate/h</div></div>
+      </div>
+      <canvas id="cf-chart" height="200" style="width:100%;border:1px solid rgba(255,255,255,0.06);border-radius:6px"></canvas>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ VALUE ATTRIBUTION ═══ -->
+  <div class="card" id="section-value-attribution" data-section="value-attribution" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Business Value Attribution · Task → Resultado</div>
+      <div class="cacts"><button class="btn" onclick="loadValueAttribution()" style="padding:3px 10px;font-size:10px">↻ Atualizar</button></div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div id="value-attribution-list" style="display:flex;flex-direction:column;gap:6px;max-height:70vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ QUOTA OPTIMIZER ═══ -->
+  <div class="card" id="section-quota-optimizer" data-section="quota-optimizer" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Resource Quota Optimizer · Sugestões de Quota</div>
+      <div class="cacts">
+        <button class="btn" onclick="loadQuotaOptimizer()" style="padding:3px 10px;font-size:10px">🔍 Analisar</button>
+        <button class="btn p" onclick="applyQuotaSuggestions()" style="padding:3px 12px;font-size:10px">✓ Aplicar Sugestões</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div id="quota-optimizer-list" style="display:flex;flex-direction:column;gap:6px;max-height:70vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ RUNBOOK EXECUTOR ═══ -->
+  <div class="card" id="section-runbook" data-section="runbook" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Runbook Executor · Playbooks Operacionais</div>
+      <div class="cacts">
+        <button class="btn p" onclick="openRunbookModal()" style="padding:3px 12px;font-size:10px">+ Novo Runbook</button>
+        <button class="btn" onclick="loadRunbooks()" style="padding:3px 10px;font-size:10px">↻ Atualizar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;gap:12px;padding:8px 0;height:calc(100vh - 240px)">
+      <div style="width:280px;display:flex;flex-direction:column;gap:6px">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase">Runbooks</div>
+        <div id="runbook-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px"></div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+        <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase">Execução</div>
+        <div id="runbook-detail" style="flex:1;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:12px;overflow-y:auto;font-family:var(--m);font-size:10px;color:var(--t2)">Selecione um runbook para executar.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ CHAOS ENGINEERING ═══ -->
+  <div class="card" id="section-chaos" data-section="chaos" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Chaos Engineering · Injeção de Falhas</div>
+      <div class="cacts">
+        <div class="chip" style="background:rgba(255,80,80,0.12);color:var(--rd);border-color:var(--rd);font-family:var(--m);font-size:9px;animation:pulse 2s infinite">⚡ DESTRUTIVO — USE COM CAUTELA</div>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:14px;padding:8px 0">
+      <div style="background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.25);border-radius:8px;padding:10px 14px;font-size:10px;color:var(--t2)">
+        <strong style="color:var(--rd)">Chaos Monkey:</strong> Injeta falhas controladas no sistema para testar resiliência. Todas as ações são registradas no audit log e podem ser revertidas.
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+        <div style="border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px">
+          <div style="font-size:10px;font-weight:600;color:var(--am);margin-bottom:8px">🔴 Matar Agente</div>
+          <select id="chaos-agent" class="inp" style="width:100%;padding:5px 8px;font-size:11px;margin-bottom:6px">
+            <option value="">Selecionar agente...</option>
+          </select>
+          <button class="btn" onclick="chaosKillAgent()" style="width:100%;padding:5px;font-size:10px;color:var(--rd);border-color:var(--rd)40">Executar Kill</button>
+        </div>
+        <div style="border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px">
+          <div style="font-size:10px;font-weight:600;color:var(--am);margin-bottom:8px">⏱ Delay Redis</div>
+          <input id="chaos-delay-ms" class="inp" type="number" value="500" min="100" max="5000" style="width:100%;padding:5px 8px;font-size:11px;margin-bottom:6px" placeholder="Delay em ms">
+          <button class="btn" onclick="chaosInjectDelay()" style="width:100%;padding:5px;font-size:10px;color:var(--am);border-color:var(--am)40">Injetar Delay</button>
+        </div>
+        <div style="border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px">
+          <div style="font-size:10px;font-weight:600;color:var(--am);margin-bottom:8px">📦 Saturar Fila</div>
+          <input id="chaos-queue-tasks" class="inp" type="number" value="100" min="1" max="1000" style="width:100%;padding:5px 8px;font-size:11px;margin-bottom:6px" placeholder="Nº de tasks fake">
+          <button class="btn" onclick="chaosSaturateQueue()" style="width:100%;padding:5px;font-size:10px;color:var(--am);border-color:var(--am)40">Saturar</button>
+        </div>
+        <div style="border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px">
+          <div style="font-size:10px;font-weight:600;color:var(--am);margin-bottom:8px">🌡 Gerar Erro Rate</div>
+          <input id="chaos-error-rate" class="inp" type="number" value="50" min="1" max="100" style="width:100%;padding:5px 8px;font-size:11px;margin-bottom:6px" placeholder="% de erros">
+          <button class="btn" onclick="chaosErrorRate()" style="width:100%;padding:5px;font-size:10px;color:var(--am);border-color:var(--am)40">Ativar</button>
+        </div>
+      </div>
+      <div id="chaos-log" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,80,80,0.15);border-radius:6px;padding:10px;font-family:var(--m);font-size:9px;color:var(--t2);min-height:80px;max-height:200px;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ CANARY RELEASE ═══ -->
+  <div class="card" id="section-canary" data-section="canary" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Canary Release Manager · Rollout Gradual</div>
+      <div class="cacts">
+        <button class="btn" onclick="loadCanaryStatus()" style="padding:3px 10px;font-size:10px">↻ Status</button>
+        <button class="btn p" onclick="openCanaryModal()" style="padding:3px 12px;font-size:10px">+ Novo Canary</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:12px;padding:8px 0">
+      <div id="canary-list" style="display:flex;flex-direction:column;gap:8px;max-height:70vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ POSTMORTEM BUILDER ═══ -->
+  <div class="card" id="section-postmortem" data-section="postmortem" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Postmortem Builder · Análise de Incidente</div>
+      <div class="cacts">
+        <button class="btn p" onclick="newPostmortem()" style="padding:3px 12px;font-size:10px">+ Novo Postmortem</button>
+        <button class="btn" onclick="loadPostmortems()" style="padding:3px 10px;font-size:10px">↻ Histórico</button>
+        <button class="btn" onclick="exportPostmortemMd()" style="padding:3px 10px;font-size:10px">↓ .md</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;gap:12px;padding:8px 0;height:calc(100vh - 240px)">
+      <div style="width:260px;display:flex;flex-direction:column;gap:6px">
+        <div id="postmortem-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px"></div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+        <div id="postmortem-editor" style="display:flex;flex-direction:column;gap:8px">
+          <div><div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Título</div><input id="pm-title" class="inp" placeholder="Nome do incidente..." style="width:100%;padding:6px 10px;font-size:11px"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <div><div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Severidade</div><select id="pm-sev" class="inp" style="width:100%;padding:5px 8px;font-size:11px"><option>P1</option><option>P2</option><option>P3</option></select></div>
+            <div><div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Início</div><input id="pm-start" class="inp" type="datetime-local" style="width:100%;padding:5px 8px;font-size:10px"></div>
+            <div><div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Fim</div><input id="pm-end" class="inp" type="datetime-local" style="width:100%;padding:5px 8px;font-size:10px"></div>
+          </div>
+          <div><div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Root Cause</div><textarea id="pm-root-cause" class="inp" rows="3" style="width:100%;resize:vertical;font-size:11px;padding:6px 10px"></textarea></div>
+          <div><div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Impact</div><textarea id="pm-impact" class="inp" rows="3" style="width:100%;resize:vertical;font-size:11px;padding:6px 10px"></textarea></div>
+          <div><div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Action Items</div><textarea id="pm-action-items" class="inp" rows="4" style="width:100%;resize:vertical;font-size:11px;padding:6px 10px" placeholder="• [ ] Adicionar circuit breaker&#10;• [ ] Aumentar timeout&#10;• [ ] Melhorar alertas"></textarea></div>
+          <button class="btn p" onclick="savePostmortem()" style="padding:6px 16px;font-size:11px;align-self:flex-start">💾 Salvar Postmortem</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SDK GENERATOR ═══ -->
+  <div class="card" id="section-sdk-gen" data-section="sdk-gen" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">SDK Code Generator · Cliente API</div>
+      <div class="cacts">
+        <button class="btn p" onclick="generateSdk()" style="padding:3px 12px;font-size:10px">⚡ Gerar SDK</button>
+        <button class="btn" onclick="copySdkCode()" style="padding:3px 10px;font-size:10px">⎘ Copiar</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:10px;padding:8px 0">
+      <div style="display:flex;gap:8px">
+        <select id="sdk-language" class="inp" style="padding:5px 8px;font-size:11px" onchange="generateSdk()">
+          <option value="python">Python</option>
+          <option value="javascript">JavaScript</option>
+          <option value="typescript">TypeScript</option>
+          <option value="go">Go</option>
+          <option value="curl">cURL</option>
+        </select>
+        <input id="sdk-base-url" class="inp" placeholder="Base URL (ex: http://localhost:8000)" style="flex:1;padding:5px 10px;font-size:11px" value="http://localhost:8000">
+        <input id="sdk-api-key" class="inp" placeholder="API Key (opcional)" style="width:200px;padding:5px 10px;font-size:11px">
+      </div>
+      <div style="font-size:9px;color:var(--t3);font-family:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Código Gerado</div>
+      <pre id="sdk-code-output" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:14px;font-family:var(--m);font-size:10px;color:var(--cy);overflow:auto;max-height:60vh;margin:0;white-space:pre-wrap">Selecione uma linguagem para gerar o SDK.</pre>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ CHANGELOG ═══ -->
+  <div class="card" id="section-changelog" data-section="changelog" style="display:none;flex-direction:column;min-height:calc(100vh - 180px)">
+    <div class="chd"><div class="ct">Changelog · Release Notes</div>
+      <div class="cacts">
+        <button class="btn" onclick="loadChangelog()" style="padding:3px 10px;font-size:10px">↻ Atualizar</button>
+        <button class="btn p" onclick="openChangelogModal()" style="padding:3px 12px;font-size:10px">+ Entrada</button>
+      </div>
+    </div>
+    <div class="cbd" style="display:flex;flex-direction:column;gap:8px;padding:8px 0">
+      <div id="changelog-list" style="display:flex;flex-direction:column;gap:10px;max-height:75vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
 </div>
 
 <!-- TASK INJECT MODAL -->
@@ -2014,7 +3392,31 @@ const PAGE_LABELS={
   lessons:'Base de Lições',tenants:'Tenants & Quotas',memory:'Memória & Quotas',
   cost:'Custos & Atribuição · L6',audit:'Audit Log · NOC',
   'prompt-inspector':'Prompt Inspector',timeline:'Tool Timeline',events:'Pulso do Sistema',
-  neural:'Neural Steering · Pilotagem Ativa N5',topology:'Topologia Cognitiva · Sistema Nervoso'
+  neural:'Neural Steering · Pilotagem Ativa N5',topology:'Topologia Cognitiva · Sistema Nervoso',
+  containers:'Container Manager · Docker Stack N5',dag:'DAG Viewer · Dependências de Tasks',
+  cron:'Scheduler · Tarefas Recorrentes','rag-inspector':'RAG Pipeline Inspector',
+  prompts:'Prompt Template Library',models:'Model Registry · LLMs',
+  sla:'SLA · Error Budget',incidents:'Incident Manager',
+  pipelines:'Pipeline Builder',webhooks:'Webhook Manager',
+  playground:'API Playground','pii-scanner':'PII Scanner · Compliance',
+  'batch-ops':'Batch Operations · Tasks em Massa','task-templates':'Task Templates · Configs Reutilizáveis',
+  rollback:'Rollback · Time Travel','context-analyzer':'Context Window Analyzer',
+  'token-budget':'Token Budget Manager','ab-testing':'A/B Prompt Testing',
+  'redis-inspector':'Redis Inspector','db-console':'DB Console · SQL Seguro',
+  'migration-console':'Migration Console','queue-heatmap':'Queue Heatmap · Carga por Hora',
+  'blue-green':'Blue/Green Deployment',tracing:'Distributed Tracing · OpenTelemetry',
+  anomaly:'Anomaly Detection · ML','correlation':'Correlation Engine',
+  'knowledge-editor':'Knowledge Graph Editor','learn-velocity':'Learning Velocity Tracker',
+  'concept-drift':'Concept Drift Monitor','memory-pruning':'Memory Pruning Console',
+  rbac:'RBAC Manager · Controle de Acesso','data-lineage':'Data Lineage · Rastreamento',
+  'secret-rotation':'Secret Rotation · API Keys','compliance':'Compliance Report · LGPD/SOC2',
+  'tenant-analytics':'Tenant Analytics Detalhado','billing':'Billing Export · Faturamento',
+  'feature-flags':'Feature Flags por Tenant','tenant-onboarding':'Tenant Onboarding Wizard',
+  'tenant-isolation':'Tenant Isolation Monitor','predictive-capacity':'Predictive Capacity Planning',
+  'cost-forecast':'Cost Forecasting · Projeção','value-attribution':'Business Value Attribution',
+  'quota-optimizer':'Resource Quota Optimizer',runbook:'Runbook Executor',
+  chaos:'Chaos Engineering · Fault Injection',canary:'Canary Release Manager',
+  postmortem:'Postmortem Builder','sdk-gen':'SDK Code Generator',changelog:'Changelog · Release Notes'
 };
 // Pages that replace the entire main view with a dedicated SPA div
 const SPA_PAGES={'engine-room':'engine-room-spa','ask':'ask-spa','explorer':'explorer-spa'};
