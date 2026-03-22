@@ -20,7 +20,7 @@ from typing import Literal
 from services.streaming.core.config import env_get
 
 # Type Aliases for Backend and Ollama Models
-BackendType = Literal["anthropic", "codex", "ollama", "skip"]
+BackendType = Literal["anthropic", "codex", "ollama", "opencode", "skip"]
 OllamaModelType = Literal["reasoning", "code", "general"]
 
 # GPU Model Pool mappings
@@ -776,8 +776,8 @@ def get_system_prompt(agent_name: str, workspace: str = "/workspace") -> str:
     return base + "\nYou are an AI software engineering agent. Complete the assigned task."
 
 
-def get_preferred_backend(agent_name: str) -> str:
-    """Return preferred backend for an agent ('anthropic' | 'codex' | 'ollama' | 'skip')."""
+def get_preferred_backend(agent_name: str) -> BackendType:
+    """Return preferred backend for an agent ('anthropic' | 'codex' | 'ollama' | 'opencode' | 'skip')."""
     cfg = get_agent_config(agent_name)
     if cfg:
         return cfg.backend

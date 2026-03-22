@@ -34,11 +34,15 @@ Usage
 """
 
 from __future__ import annotations
-from services.streaming.core.config import env_get
 
 import os
 from contextlib import contextmanager, nullcontext
 from typing import Any
+
+
+def env_get(name: str, default: str = "") -> str:
+    """Lightweight env reader — avoids importing services.streaming at module level."""
+    return os.environ.get(name) or default
 
 # ── OpenTelemetry (graceful no-op when not installed) ─────────────────────────
 

@@ -213,3 +213,13 @@ ASK_CACHE_TTL = env_get_int("ASK_CACHE_TTL", default=300)
 MEMORY_L2_TIMEOUT_S = env_get_float("MEMORY_L2_TIMEOUT_S", default=3.0)
 MEMORY_L3_TIMEOUT_S = env_get_float("MEMORY_L3_TIMEOUT_S", default=2.0)
 RATE_LIMIT_FAIL_OPEN = env_get_bool("RATE_LIMIT_FAIL_OPEN", default=False)
+
+# ── Neo4j ──────────────────────────────────────────────────────────────────────
+NEO4J_URI  = env_get("NEO4J_URI",  default="bolt://neo4j:7687")
+NEO4J_USER = env_get("NEO4J_USER", default="neo4j")
+NEO4J_PASS = (env_get("NEO4J_PASS") or env_get("NEO4J_AUTH", default="neo4j/neo4j").split("/", 1)[-1])
+
+# ── Ingest pipeline ────────────────────────────────────────────────────────────
+CHUNK_SIZE     = env_get_int("INGEST_CHUNK_SIZE",    default=1500)
+CHUNK_OVERLAP  = env_get_int("INGEST_CHUNK_OVERLAP", default=150)
+DISPATCHES_DIR = env_get("DISPATCHES_DIR", default=str(BASE / "state" / "external-agent-bridge" / "dispatches"))

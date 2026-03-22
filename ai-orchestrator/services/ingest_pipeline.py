@@ -27,6 +27,7 @@ Usage:
     pipeline.run("ingest-abc123", project_path="/app", project_id="sinc", tenant_id="local")
 """
 
+import logging
 import os
 import json
 import re as _re
@@ -38,7 +39,7 @@ import uuid
 import hashlib
 import threading
 import asyncio
-from typing import Optional, Callable
+from typing import Any, Dict, List, Optional, Callable, Tuple
 from services.xref_resolver import XRefResolver
 from services.streaming.core.sse import broadcast
 

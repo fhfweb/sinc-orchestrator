@@ -38,15 +38,20 @@ RUN apt-get update -qq \
 
 # ── Install OpenCode binary from GitHub releases ───────────────────────────────
 # Pin a release tag; update OPENCODE_VERSION to upgrade.
-ARG OPENCODE_VERSION=0.1.122
+# Asset format: opencode-linux-x64.tar.gz  (arm64: opencode-linux-arm64.tar.gz)
+ARG OPENCODE_VERSION=1.2.27
 ARG TARGETARCH=amd64
 
 RUN set -eux; \
-    ARCHIVE="opencode_Linux_${TARGETARCH}.tar.gz"; \
+    case "${TARGETARCH}" in \
+        arm64) ARCH="arm64" ;; \
+        *)     ARCH="x64"   ;; \
+    esac; \
+    ARCHIVE="opencode-linux-${ARCH}.tar.gz"; \
     curl -fsSL \
         "https://github.com/sst/opencode/releases/download/v${OPENCODE_VERSION}/${ARCHIVE}" \
         -o /tmp/opencode.tar.gz; \
-    tar -xzf /tmp/opencode.tar.gz -C /usr/local/bin opencode; \
+    tar -xzf /tmp/opencode.tar.gz -C /usr/local/bin; \
     chmod +x /usr/local/bin/opencode; \
     rm /tmp/opencode.tar.gz; \
     opencode --version
@@ -74,4 +79,4 @@ ENV SINC_MCP_URL="http://orchestrator-streaming:8765/mcp" \
 # Using shell form so envsubst can substitute variables into the config.
 CMD ["sh", "-c", \
     "sed -i \"s|\\$SINC_MCP_URL|${SINC_MCP_URL}|g\" /home/opencode/.config/opencode/config.json && \
-     opencode serve --port ${OPENCODE_PORT} --workspace ${OPENCODE_WORKSPACE}"]
+     opencode serve --port ${OPENCODE_PORT} --hostname 0.0.0.0 --print-logs"]

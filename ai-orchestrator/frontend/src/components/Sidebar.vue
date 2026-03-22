@@ -77,7 +77,7 @@ function routesByGroup(groupId: string) {
 }
 
 const pinned = computed(() => {
-  const pinnedPaths = ['/noc', '/noc/logs', '/noc/kanban', '/noc/agents', '/noc/ask', '/noc/metrics', '/noc/engine', '/noc/incidents']
+  const pinnedPaths = ['/noc', '/noc/logs', '/noc/kanban', '/noc/agents', '/noc/ask', '/noc/metrics']
   return allRoutes
     .filter(r => pinnedPaths.includes(r.path))
     .filter(r => !query.value || r.meta?.label?.toString().toLowerCase().includes(query.value.toLowerCase()))
